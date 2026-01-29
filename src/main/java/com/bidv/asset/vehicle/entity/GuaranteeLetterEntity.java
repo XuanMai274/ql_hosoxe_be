@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.entity;
 
+import com.bidv.asset.vehicle.DTO.BranchAuthorizedRepresentativeDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -49,7 +51,9 @@ public class GuaranteeLetterEntity {
     private BigDecimal expectedGuaranteeAmount; // so tien bao lanh du kien(nhap khi tao bao lanh)
     @Column(name = "total_guarantee_amount", precision = 18, scale = 2)
     private BigDecimal totalGuaranteeAmount;// số tiền bảo lãnh thực te(Thay doi khi co xe them/rut ho so)
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "authorized_representative_id")
+    private BranchAuthorizedRepresentativeEntity authorizedRepresentative;
     @Column(name = "used_amount")
     private BigDecimal usedAmount;
 
@@ -80,5 +84,14 @@ public class GuaranteeLetterEntity {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manufacturer_id", nullable = false)
+    private ManufacturerEntity manufacturer;
+    @OneToMany(
+            mappedBy = "guaranteeLetter",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<VehicleEntity> vehicles;
 }

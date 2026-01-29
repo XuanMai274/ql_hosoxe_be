@@ -41,6 +41,9 @@ public class VehicleEntity {
     private String description;
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guarantee_letter_id", nullable = false)
+    private GuaranteeLetterEntity guaranteeLetter;
     @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY)
     private List<VehicleDossierEntity> dossiers;
 
@@ -49,8 +52,4 @@ public class VehicleEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id")
     private InvoiceEntity invoice;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manufacturer_id", nullable = false)
-    private ManufacturerEntity manufacturer;
 }

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 @Getter
@@ -15,6 +16,12 @@ public class ManufacturerDTO {
     private Long id;
     private String code;
     private String name;
+    private String logo;
+    private String description;
     private LocalDateTime createdAt;
-    private List<Long> vehicleIds;
+    private BigDecimal guaranteeRate;
+    private String templateCode;
+    // CHỈ LƯU ID, KHÔNG MAP FULL
+    private List<Long> guaranteeLetterIds;
 }
+

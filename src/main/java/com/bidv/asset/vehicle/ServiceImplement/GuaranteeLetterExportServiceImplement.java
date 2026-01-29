@@ -3,9 +3,7 @@ package com.bidv.asset.vehicle.ServiceImplement;
 import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterExportService;
 import com.bidv.asset.vehicle.Utill.VietnameseNumberUtil;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -19,18 +17,63 @@ import java.util.*;
 public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExportService {
 
     @Override
-    public byte[] generateWord(GuaranteeLetterDTO dto) throws IOException {
+    public byte[] generateWord(GuaranteeLetterDTO dto, String template) throws IOException {
 
-        // 1. Load template
-        InputStream is = getClass()
-                .getResourceAsStream("/templates/thu-bao-lanh-vinfast.docx");
-        if (is == null) {
-            throw new FileNotFoundException("Không tìm thấy file template thu-bao-lanh-vinfast.docx");
+        if ("VINFAST_V1".equals(template)) {
+            return generateVinfast(dto);
         }
 
-        XWPFDocument doc = new XWPFDocument(is);
+        if ("HYUNDAI_V1".equals(template)) {
+            return generateHyundai(dto);
+        }
 
-        // 2. Chuẩn bị dữ liệu
+        throw new IllegalArgumentException("Template không được hỗ trợ: " + template);
+    }
+
+    // =====================================================
+    // ================== VINFAST ==========================
+    // =====================================================
+
+    private byte[] generateVinfast(GuaranteeLetterDTO dto) throws IOException {
+        XWPFDocument doc = loadTemplate("/templates/thu-bao-lanh-vinfast.docx");
+
+        Map<String, String> data = buildCommonData(dto);
+        // 👉 nếu Vinfast có field riêng thì thêm ở đây
+
+        replaceAllPlaceholders(doc, data);
+        return writeDoc(doc);
+    }
+
+    // =====================================================
+    // ================== HYUNDAI ==========================
+    // =====================================================
+
+    private byte[] generateHyundai(GuaranteeLetterDTO dto) throws IOException {
+        XWPFDocument doc = loadTemplate("/templates/thu-bao-lanh-hyundai.docx");
+
+        Map<String, String> data = buildCommonData(dto);
+        // 👉 nếu Hyundai có text khác thì chỉnh ở đây
+
+        replaceAllPlaceholders(doc, data);
+        return writeDoc(doc);
+    }
+
+    // =====================================================
+    // ================= COMMON LOGIC ======================
+    // =====================================================
+
+    private XWPFDocument loadTemplate(String path) throws IOException {
+        InputStream is = getClass().getResourceAsStream(path);
+        if (is == null) {
+            throw new FileNotFoundException("Không tìm thấy template: " + path);
+        }
+        return new XWPFDocument(is);
+    }
+
+    private Map<String, String> buildCommonData(GuaranteeLetterDTO dto) {
+
+        Map<String, String> data = new HashMap<>();
+
         String guaranteeDateTitle = toVietnameseDate(
                 dto.getGuaranteeContractDate() != null
                         ? dto.getGuaranteeContractDate()
@@ -38,44 +81,52 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         );
 
         BigDecimal expectedAmount = dto.getExpectedGuaranteeAmount();
-        String expectedAmountText = VietnameseNumberUtil.toVietnamese(expectedAmount);
 
-        Map<String, String> data = new HashMap<>();
-        data.put("{{GUARANTEE_NUMBER}}", dto.getGuaranteeContractNumber());
+        data.put("{{GUARANTEE_NUMBER}}", safe(dto.getGuaranteeContractNumber()));
         data.put("{{GUARANTEE_DATE}}",
                 LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         data.put("{{GUARANTEE_DATE_TITLE}}", guaranteeDateTitle);
-        data.put("{{SALE_CONTRACT}}", dto.getSaleContract());
+        data.put("{{SALE_CONTRACT}}", safe(dto.getSaleContract()));
         data.put("{{SALE_CONTRACT_AMOUNT}}", formatMoney(dto.getSaleContractAmount()));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT}}", formatMoney(expectedAmount));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}", expectedAmountText);
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
+                VietnameseNumberUtil.toVietnamese(expectedAmount));
+
+        if (dto.getBranchAuthorizedRepresentativeDTO() != null) {
+            data.put("{{REPRESENTATIVE_NAME}}",
+                    safe(dto.getBranchAuthorizedRepresentativeDTO().getRepresentativeName()));
+            data.put("{{REPRESENTATIVE_TITLE}}",
+                    safe(dto.getBranchAuthorizedRepresentativeDTO().getRepresentativeTitle()));
+            data.put("{{AUTH_DOC_NO}}",
+                    safe(dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationDocNo()));
+            data.put("{{AUTH_DOC_DATE}}",
+                    dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationDocDate() != null
+                            ? dto.getBranchAuthorizedRepresentativeDTO()
+                            .getAuthorizationDocDate()
+                            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                            : "");
+            data.put("{{AUTH_ISSUER}}",
+                    safe(dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationIssuer()));
+        }
+
         data.put("{{EXPECTED_VEHICLE_COUNT}}",
                 dto.getExpectedVehicleCount() != null
                         ? dto.getExpectedVehicleCount().toString()
                         : "");
 
-        // 3. Replace placeholder (CHUẨN, thay được mọi trường hợp)
-        replaceAllPlaceholders(doc, data);
-
-        // 4. Export file
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        doc.write(out);
-        doc.close();
-
-        return out.toByteArray();
+        return data;
     }
 
-    /**
-     * Replace placeholder ở toàn bộ document (paragraph + table)
-     */
+    // =====================================================
+    // ================= REPLACE LOGIC =====================
+    // =====================================================
+
     private void replaceAllPlaceholders(XWPFDocument doc, Map<String, String> data) {
 
-        // Paragraph thường
         for (XWPFParagraph p : doc.getParagraphs()) {
             replaceInParagraph(p, data);
         }
 
-        // Paragraph trong table
         doc.getTables().forEach(table ->
                 table.getRows().forEach(row ->
                         row.getTableCells().forEach(cell ->
@@ -87,36 +138,42 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         );
     }
 
-    /**
-     * Replace placeholder theo paragraph (FIX TRIỆT ĐỂ lỗi split run)
-     */
     private void replaceInParagraph(XWPFParagraph paragraph, Map<String, String> data) {
 
+        List<XWPFRun> runs = paragraph.getRuns();
+        if (runs == null || runs.isEmpty()) return;
+
         StringBuilder fullText = new StringBuilder();
-        for (XWPFRun run : paragraph.getRuns()) {
+        for (XWPFRun run : runs) {
             String text = run.getText(0);
             if (text != null) {
                 fullText.append(text);
             }
         }
 
-        String replacedText = fullText.toString();
+        String replaced = fullText.toString();
         for (Map.Entry<String, String> entry : data.entrySet()) {
-            replacedText = replacedText.replace(entry.getKey(), entry.getValue());
+            replaced = replaced.replace(entry.getKey(), entry.getValue());
         }
 
-        if (!replacedText.equals(fullText.toString())) {
-            int runCount = paragraph.getRuns().size();
-            for (int i = runCount - 1; i >= 0; i--) {
-                paragraph.removeRun(i);
-            }
+        if (replaced.equals(fullText.toString())) return;
 
-            XWPFRun newRun = paragraph.createRun();
-            newRun.setText(replacedText);
+        runs.get(0).setText(replaced, 0);
+        for (int i = 1; i < runs.size(); i++) {
+            runs.get(i).setText("", 0);
         }
     }
 
-    // ===== UTIL =====
+    // =====================================================
+    // ================= UTIL ==============================
+    // =====================================================
+
+    private byte[] writeDoc(XWPFDocument doc) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        doc.write(out);
+        doc.close();
+        return out.toByteArray();
+    }
 
     private String formatMoney(BigDecimal value) {
         if (value == null) return "";
@@ -132,5 +189,9 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
                 date.getMonthValue(),
                 date.getYear()
         );
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 }

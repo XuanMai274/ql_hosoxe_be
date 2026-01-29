@@ -8,13 +8,15 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class GuaranteeLetterDTO {
     private Long id;
-    private Long creditContractId;
+    private CreditContractDTO creditContractDTO;
     // ===== GUARANTEE CONTRACT =====
     private String guaranteeContractNumber;
     private LocalDate guaranteeContractDate;
@@ -36,4 +38,7 @@ public class GuaranteeLetterDTO {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private BranchAuthorizedRepresentativeDTO branchAuthorizedRepresentativeDTO;
+    private ManufacturerDTO manufacturerDTO;
+    private List<Long> vehicles;
 }

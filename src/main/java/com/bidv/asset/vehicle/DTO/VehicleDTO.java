@@ -30,18 +30,14 @@ public class VehicleDTO {
     private String color;
     private Integer seats;
     private BigDecimal price;
-
     private String originalCopy;
     private String importDocs;
     private String registrationOrderNumber;
     private LocalDate docsDeliveryDate;
-
     private String description;
     private LocalDateTime createdAt;
-
-    private Long manufacturerId;
     private Long invoiceId;
-
     private List<Long> dossierIds;
     private List<Long> documentIds;
+    private GuaranteeLetterDTO guaranteeLetterDTO;
 }

@@ -5,5 +5,5 @@ import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
 import java.io.IOException;
 
 public interface GuaranteeLetterExportService {
-    public byte[] generateWord(GuaranteeLetterDTO dto) throws IOException;
+    public byte[] generateWord(GuaranteeLetterDTO dto,String template) throws IOException;
 }
