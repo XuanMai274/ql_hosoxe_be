@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -17,13 +18,25 @@ public class VehicleExportController {
     @Autowired
     VehicleExportService vehicleExportService;
     @GetMapping("/excel")
-    public ResponseEntity<byte[]> exportExcel() {
+    public ResponseEntity<byte[]> exportExcel(
+            @RequestParam(required = false) String chassisNumber,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String manufacturer,
+            @RequestParam(required = false) String guaranteeContractNumber
+    ) {
 
-        byte[] file = vehicleExportService.exportVehicleExcel();
+        byte[] file = vehicleExportService.exportVehicleExcel(
+                chassisNumber,
+                status,
+                manufacturer,
+                guaranteeContractNumber
+        );
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=danh_sach_xe.xlsx")
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=danh_sach_xe.xlsx"
+                )
                 .contentType(
                         MediaType.parseMediaType(
                                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -31,4 +44,5 @@ public class VehicleExportController {
                 )
                 .body(file);
     }
+
 }

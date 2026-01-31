@@ -18,12 +18,24 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     @Autowired
     VehicleRepository vehicleRepository;
     @Override
-    public byte[] exportVehicleExcel() {
-        List<VehicleEntity> vehicles = vehicleRepository.findAllForExcel();
+    public byte[] exportVehicleExcel(
+            String chassisNumber,
+            String status,
+            String manufacturer,
+            String guaranteeContractNumber
+    ) {
+
+        List<VehicleEntity> vehicles =
+                vehicleRepository.searchVehiclesForExcel(
+                        chassisNumber,
+                        status,
+                        manufacturer,
+                        guaranteeContractNumber
+                );
 
         List<VehicleExcelDTO> excelData = new ArrayList<>();
-
         int stt = 1;
+
         for (VehicleEntity v : vehicles) {
             VehicleExcelDTO dto = mapToExcelDTO(v);
             dto.setStt(stt++);
@@ -32,7 +44,6 @@ public class VehicleExportServiceImplement implements VehicleExportService {
 
         return ExcelExportUtil.exportVehicleExcel(excelData);
     }
-
     /* ================= MAPPING ================= */
     private VehicleExcelDTO mapToExcelDTO(VehicleEntity v) {
 

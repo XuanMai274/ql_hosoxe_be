@@ -54,6 +54,36 @@ public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
             @Param("guaranteeContractNumber") String guaranteeContractNumber,
             Pageable pageable
     );
+    @Query("""
+    select v
+    from VehicleEntity v
+    join v.guaranteeLetter gl
+    join gl.manufacturer m
+    where (
+        coalesce(:chassisNumber, '') = ''
+        or lower(v.chassisNumber) like lower(concat('%', :chassisNumber, '%'))
+    )
+    and (
+        coalesce(:status, '') = ''
+        or v.status = :status
+    )
+    and (
+        coalesce(:manufacturer, '') = ''
+        or m.code = :manufacturer
+    )
+    and (
+        coalesce(:guaranteeContractNumber, '') = ''
+        or lower(gl.guaranteeContractNumber)
+            like lower(concat('%', :guaranteeContractNumber, '%'))
+    )
+    order by v.createdAt desc
+    """)
+    List<VehicleEntity> searchVehiclesForExcel(
+            @Param("chassisNumber") String chassisNumber,
+            @Param("status") String status,
+            @Param("manufacturer") String manufacturer,
+            @Param("guaranteeContractNumber") String guaranteeContractNumber
+    );
 //    @Query("""
 //    select new com.bidv.asset.vehicle.DTO.VehicleListDTO(
 //        v.id,
