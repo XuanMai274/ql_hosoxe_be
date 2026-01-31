@@ -7,10 +7,7 @@ import com.bidv.asset.vehicle.Repository.CreditContractRepository;
 import com.bidv.asset.vehicle.Repository.GuaranteeLetterRepository;
 import com.bidv.asset.vehicle.Repository.ManufacturerRepository;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterService;
-import com.bidv.asset.vehicle.entity.BranchAuthorizedRepresentativeEntity;
-import com.bidv.asset.vehicle.entity.CreditContractEntity;
-import com.bidv.asset.vehicle.entity.GuaranteeLetterEntity;
-import com.bidv.asset.vehicle.entity.ManufacturerEntity;
+import com.bidv.asset.vehicle.entity.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.Setter;
 import org.apache.coyote.BadRequestException;
@@ -23,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -213,7 +211,47 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 .map(guaranteeLetterMapper::toDto)
                 .toList();
     }
+    @Override
+    public void updateAfterVehicleImported(GuaranteeLetterEntity gl, VehicleEntity vehicle) {
 
+        /* ========= 1. imported_vehicle_count +1 ========= */
+        Integer importedCount = gl.getImportedVehicleCount();
+        gl.setImportedVehicleCount(
+                importedCount == null ? 1 : importedCount + 1
+        );
+
+        /* ========= 2. total_guarantee_amount += price ========= */
+        BigDecimal vehiclePrice = vehicle.getPrice() != null
+                ? vehicle.getPrice()
+                : BigDecimal.ZERO;
+
+        BigDecimal totalGuarantee = gl.getTotalGuaranteeAmount();
+        gl.setTotalGuaranteeAmount(
+                totalGuarantee == null
+                        ? vehiclePrice
+                        : totalGuarantee.add(vehiclePrice)
+        );
+
+        /* ========= 3. used_amount ========= */
+        BigDecimal usedAmount = gl.getUsedAmount();
+        gl.setUsedAmount(
+                usedAmount == null
+                        ? vehiclePrice
+                        : usedAmount.add(vehiclePrice)
+        );
+
+        /* ========= 4. remaining_amount ========= */
+        if (gl.getExpectedGuaranteeAmount() != null) {
+            gl.setRemainingAmount(
+                    gl.getExpectedGuaranteeAmount().subtract(gl.getUsedAmount())
+            );
+        }
+
+        /* ========= 5. updated_at ========= */
+        gl.setUpdatedAt(LocalDateTime.now());
+
+        guaranteeLetterRepository.save(gl);
+    }
 
 
 }

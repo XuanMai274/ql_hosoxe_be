@@ -2,6 +2,7 @@ package com.bidv.asset.vehicle.Service;
 
 import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
 import com.bidv.asset.vehicle.entity.GuaranteeLetterEntity;
+import com.bidv.asset.vehicle.entity.VehicleEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -29,5 +30,6 @@ public interface GuaranteeLetterService {
             String keyword,
             String manufacturerCode
     );
+    void updateAfterVehicleImported(GuaranteeLetterEntity gl, VehicleEntity vehicle);
 
 }

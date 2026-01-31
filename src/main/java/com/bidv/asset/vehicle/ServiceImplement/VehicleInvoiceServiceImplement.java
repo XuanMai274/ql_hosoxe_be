@@ -7,6 +7,7 @@ import com.bidv.asset.vehicle.Repository.DocumentRepository;
 import com.bidv.asset.vehicle.Repository.GuaranteeLetterRepository;
 import com.bidv.asset.vehicle.Repository.InvoiceRepository;
 import com.bidv.asset.vehicle.Repository.VehicleRepository;
+import com.bidv.asset.vehicle.Service.GuaranteeLetterService;
 import com.bidv.asset.vehicle.Service.VehicleInvoiceService;
 import com.bidv.asset.vehicle.entity.DocumentEntity;
 import com.bidv.asset.vehicle.entity.GuaranteeLetterEntity;
@@ -30,6 +31,8 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
     InvoiceRepository invoiceRepository;
     @Autowired
     GuaranteeLetterRepository guaranteeLetterRepository;
+    @Autowired
+    GuaranteeLetterService guaranteeLetterService;
     @Override
     @Transactional
     public List<VehicleDTO> createInvoiceWithVehicles(CreateInvoiceVehicleRequest request) {
@@ -87,7 +90,8 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
             vehicle.setGuaranteeLetter(gl);
 
             vehicle = vehicleRepository.save(vehicle);
-
+            /* ================== 3. UPDATE GUARANTEE LETTER ================== */
+            guaranteeLetterService.updateAfterVehicleImported(gl, vehicle);
             /* ================== 3. GẮN DOCUMENTS (NẾU CÓ) ================== */
             if (v.getDocumentIds() != null) {
                 for (Long docId : v.getDocumentIds()) {
@@ -100,7 +104,7 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
 
             /* ================== 4. MAP ENTITY → DTO ================== */
             VehicleDTO dto = new VehicleDTO();
-            dto.setId(vehicle.getId());          // 🔥 QUAN TRỌNG
+            dto.setId(vehicle.getId());
             dto.setStt(vehicle.getStt());
             dto.setVehicleName(vehicle.getVehicleName());
             dto.setChassisNumber(vehicle.getChassisNumber());
