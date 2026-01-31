@@ -99,4 +99,14 @@ public class GuaranteeLetterAPI {
                 guaranteeLetterService.updateGuaranteeLetter(id, dto)
         );
     }
+    @GetMapping("/suggest")
+    public ResponseEntity<List<GuaranteeLetterDTO>> suggest(
+            @RequestParam String keyword,
+            @RequestParam String manufacturerCode
+    ) {
+        return ResponseEntity.ok(
+                guaranteeLetterService.suggest(keyword, manufacturerCode)
+        );
+    }
+
 }

@@ -48,7 +48,22 @@ public interface GuaranteeLetterRepository extends CrudRepository<GuaranteeLette
             @Param("toDate") LocalDate toDate,
             Pageable pageable
     );
-
-
+    @Query("""
+        SELECT gl
+        FROM GuaranteeLetterEntity gl
+        JOIN gl.manufacturer m
+        WHERE
+            m.code = :manufacturerCode
+            AND (
+                gl.guaranteeNoticeNumber ILIKE CONCAT(:keyword, '%')
+                OR gl.referenceCode ILIKE CONCAT(:keyword, '%')
+            )
+        ORDER BY gl.guaranteeContractDate DESC
+    """)
+    List<GuaranteeLetterEntity> suggestGuaranteeLetters(
+            @Param("keyword") String keyword,
+            @Param("manufacturerCode") String manufacturerCode,
+            Pageable pageable
+    );
 
 }

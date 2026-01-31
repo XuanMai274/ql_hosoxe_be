@@ -17,6 +17,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -195,4 +196,24 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
         return guaranteeLetterMapper.toDto(saved);
 
     }
+
+    public List<GuaranteeLetterDTO> suggest(
+            String keyword,
+            String manufacturerCode
+    ) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return List.of(); // chưa đủ ký tự → không search
+        }
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        return guaranteeLetterRepository
+                .suggestGuaranteeLetters(keyword.trim(), manufacturerCode, pageable)
+                .stream()
+                .map(guaranteeLetterMapper::toDto)
+                .toList();
+    }
+
+
+
 }

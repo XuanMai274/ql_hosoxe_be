@@ -36,7 +36,7 @@ public class VehicleDTO {
     private LocalDate docsDeliveryDate;
     private String description;
     private LocalDateTime createdAt;
-    private Long invoiceId;
+    private InvoiceDTO invoiceId;
     private List<Long> dossierIds;
     private List<Long> documentIds;
     private GuaranteeLetterDTO guaranteeLetterDTO;

@@ -25,5 +25,9 @@ public interface GuaranteeLetterService {
     );
     public GuaranteeLetterDTO findById(long id);
     public GuaranteeLetterDTO updateGuaranteeLetter(Long id, GuaranteeLetterDTO dto);
+    public List<GuaranteeLetterDTO> suggest(
+            String keyword,
+            String manufacturerCode
+    );
 
 }

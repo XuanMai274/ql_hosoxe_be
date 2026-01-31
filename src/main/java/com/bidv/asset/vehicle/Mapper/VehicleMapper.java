@@ -1,6 +1,7 @@
 package com.bidv.asset.vehicle.Mapper;
 
 import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
+import com.bidv.asset.vehicle.DTO.InvoiceDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.entity.*;
 import lombok.RequiredArgsConstructor;
@@ -43,13 +44,15 @@ public class VehicleMapper {
         dto.setDescription(entity.getDescription());
         dto.setCreatedAt(entity.getCreatedAt());
 
-        // ===== INVOICE =====
-        dto.setInvoiceId(
-                entity.getInvoice() != null ? entity.getInvoice().getId() : null
-        );
+        /* ===== INVOICE ===== */
+        if (entity.getInvoice() != null) {
+            InvoiceDTO invoiceDTO = new InvoiceDTO();
+            invoiceDTO.setId(entity.getInvoice().getId());
+            dto.setInvoiceId(invoiceDTO);
+        }
 
-        // ===== DOSSIERS =====
-        if (entity.getDossiers() != null && !entity.getDossiers().isEmpty()) {
+        /* ===== DOSSIERS ===== */
+        if (entity.getDossiers() != null) {
             dto.setDossierIds(
                     entity.getDossiers()
                             .stream()
@@ -58,8 +61,8 @@ public class VehicleMapper {
             );
         }
 
-        // ===== DOCUMENTS =====
-        if (entity.getDocuments() != null && !entity.getDocuments().isEmpty()) {
+        /* ===== DOCUMENTS ===== */
+        if (entity.getDocuments() != null) {
             dto.setDocumentIds(
                     entity.getDocuments()
                             .stream()
@@ -68,7 +71,7 @@ public class VehicleMapper {
             );
         }
 
-        // ===== GUARANTEE LETTER (ID ONLY DTO) =====
+        /* ===== GUARANTEE LETTER ===== */
         if (entity.getGuaranteeLetter() != null) {
             GuaranteeLetterDTO guaranteeDTO = new GuaranteeLetterDTO();
             guaranteeDTO.setId(entity.getGuaranteeLetter().getId());
@@ -112,21 +115,21 @@ public class VehicleMapper {
         entity.setDescription(dto.getDescription());
         entity.setCreatedAt(dto.getCreatedAt());
 
-        // ===== INVOICE: set ID only =====
-        if (dto.getInvoiceId() != null) {
+        /* ===== INVOICE (ID ONLY) ===== */
+        if (dto.getInvoiceId() != null && dto.getInvoiceId().getId() != null) {
             InvoiceEntity invoice = new InvoiceEntity();
-            invoice.setId(dto.getInvoiceId());
+            invoice.setId(dto.getInvoiceId().getId());
             entity.setInvoice(invoice);
         }
 
-        // ===== GUARANTEE LETTER: set ID only =====
-        if (dto.getGuaranteeLetterDTO() != null) {
+        /* ===== GUARANTEE LETTER (ID ONLY – REQUIRED) ===== */
+        if (dto.getGuaranteeLetterDTO() != null && dto.getGuaranteeLetterDTO().getId() != null) {
             GuaranteeLetterEntity guaranteeLetter = new GuaranteeLetterEntity();
             guaranteeLetter.setId(dto.getGuaranteeLetterDTO().getId());
             entity.setGuaranteeLetter(guaranteeLetter);
         }
 
-        // dossiers, documents KHÔNG map ở mapper
+        // dossiers & documents: KHÔNG map ở đây (xử lý ở service)
 
         return entity;
     }

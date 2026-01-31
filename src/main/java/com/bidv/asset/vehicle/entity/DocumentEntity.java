@@ -16,11 +16,12 @@ public class DocumentEntity {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "document_id_seq")
     @SequenceGenerator(name = "document_id_seq", sequenceName = "document_id_seq")
     private Long id;
-
     @ManyToOne
     @JoinColumn(name = "vehicle_id")
     private VehicleEntity vehicle;
-
+    private Long fileSize;
+    private String checksum;
+    private String status; // TEMP | ATTACHED | DELETED
     private String fileName;
     private String fileType;
     private String filePath;
