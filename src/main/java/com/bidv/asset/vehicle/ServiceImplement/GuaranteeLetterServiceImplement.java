@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -39,9 +40,14 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
     BranchAuthorizedRepresentativeRepository branchAuthorizedRepresentativeRepository;
     @Autowired
     ManufacturerRepository manufacturerRepository;
+
+
+    @Transactional
     @Override
     public GuaranteeLetterDTO createGuaranteeLetter(GuaranteeLetterDTO dto) {
-        // 1. Validate request
+        /* =======================
+         * 1. VALIDATE REQUEST
+         * ======================= */
         if (dto == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -49,46 +55,102 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
             );
         }
 
-        if (dto.getCreditContractDTO() == null) {
+        if (dto.getCreditContractDTO() == null
+                || dto.getCreditContractDTO().getId() == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "creditContractId không được null"
             );
         }
 
-        // 2. Kiểm tra CreditContract tồn tại
+        if (dto.getExpectedGuaranteeAmount() == null
+                || dto.getExpectedGuaranteeAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Số tiền bảo lãnh không hợp lệ"
+            );
+        }
+
+        /* =======================
+         * 2. LOAD MASTER DATA
+         * ======================= */
         CreditContractEntity creditContract = creditContractRepository
                 .findById(dto.getCreditContractDTO().getId())
-                .orElseThrow(() ->
-                        new ResponseStatusException(
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Không tìm thấy CreditContract với id = "
+                                + dto.getCreditContractDTO().getId()
+                ));
+
+        BranchAuthorizedRepresentativeEntity authorizedRep =
+                branchAuthorizedRepresentativeRepository
+                        .findById(dto.getBranchAuthorizedRepresentativeDTO().getId())
+                        .orElseThrow(() -> new ResponseStatusException(
                                 HttpStatus.NOT_FOUND,
-                                "Không tìm thấy CreditContract với id = " + dto.getCreditContractDTO()
-                        )
-                );
-        BranchAuthorizedRepresentativeEntity branchAuthorizedRepresentative=branchAuthorizedRepresentativeRepository.findById(dto.getBranchAuthorizedRepresentativeDTO().getId()).orElseThrow(() ->
-                new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Không tìm thấy BranchAuthorizedRepresentative với id = " + dto.getBranchAuthorizedRepresentativeDTO()
-                )
-        );
-        ManufacturerEntity manufacturerEntity=manufacturerRepository.findById(dto.getManufacturerDTO().getId()).orElseThrow(() ->
-                new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Không tìm thấy manufacturer với id = " + dto.getManufacturerDTO()
-                )
-        );
-        // 3. Map DTO -> Entity
+                                "Không tìm thấy BranchAuthorizedRepresentative với id = "
+                                        + dto.getBranchAuthorizedRepresentativeDTO().getId()
+                        ));
+
+        ManufacturerEntity manufacturer =
+                manufacturerRepository
+                        .findById(dto.getManufacturerDTO().getId())
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Không tìm thấy Manufacturer với id = "
+                                        + dto.getManufacturerDTO().getId()
+                        ));
+
+        /* =======================
+         * 3. CHECK & CALCULATE LIMIT
+         * ======================= */
+        BigDecimal creditLimit = creditContract.getCreditLimit();
+
+        BigDecimal currentUsedLimit = creditContract.getUsedLimit() == null
+                ? BigDecimal.ZERO
+                : creditContract.getUsedLimit();
+
+        BigDecimal newUsedLimit =
+                currentUsedLimit.add(dto.getExpectedGuaranteeAmount());
+
+        // ❌ Không cho vượt hạn mức
+//        if (newUsedLimit.compareTo(creditLimit) > 0) {
+//            throw new ResponseStatusException(
+//                    HttpStatus.BAD_REQUEST,
+//                    "Vượt quá hạn mức tín dụng. Hạn mức còn lại: "
+//                            + creditLimit.subtract(currentUsedLimit)
+//            );
+//        }
+
+        BigDecimal newRemainingLimit =
+                creditLimit.subtract(newUsedLimit);
+
+        /* =======================
+         * 4. MAP & SAVE GUARANTEE LETTER
+         * ======================= */
         GuaranteeLetterEntity entity = guaranteeLetterMapper.toEntity(dto);
         entity.setGuaranteeContractDate(LocalDate.now());
         entity.setCreditContract(creditContract);
-        entity.setManufacturer(manufacturerEntity);
-        entity.setAuthorizedRepresentative(branchAuthorizedRepresentative);
+        entity.setManufacturer(manufacturer);
+        entity.setAuthorizedRepresentative(authorizedRep);
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
 
-        // 4. Save DB
-        GuaranteeLetterEntity saved = guaranteeLetterRepository.save(entity);
-        return guaranteeLetterMapper.toDto(saved);
+        GuaranteeLetterEntity savedGuarantee =
+                guaranteeLetterRepository.save(entity);
+
+        /* =======================
+         * 5. UPDATE CREDIT CONTRACT
+         * ======================= */
+        creditContract.setUsedLimit(newUsedLimit);
+        creditContract.setRemainingLimit(newRemainingLimit);
+        creditContract.setUpdateAt(LocalDateTime.now());
+
+        creditContractRepository.save(creditContract);
+
+        /* =======================
+         * 6. RETURN DTO
+         * ======================= */
+        return guaranteeLetterMapper.toDto(savedGuarantee);
     }
 
     @Override
@@ -115,6 +177,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
             String manufacturerCode,
             LocalDate fromDate,
             LocalDate toDate,
+            Boolean hasLetterNumber,
             Pageable pageable
     ) {
         if (keyword != null && keyword.trim().isEmpty()) {
@@ -125,6 +188,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 manufacturerCode,
                 fromDate,
                 toDate,
+                hasLetterNumber,
                 pageable
         ).map(guaranteeLetterMapper::toDto);
     }

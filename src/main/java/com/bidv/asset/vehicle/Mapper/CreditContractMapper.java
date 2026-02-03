@@ -21,7 +21,9 @@ public class CreditContractMapper {
         dto.setContractNumber(entity.getContractNumber());
         dto.setContractDate(entity.getContractDate());
         dto.setCreatedAt(entity.getCreatedAt());
-
+        dto.setCreditLimit(entity.getCreditLimit());
+        dto.setRemainingLimit(entity.getRemainingLimit());
+        dto.setUsedLimit(entity.getUsedLimit());
         // Map OneToMany -> List<Long>
         if (entity.getGuaranteeLetters() != null) {
             List<Long> guaranteeIds = entity.getGuaranteeLetters()
@@ -45,7 +47,9 @@ public class CreditContractMapper {
         entity.setContractNumber(dto.getContractNumber());
         entity.setContractDate(dto.getContractDate());
         entity.setCreatedAt(dto.getCreatedAt());
-
+        entity.setCreditLimit(dto.getCreditLimit());
+        entity.setRemainingLimit(dto.getRemainingLimit());
+        entity.setUsedLimit(dto.getUsedLimit());
         /*
          * Không map guaranteeLetters tại đây
          * Quan hệ phải xử lý ở Service:

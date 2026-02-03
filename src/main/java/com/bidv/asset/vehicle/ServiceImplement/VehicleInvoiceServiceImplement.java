@@ -2,12 +2,14 @@ package com.bidv.asset.vehicle.ServiceImplement;
 
 import com.bidv.asset.vehicle.DTO.CreateInvoiceVehicleRequest;
 import com.bidv.asset.vehicle.DTO.InvoiceDTO;
+import com.bidv.asset.vehicle.DTO.OcrResponseDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.Repository.DocumentRepository;
 import com.bidv.asset.vehicle.Repository.GuaranteeLetterRepository;
 import com.bidv.asset.vehicle.Repository.InvoiceRepository;
 import com.bidv.asset.vehicle.Repository.VehicleRepository;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterService;
+import com.bidv.asset.vehicle.Service.OcrClient;
 import com.bidv.asset.vehicle.Service.VehicleInvoiceService;
 import com.bidv.asset.vehicle.entity.DocumentEntity;
 import com.bidv.asset.vehicle.entity.GuaranteeLetterEntity;
@@ -16,10 +18,13 @@ import com.bidv.asset.vehicle.entity.VehicleEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.bidv.asset.vehicle.Mapper.VehicleOcrMapper.mapAndValidateVehicles;
 
 @Service
 public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
@@ -33,6 +38,8 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
     GuaranteeLetterRepository guaranteeLetterRepository;
     @Autowired
     GuaranteeLetterService guaranteeLetterService;
+    @Autowired
+    OcrClient ocrClient;
     @Override
     @Transactional
     public List<VehicleDTO> createInvoiceWithVehicles(CreateInvoiceVehicleRequest request) {
@@ -114,5 +121,11 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
         }
 
         return createdVehicles;
+    }
+    public List<VehicleDTO> extractAndValidate(MultipartFile file) {
+
+        OcrResponseDTO ocr = ocrClient.extract(file);
+
+        return mapAndValidateVehicles(ocr);
     }
 }

@@ -22,6 +22,7 @@ public interface GuaranteeLetterService {
             String manufacturerCode,
             LocalDate fromDate,
             LocalDate toDate,
+            Boolean hasLetterNumber,
             Pageable pageable
     );
     public GuaranteeLetterDTO findById(long id);

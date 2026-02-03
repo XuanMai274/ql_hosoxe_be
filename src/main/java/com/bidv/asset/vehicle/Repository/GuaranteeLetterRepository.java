@@ -30,22 +30,32 @@ public interface GuaranteeLetterRepository extends CrudRepository<GuaranteeLette
             Pageable pageable
     );
     @Query("""
-        SELECT gl FROM GuaranteeLetterEntity gl
-        JOIN gl.manufacturer m
-        WHERE (
-            COALESCE(:keyword, '') = ''
-            OR LOWER(gl.guaranteeContractNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))
-            OR LOWER(gl.referenceCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
-        )
-        AND (COALESCE(:manufacturerCode, '') = '' OR m.code = :manufacturerCode)
-        AND (CAST(:fromDate AS date) IS NULL OR gl.guaranteeContractDate >= :fromDate)
-        AND (CAST(:toDate AS date) IS NULL OR gl.guaranteeContractDate <= :toDate)
-        """)
+    SELECT gl FROM GuaranteeLetterEntity gl
+    JOIN gl.manufacturer m
+    WHERE (
+        COALESCE(:keyword, '') = ''
+        OR LOWER(gl.guaranteeContractNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(gl.referenceCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    )
+
+    AND (COALESCE(:manufacturerCode, '') = '' OR m.code = :manufacturerCode)
+
+    AND (:fromDate IS NULL OR gl.guaranteeContractDate >= :fromDate)
+
+    AND (:toDate IS NULL OR gl.guaranteeContractDate <= :toDate)
+
+    AND (
+        :hasLetterNumber IS NULL
+        OR (:hasLetterNumber = true AND gl.guaranteeNoticeNumber IS NOT NULL)
+        OR (:hasLetterNumber = false AND gl.guaranteeNoticeNumber IS NULL)
+    )
+""")
     Page<GuaranteeLetterEntity> search(
             @Param("keyword") String keyword,
             @Param("manufacturerCode") String manufacturerCode,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate,
+            @Param("hasLetterNumber") Boolean hasLetterNumber,
             Pageable pageable
     );
     @Query("""

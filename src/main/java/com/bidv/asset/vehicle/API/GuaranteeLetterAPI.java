@@ -70,6 +70,7 @@ public class GuaranteeLetterAPI {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate toDate,
+            @RequestParam(required = false) Boolean hasLetterNumber,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
@@ -82,7 +83,7 @@ public class GuaranteeLetterAPI {
         );
 
         return ResponseEntity.ok(
-                guaranteeLetterService.search(keyword, manufacturerCode, fromDate, toDate, pageable)
+                guaranteeLetterService.search(keyword, manufacturerCode, fromDate, toDate, hasLetterNumber, pageable)
         );
     }
     @GetMapping("/{id}")
