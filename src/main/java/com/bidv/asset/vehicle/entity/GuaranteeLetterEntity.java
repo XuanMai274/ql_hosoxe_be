@@ -94,4 +94,11 @@ public class GuaranteeLetterEntity {
             orphanRemoval = true
     )
     private List<VehicleEntity> vehicles;
+    @OneToOne(
+            mappedBy = "guaranteeLetter",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private GuaranteeLetterFileEntity file;
 }

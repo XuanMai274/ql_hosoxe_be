@@ -1,6 +1,7 @@
 package com.bidv.asset.vehicle.Mapper;
 
 import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
+import com.bidv.asset.vehicle.DTO.GuaranteeLetterFileDTO;
 import com.bidv.asset.vehicle.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -71,6 +72,25 @@ public class GuaranteeLetterMapper {
                             .collect(Collectors.toList())
             );
         }
+        // ===== FILE METADATA =====
+        if (entity.getFile() != null && Boolean.TRUE.equals(entity.getFile().getIsActive())) {
+            GuaranteeLetterFileEntity fileEntity = entity.getFile();
+
+            GuaranteeLetterFileDTO fileDTO = new GuaranteeLetterFileDTO();
+            fileDTO.setId(fileEntity.getId());
+            fileDTO.setGuaranteeLetterId(entity.getId());
+            fileDTO.setFileName(fileEntity.getFileName());
+            fileDTO.setFilePath(fileEntity.getFilePath());
+            fileDTO.setFileType(fileEntity.getFileType());
+            fileDTO.setFileSize(fileEntity.getFileSize());
+            fileDTO.setFileHash(fileEntity.getFileHash());
+            fileDTO.setVersion(fileEntity.getVersion());
+            fileDTO.setIsActive(fileEntity.getIsActive());
+            fileDTO.setCreatedAt(fileEntity.getCreatedAt());
+
+            dto.setFile(fileDTO);
+        }
+
 
         return dto;
     }

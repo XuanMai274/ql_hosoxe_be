@@ -41,4 +41,6 @@ public class GuaranteeLetterDTO {
     private BranchAuthorizedRepresentativeDTO branchAuthorizedRepresentativeDTO;
     private ManufacturerDTO manufacturerDTO;
     private List<Long> vehicles;
+    private GuaranteeLetterFileDTO file;
+
 }

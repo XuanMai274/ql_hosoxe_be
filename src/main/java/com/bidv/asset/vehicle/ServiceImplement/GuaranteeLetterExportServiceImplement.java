@@ -19,6 +19,7 @@ import java.util.*;
 @Service
 public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExportService {
     BigDecimal gHTDConSD= BigDecimal.valueOf(0);
+    BigDecimal gHTDaSuDung=BigDecimal.valueOf(0);
     // =====================================================
     // ================= PUBLIC API ========================
     // =====================================================
@@ -92,6 +93,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     private byte[] generateDeXuatVinfast(GuaranteeLetterDTO dto, XuatDeXuatBaoLanh xuatDeXuatBaoLanhBaoLanh) throws IOException {
         XWPFDocument doc = loadTemplate("/templates/Vinfast/de-xuat-cap-bao-lanh-vinfast.docx");
         gHTDConSD=xuatDeXuatBaoLanhBaoLanh.getRemainingAmount();
+        gHTDaSuDung=xuatDeXuatBaoLanhBaoLanh.getTotalGuaranteeAmount();
         Map<String, String> data = buildCommonData(dto);
 
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
@@ -323,11 +325,15 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         data.put("{{GUARANTEE_DATE}}", formatDate(LocalDate.now()));
         data.put("{{GUARANTEE_DATE_TITLE}}",
                 toVietnameseDate(dto.getGuaranteeContractDate()));
-        data.put("{{{{GHTDConSD}} }}", String.valueOf(gHTDConSD));
+//        data.put("{{GHTDaSuDung}}",
+//                formatMoney(dto.getTotalGuaranteeAmount()));
+        data.put("{{GHTDConSD}}", formatMoney(gHTDConSD));
+        // ===== GHTD đã s dụng =====
+       data.put("{{GHTDaSuDung}}",formatMoney(gHTDaSuDung));
         data.put("{{SALE_CONTRACT}}", safe(dto.getSaleContract()));
         data.put("{{SALE_CONTRACT_AMOUNT}}",
                 formatMoney(dto.getSaleContractAmount()));
-        data.put("GIAHDMB", String.valueOf(dto.getSaleContractAmount()));
+        data.put("{{GIAHDMB}}", formatMoney(dto.getSaleContractAmount()));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT}}",
                 formatMoney(expectedAmount));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
