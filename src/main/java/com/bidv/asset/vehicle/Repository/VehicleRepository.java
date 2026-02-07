@@ -16,6 +16,13 @@ import java.util.Optional;
 
 @Repository
 public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
+    Optional<VehicleEntity> findDetailById(Long id);
+    // tìm xe theo số khug
+    Optional<VehicleEntity> findByChassisNumber(String chassisNumber);
+    // dùng khi update
+    boolean existsByChassisNumberAndIdNot(String chassisNumber, Long id);
+    // tìm xe theo trạng thái
+    List<VehicleEntity> findByStatus(String status);
     boolean existsByChassisNumber(String chassisNumber);
     @Query("""
     select new com.bidv.asset.vehicle.DTO.VehicleListDTO(
@@ -49,6 +56,7 @@ public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
     )
     order by v.createdAt desc
 """)
+    // phần tìm kiếm tại danh sách hồ sơ xe
     Page<VehicleListDTO> searchVehicles(
             @Param("chassisNumber") String chassisNumber,
             @Param("status") String status,
@@ -92,11 +100,7 @@ public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
             "invoice",
             "documents"
     })
-    Optional<VehicleEntity> findDetailById(Long id);
-    // tìm xe theo số khug
-    Optional<VehicleEntity> findByChassisNumber(String chassisNumber);
-    // dùng khi update
-    boolean existsByChassisNumberAndIdNot(String chassisNumber, Long id);
+
 //    @Query("""
 //    select new com.bidv.asset.vehicle.DTO.VehicleListDTO(
 //        v.id,

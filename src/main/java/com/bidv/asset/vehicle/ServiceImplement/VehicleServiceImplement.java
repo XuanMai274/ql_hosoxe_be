@@ -19,6 +19,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
 @Service
 public class VehicleServiceImplement implements VehicleService {
     @Autowired
@@ -112,7 +117,57 @@ public class VehicleServiceImplement implements VehicleService {
 
         return mapToDTO(saved);
     }
+    @Override
+    public List<VehicleDTO> getVehiclesByStatus(String status) {
 
+        List<VehicleEntity> vehicles = vehicleRepository.findByStatus(status);
+
+        return vehicles.stream()
+                .map(vehicle -> {
+                    VehicleDTO dto = vehicleMapper.toDto(vehicle);
+
+                    // 👉 chỉ áp dụng logic với trạng thái Giữ két
+                    if ("Giữ két".equalsIgnoreCase(status)) {
+                        dto.setDeadlineLabel(
+                                calculateDeadlineLabel(vehicle.getCreatedAt())
+                        );
+                    }
+
+                    return dto;
+                })
+                .toList();
+    }
+
+    private VehicleDTO mapWithDeadlineLabel(VehicleEntity entity) {
+
+        VehicleDTO dto = vehicleMapper.toDto(entity);
+
+        dto.setDeadlineLabel(
+                calculateDeadlineLabel(entity.getCreatedAt())
+        );
+
+        return dto;
+    }
+
+    private String calculateDeadlineLabel(LocalDateTime createdAt) {
+
+        if (createdAt == null) return null;
+
+        LocalDate deadline = createdAt.toLocalDate().plusDays(3);
+        LocalDate today = LocalDate.now();
+
+        long diff = ChronoUnit.DAYS.between(today, deadline);
+
+        if (diff > 0) {
+            return "Còn " + diff + " ngày đến hạn nhập kho";
+        }
+
+        if (diff == 0) {
+            return "Cần nhập kho hôm nay";
+        }
+
+        return "Đã quá hạn nhập kho " + Math.abs(diff) + " ngày";
+    }
     /* ===== Mapper ===== */
     private VehicleDTO mapToDTO(VehicleEntity entity) {
         VehicleDTO dto = new VehicleDTO();

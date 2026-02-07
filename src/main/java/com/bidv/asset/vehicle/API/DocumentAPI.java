@@ -50,6 +50,45 @@ public class DocumentAPI {
         documentService.deleteDocumentManually(id);
         return ResponseEntity.ok().build();
     }
+    //5 download file
+    @GetMapping("/{id}/download")
+    public ResponseEntity<ByteArrayResource> download(@PathVariable Long id) {
+
+        byte[] data = documentService.loadFile(id);
+        DocumentDTO meta = documentService.getMeta(id);
+
+        MediaType mediaType = resolveMediaType(meta.getFileName());
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + meta.getFileName() + "\""
+                )
+                .body(new ByteArrayResource(data));
+    }
+    private MediaType resolveMediaType(String fileName) {
+
+        if (fileName == null) return MediaType.APPLICATION_OCTET_STREAM;
+
+        String lower = fileName.toLowerCase();
+
+        if (lower.endsWith(".pdf")) return MediaType.APPLICATION_PDF;
+
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg"))
+            return MediaType.IMAGE_JPEG;
+
+        if (lower.endsWith(".png"))
+            return MediaType.IMAGE_PNG;
+
+        if (lower.endsWith(".doc") || lower.endsWith(".docx"))
+            return MediaType.APPLICATION_OCTET_STREAM;
+
+        if (lower.endsWith(".xls") || lower.endsWith(".xlsx"))
+            return MediaType.APPLICATION_OCTET_STREAM;
+
+        return MediaType.APPLICATION_OCTET_STREAM;
+    }
 
 
 }

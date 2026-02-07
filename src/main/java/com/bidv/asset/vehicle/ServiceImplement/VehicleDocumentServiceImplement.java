@@ -122,6 +122,14 @@ public class VehicleDocumentServiceImplement implements VehicleDocumentService {
         // 2. Xóa metadata trong DB
         documentRepository.delete(doc);
     }
+    @Override
+    public DocumentDTO getMeta(Long id) {
+
+        DocumentEntity entity = documentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy metadata"));
+
+        return mapToDto(entity);
+    }
     private DocumentDTO mapToDto(DocumentEntity doc) {
         DocumentDTO dto = new DocumentDTO();
         dto.setId(doc.getId());

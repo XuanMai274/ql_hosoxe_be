@@ -58,6 +58,12 @@ public class VehicleAPI {
                 ? null
                 : value.trim().toLowerCase();
     }
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<VehicleDTO>> getByStatus(
+            @PathVariable String status
+    ) {
+        return ResponseEntity.ok(vehicleService.getVehiclesByStatus(status));
+    }
 //    @GetMapping
 //    public Page<VehicleListDTO> getVehicles(
 //            @RequestParam(required = false) String chassisNumber,

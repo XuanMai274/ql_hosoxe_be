@@ -14,4 +14,5 @@ public interface VehicleDocumentService {
     List<DocumentDTO> getDocumentsByVehicle(Long vehicleId);
     public void deleteDocumentManually(Long documentId);
     byte[] loadFile(Long documentId);
+    DocumentDTO getMeta(Long id);
 }

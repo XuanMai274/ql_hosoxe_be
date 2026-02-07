@@ -88,7 +88,12 @@ public class VehicleMapper {
             guaranteeDTO.setRemainingAmount(g.getRemainingAmount());
             guaranteeDTO.setReferenceCode(g.getReferenceCode());
             guaranteeDTO.setGuaranteeNoticeNumber(g.getGuaranteeNoticeNumber());
-
+            ManufacturerDTO manufacturerDTO=new ManufacturerDTO();
+            manufacturerDTO.setCode(g.getManufacturer().getCode());
+            manufacturerDTO.setTemplateCode(g.getManufacturer().getTemplateCode());
+            manufacturerDTO.setId(g.getManufacturer().getId());
+            manufacturerDTO.setName(g.getManufacturer().getName());
+            guaranteeDTO.setManufacturerDTO(manufacturerDTO);
             dto.setGuaranteeLetterDTO(guaranteeDTO);
         }
 

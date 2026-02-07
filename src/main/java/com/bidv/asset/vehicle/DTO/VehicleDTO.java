@@ -44,7 +44,7 @@ public class VehicleDTO {
     private List<Long> dossierIds;
     private List<DocumentDTO> documents;
     private GuaranteeLetterDTO guaranteeLetterDTO;
-
+    private String deadlineLabel;
     /* ================== OCR / VALIDATION FIELDS (MỚI) ================== */
 
     /** Giá trị VIN gốc từ OCR (để FE hiển thị & sửa) */
