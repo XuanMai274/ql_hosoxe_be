@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/officer/extract")
-public class ExtractionAPI {
+@RequestMapping("/officer/extract/vinfast")
+public class VinfastExtractionAPI {
 
     @Autowired
     private PdfService pdfService;
@@ -157,20 +157,5 @@ public class ExtractionAPI {
         response.setMessage(
                 errorMessages.length() > 0 ? successMsg + ". Lưu ý: " + errorMessages.toString() : successMsg);
         return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/excel")
-    public ResponseEntity<ExtractionResult> extractExcel(@RequestParam("file") MultipartFile file) {
-        String filename = file.getOriginalFilename().toLowerCase();
-        if (file.isEmpty() || !(filename.endsWith(".xlsx") || filename.endsWith(".xls"))) {
-            return ResponseEntity.badRequest()
-                    .body(new ExtractionResult(false, null, "Vui lòng upload file Excel hợp lệ."));
-        }
-        try {
-            List<Map<String, Object>> data = excelService.extractExcel(file);
-            return ResponseEntity.ok(new ExtractionResult(true, data, "Thành công"));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(new ExtractionResult(false, null, e.getMessage()));
-        }
     }
 }

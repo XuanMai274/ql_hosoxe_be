@@ -18,50 +18,78 @@ public class ExcelServiceImplement implements ExcelService {
     @Override
     public List<Map<String, Object>> extractExcel(MultipartFile file) throws IOException {
         List<Map<String, Object>> result = new ArrayList<>();
+        DataFormatter formatter = new DataFormatter();
 
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-            Row headerRow = sheet.getRow(0);
-            if (headerRow == null)
-                return result;
-
+            int headerRowNum = -1;
             List<String> headers = new ArrayList<>();
-            for (Cell cell : headerRow) {
-                headers.add(cell.toString());
-            }
 
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            // Tìm dòng tiêu đề (quét 20 dòng đầu tiên)
+            for (int i = 0; i <= Math.min(sheet.getLastRowNum(), 20); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null)
                     continue;
 
+                for (Cell cell : row) {
+                    String cellValue = formatter.formatCellValue(cell).toLowerCase().trim();
+                    if (cellValue.contains("vin") || cellValue.contains("số khung")) {
+                        headerRowNum = i;
+                        break;
+                    }
+                }
+                if (headerRowNum != -1) {
+                    for (Cell cell : row) {
+                        headers.add(formatter.formatCellValue(cell).trim());
+                    }
+                    break;
+                }
+            }
+
+            if (headerRowNum == -1)
+                return result;
+
+            // Xác định vị trí cột định danh (VIN/Số khung) để biết ranh giới bảng
+            int identifierIdx = -1;
+            for (int j = 0; j < headers.size(); j++) {
+                String h = headers.get(j).toLowerCase();
+                if (h.contains("vin") || h.contains("số khung")) {
+                    identifierIdx = j;
+                    break;
+                }
+            }
+
+            // Đọc dữ liệu từ sau dòng tiêu đề
+            for (int i = headerRowNum + 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null)
+                    break; // Gặp dòng null thì dừng (hết bảng)
+
                 Map<String, Object> rowData = new LinkedHashMap<>();
+                boolean hasData = false;
                 for (int j = 0; j < headers.size(); j++) {
                     Cell cell = row.getCell(j);
-                    rowData.put(headers.get(j), getCellValue(cell));
+                    String val = formatter.formatCellValue(cell);
+                    rowData.put(headers.get(j), val);
+                    if (val != null && !val.trim().isEmpty())
+                        hasData = true;
                 }
+
+                if (!hasData)
+                    break; // Dòng trống hoàn toàn -> hết bảng
+
+                // Nếu cột Số khung trống -> Có thể là dòng Tổng hoặc bắt đầu bảng khác -> Dừng
+                // lại
+                if (identifierIdx != -1) {
+                    Cell idCell = row.getCell(identifierIdx);
+                    String idVal = formatter.formatCellValue(idCell).trim();
+                    if (idVal.isEmpty())
+                        break;
+                }
+
                 result.add(rowData);
             }
         }
         return result;
-    }
-
-    private Object getCellValue(Cell cell) {
-        if (cell == null)
-            return null;
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell))
-                    return cell.getDateCellValue();
-                return cell.getNumericCellValue();
-            case BOOLEAN:
-                return cell.getBooleanCellValue();
-            case FORMULA:
-                return cell.getCellFormula();
-            default:
-                return null;
-        }
     }
 }
