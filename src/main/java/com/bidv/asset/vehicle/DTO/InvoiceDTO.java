@@ -17,7 +17,6 @@ public class InvoiceDTO {
     private Long id;
     private String invoiceNumber;
     private LocalDate invoiceDate;
-
     private String sellerName;
     private String sellerTaxCode;
     private String buyerName;

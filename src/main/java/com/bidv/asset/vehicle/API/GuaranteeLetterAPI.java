@@ -100,6 +100,13 @@ public class GuaranteeLetterAPI {
                 guaranteeLetterService.updateGuaranteeLetter(id, dto)
         );
     }
+    // api lấy lên danh sách thư bảo lãnh
+    @GetMapping("/findAll")
+    public  ResponseEntity<List<GuaranteeLetterDTO>> findAll(){
+        List<GuaranteeLetterDTO> result = guaranteeLetterService.findAll();
+
+        return ResponseEntity.ok(result);
+    }
     @GetMapping("/suggest")
     public ResponseEntity<List<GuaranteeLetterDTO>> suggest(
             @RequestParam String keyword,

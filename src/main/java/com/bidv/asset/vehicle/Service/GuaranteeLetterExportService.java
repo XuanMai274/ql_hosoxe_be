@@ -9,6 +9,6 @@ import java.io.IOException;
 public interface GuaranteeLetterExportService {
     public byte[] generateThuBaoLanh(GuaranteeLetterDTO dto,String template) throws IOException;
     public byte[] generateDeXuatBaoLanh(ExportDeXuatRequest exportDeXuatRequest,String template) throws IOException;
-    public byte[] generateXetDuyet(GuaranteeLetterDTO dto,String template) throws IOException;
+    public byte[] generateXetDuyet(ExportDeXuatRequest exportDeXuatRequest, String template)  throws IOException;
     public byte[] generateYKien(GuaranteeLetterDTO dto, String template)throws IOException;
 }

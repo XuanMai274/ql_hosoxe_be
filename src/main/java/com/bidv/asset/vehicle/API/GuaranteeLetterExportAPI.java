@@ -54,9 +54,9 @@ public class GuaranteeLetterExportAPI {
                 .body(word);
     }
     @PostMapping("/export/phan-xet-duyet")
-    public ResponseEntity<byte[]> exportPhanXetDuyet(@RequestBody GuaranteeLetterDTO dto,@RequestParam("template") String template) throws Exception {
+    public ResponseEntity<byte[]> exportPhanXetDuyet(  @RequestBody ExportDeXuatRequest request,@RequestParam("template") String template) throws Exception {
 
-        byte[] word = guaranteeLetterExportService.generateXetDuyet(dto,template);
+        byte[] word = guaranteeLetterExportService.generateXetDuyet(request,template);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

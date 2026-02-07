@@ -134,7 +134,6 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
         entity.setAuthorizedRepresentative(authorizedRep);
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
-
         GuaranteeLetterEntity savedGuarantee =
                 guaranteeLetterRepository.save(entity);
 
@@ -315,6 +314,16 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
         gl.setUpdatedAt(LocalDateTime.now());
 
         guaranteeLetterRepository.save(gl);
+    }
+
+    @Override
+    public List<GuaranteeLetterDTO> findAll() {
+        List<GuaranteeLetterEntity> guaranteeLetterEntities= (List<GuaranteeLetterEntity>) guaranteeLetterRepository.findAll();
+        List<GuaranteeLetterDTO> guaranteeLetterDTOS=new ArrayList<>();
+        for(GuaranteeLetterEntity guaranteeLetterEntity:  guaranteeLetterEntities){
+            guaranteeLetterDTOS.add(guaranteeLetterMapper.toDto(guaranteeLetterEntity));
+        }
+        return guaranteeLetterDTOS;
     }
 
 

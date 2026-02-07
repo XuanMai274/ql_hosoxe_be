@@ -46,9 +46,10 @@ public class DocumentAPI {
     }
     // 4 xóa file
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
         documentService.deleteDocumentManually(id);
-        return ResponseEntity.ok("Đã xóa file");
+        return ResponseEntity.ok().build();
     }
+
 
 }

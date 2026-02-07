@@ -1,9 +1,7 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
-import com.bidv.asset.vehicle.DTO.CreateInvoiceVehicleRequest;
-import com.bidv.asset.vehicle.DTO.InvoiceDTO;
-import com.bidv.asset.vehicle.DTO.OcrResponseDTO;
-import com.bidv.asset.vehicle.DTO.VehicleDTO;
+import com.bidv.asset.vehicle.DTO.*;
+import com.bidv.asset.vehicle.Mapper.InvoiceMapper;
 import com.bidv.asset.vehicle.Repository.DocumentRepository;
 import com.bidv.asset.vehicle.Repository.GuaranteeLetterRepository;
 import com.bidv.asset.vehicle.Repository.InvoiceRepository;
@@ -38,6 +36,8 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
     GuaranteeLetterRepository guaranteeLetterRepository;
     @Autowired
     GuaranteeLetterService guaranteeLetterService;
+    @Autowired
+    InvoiceMapper invoiceMapper;
     @Autowired
     OcrClient ocrClient;
     @Override
@@ -100,13 +100,21 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
             /* ================== 3. UPDATE GUARANTEE LETTER ================== */
             guaranteeLetterService.updateAfterVehicleImported(gl, vehicle);
             /* ================== 3. GẮN DOCUMENTS (NẾU CÓ) ================== */
-            if (v.getDocumentIds() != null) {
-                for (Long docId : v.getDocumentIds()) {
-                    DocumentEntity doc = documentRepository.findById(docId)
-                            .orElseThrow(() -> new RuntimeException("Document không tồn tại"));
+            /* ================== GẮN DOCUMENTS ================== */
+            if (v.getDocuments() != null && !v.getDocuments().isEmpty()) {
+
+                List<Long> docIds = v.getDocuments()
+                        .stream()
+                        .map(DocumentDTO::getId)
+                        .toList();
+
+                List<DocumentEntity> docs = (List<DocumentEntity>) documentRepository.findAllById(docIds);
+
+                for (DocumentEntity doc : docs) {
                     doc.setVehicle(vehicle);
-                    documentRepository.save(doc);
                 }
+
+                documentRepository.saveAll(docs);
             }
 
             /* ================== 4. MAP ENTITY → DTO ================== */
@@ -122,10 +130,22 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
 
         return createdVehicles;
     }
+
+    @Override
+    public List<InvoiceDTO> findAll() {
+        List<InvoiceDTO> invoiceDTOs= new ArrayList<>();
+        List<InvoiceEntity> invoiceEntities= (List<InvoiceEntity>) invoiceRepository.findAll();
+        for(InvoiceEntity invoice:invoiceEntities){
+            invoiceDTOs.add(invoiceMapper.toDto(invoice));
+        }
+        return invoiceDTOs;
+    }
+
     public List<VehicleDTO> extractAndValidate(MultipartFile file) {
 
         OcrResponseDTO ocr = ocrClient.extract(file);
 
         return mapAndValidateVehicles(ocr);
     }
+
 }

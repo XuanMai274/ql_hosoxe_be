@@ -32,5 +32,5 @@ public interface GuaranteeLetterService {
             String manufacturerCode
     );
     void updateAfterVehicleImported(GuaranteeLetterEntity gl, VehicleEntity vehicle);
-
+    List<GuaranteeLetterDTO> findAll();
 }

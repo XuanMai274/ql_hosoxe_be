@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.API;
 
+import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDetailDTO;
 import com.bidv.asset.vehicle.DTO.VehicleListDTO;
 import com.bidv.asset.vehicle.Mapper.VehicleMapper;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -83,10 +85,17 @@ public class VehicleAPI {
 //        );
 //    }
     @GetMapping("/{id}")
-    public VehicleDetailDTO getVehicleDetail(@PathVariable Long id) {
+    public VehicleDTO getVehicleDetail(@PathVariable Long id) {
         return vehicleService.getVehicleDetail(id);
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<VehicleDTO> updateVehicle(
+            @PathVariable Long id,
+            @RequestBody VehicleDTO dto
+    ) {
 
+        return ResponseEntity.ok(vehicleService.updateVehicle(id, dto));
+    }
 //    @GetMapping("/export")
 //    public ResponseEntity<byte[]> exportExcel() {
 //        byte[] file = exportService.exportVehicleExcel();

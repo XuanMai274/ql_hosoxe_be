@@ -1,15 +1,15 @@
 package com.bidv.asset.vehicle.API;
 
 import com.bidv.asset.vehicle.DTO.CreateInvoiceVehicleRequest;
+import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
+import com.bidv.asset.vehicle.DTO.InvoiceDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.Service.VehicleInvoiceService;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +33,12 @@ public class VehicleInvoiceAPI {
         res.put("vehicles", vehicles);
 
         return ResponseEntity.ok(res);
+    }
+    @GetMapping("/findAll")
+    public ResponseEntity<List<InvoiceDTO>> findAll(){
+        List<InvoiceDTO> result = vehicleInvoiceService.findAll();
+
+        return ResponseEntity.ok(result);
     }
 
 }

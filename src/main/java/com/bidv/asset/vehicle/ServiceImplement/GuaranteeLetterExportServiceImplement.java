@@ -20,6 +20,7 @@ import java.util.*;
 public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExportService {
     BigDecimal gHTDConSD= BigDecimal.valueOf(0);
     BigDecimal gHTDaSuDung=BigDecimal.valueOf(0);
+
     // =====================================================
     // ================= PUBLIC API ========================
     // =====================================================
@@ -47,12 +48,12 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     }
 
     @Override
-    public byte[] generateXetDuyet(GuaranteeLetterDTO dto, String template) throws IOException {
+    public byte[] generateXetDuyet(ExportDeXuatRequest exportDeXuatRequest,String template) throws IOException {
         if ("VINFAST_V1".equals(template)) {
-            return generateXetDuyetVinfast(dto);
+            return generateXetDuyetVinfast(exportDeXuatRequest.getGuaranteeLetter(),exportDeXuatRequest.getExportData());
         }
         if ("HYNDAI_V1".equals(template)) {
-            return generateXetDuyetHyundai(dto);
+            return generateXetDuyetHyundai(exportDeXuatRequest.getGuaranteeLetter(),exportDeXuatRequest.getExportData());
         }
         throw new IllegalArgumentException("Template không được hỗ trợ: " + template);
     }
@@ -144,9 +145,9 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         Map<String, String> data = buildCommonData(dto);
 
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
-        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
-        BigDecimal guaranteeFeeSum =
-                calculateGuaranteeFee(expectedAmount).add(BigDecimal.valueOf(330000));
+//        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
+//        BigDecimal guaranteeFeeSum =
+//                calculateGuaranteeFee(expectedAmount).add(BigDecimal.valueOf(330000));
 
         data.put("{{DOCUMENT_TITLE}}", "ĐỀ XUẤT CẤP BẢO LÃNH");
         data.put("{{REQUEST_DATE}}", formatDate(LocalDate.now()));
@@ -177,9 +178,9 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         data.put("{{EXPECTED_GUARANTEE_AMOUNT}}", formatMoney(expectedAmount));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
                 VietnameseNumberUtil.toVietnamese(expectedAmount));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI}}",
-                formatMoney(guaranteeFee));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG}}", formatMoney(guaranteeFeeSum));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI}}",
+//                formatMoney(guaranteeFee));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG}}", formatMoney(guaranteeFeeSum));
         replaceAllPlaceholders(doc, data);
         return writeDoc(doc);
     }
@@ -188,21 +189,42 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     // ================= XÉT DUYỆT =========================
     // =====================================================
 
-    private byte[] generateXetDuyetVinfast(GuaranteeLetterDTO dto) throws IOException {
+    private byte[] generateXetDuyetVinfast(GuaranteeLetterDTO dto,XuatDeXuatBaoLanh xuatDeXuatBaoLanhBaoLanh) throws IOException {
         XWPFDocument doc = loadTemplate("/templates/Vinfast/phan-xet-duyet-vinfast.docx");
 
         Map<String, String> data = buildCommonData(dto);
 
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
-        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
+//        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
+        // ===== GHTD =====
+        data.put("{{GHTD}}",
+                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+
+        // ===== GHTD đã sử dụng =====
+        data.put("{{GHTDaSuDung}}",
+                formatMoney(dto.getTotalGuaranteeAmount()));
+
+        // ===== Chi tiết =====
+        data.put("{{DuNoVay}}",
+                formatMoney(dto.getUsedAmount()));
+
+        data.put("{{SoDuCap}}",
+                formatMoney(xuatDeXuatBaoLanhBaoLanh.getGuaranteeBalance()));
+
+        data.put("{{SoDuVay}}",
+                formatMoney(xuatDeXuatBaoLanhBaoLanh.getShortTermLoanBalance()));
+
+        // ===== GHTD còn lại =====
+        data.put("{{GHTDConSD}}",
+                formatMoney(xuatDeXuatBaoLanhBaoLanh.getRemainingAmount()));
 
         data.put("{{EXPECTED_GUARANTEE_AMOUNT}}", formatMoney(expectedAmount).replace(" đồng", ""));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
                 VietnameseNumberUtil.toVietnamese(expectedAmount));
 
-        data.put("{{TONGPHIBAOLANH}}", formatMoney(guaranteeFee).replace(" đồng", ""));
-        data.put("{{TONGPHIBAOLANHTEXT}}",
-                VietnameseNumberUtil.toVietnamese(guaranteeFee));
+//        data.put("{{TONGPHIBAOLANH}}", formatMoney(guaranteeFee).replace(" đồng", ""));
+//        data.put("{{TONGPHIBAOLANHTEXT}}",
+//                VietnameseNumberUtil.toVietnamese(guaranteeFee));
 
         data.put("{{GUARANTEE_DATE_TITLE}}", toVietnameseDate(LocalDate.now()));
 
@@ -210,13 +232,34 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         return writeDoc(doc);
     }
 
-    private byte[] generateXetDuyetHyundai(GuaranteeLetterDTO dto) throws IOException {
+    private byte[] generateXetDuyetHyundai(GuaranteeLetterDTO dto,XuatDeXuatBaoLanh xuatDeXuatBaoLanhBaoLanh) throws IOException {
         XWPFDocument doc = loadTemplate("/templates/Hyndai/phan-xet-duyet-hyndai.docx");
 
         Map<String, String> data = buildCommonData(dto);
 
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
         BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
+        // ===== GHTD =====
+        data.put("{{GHTD}}",
+                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+
+        // ===== GHTD đã sử dụng =====
+        data.put("{{GHTDaSuDung}}",
+                formatMoney(dto.getTotalGuaranteeAmount()));
+
+        // ===== Chi tiết =====
+        data.put("{{DuNoVay}}",
+                formatMoney(dto.getUsedAmount()));
+
+        data.put("{{SoDuCap}}",
+                formatMoney(xuatDeXuatBaoLanhBaoLanh.getGuaranteeBalance()));
+
+        data.put("{{SoDuVay}}",
+                formatMoney(xuatDeXuatBaoLanhBaoLanh.getShortTermLoanBalance()));
+
+        // ===== GHTD còn lại =====
+        data.put("{{GHTDConSD}}",
+                formatMoney(xuatDeXuatBaoLanhBaoLanh.getRemainingAmount()));
 
         data.put("{{EXPECTED_GUARANTEE_AMOUNT}}", formatMoney(expectedAmount).replace(" đồng", ""));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
@@ -307,56 +350,86 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     // =====================================================
     // ================= COMMON DATA =======================
     // =====================================================
-
     private Map<String, String> buildCommonData(GuaranteeLetterDTO dto) {
 
         Map<String, String> data = new HashMap<>();
 
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
-        BigDecimal guaranteeFeeSum =
-                calculateGuaranteeFee(expectedAmount).add(BigDecimal.valueOf(330000));
+        BigDecimal minFee = BigDecimal.valueOf(800000);
+
+        // ===== Fee thường =====
+        BigDecimal calculatedFee = calculateGuaranteeFee(expectedAmount);
         BigDecimal guaranteeFee =
-                calculateGuaranteeFee(expectedAmount);
-        BigDecimal guaranteeFeeSum_hyndai =
-                calculateGuaranteeFee_hyndai(expectedAmount).add(BigDecimal.valueOf(330000));
-        BigDecimal guaranteeFeeHyndai =
-                calculateGuaranteeFee_hyndai(expectedAmount);
+                calculatedFee.compareTo(minFee) < 0 ? minFee : calculatedFee;
+
+        String guaranteeFeeNote = "";
+        if (calculatedFee.compareTo(minFee) < 0) {
+            guaranteeFeeNote =
+                    " + Phí phát hành: thu phí phát hành thư bảo lãnh mới theo mức tối thiểu hiện nay là 800.000 đồng / lần";
+        }
+
+        BigDecimal guaranteeFeeSum =
+                guaranteeFee.add(BigDecimal.valueOf(330000));
+
+
+        // ===== Fee Hyundai =====
+        BigDecimal calculatedFeeHyundai = calculateGuaranteeFee_hyndai(expectedAmount);
+        BigDecimal guaranteeFeeHyundai =
+                calculatedFeeHyundai.compareTo(minFee) < 0 ? minFee : calculatedFeeHyundai;
+
+        String guaranteeFeeNoteHyundai = "";
+        if (calculatedFeeHyundai.compareTo(minFee) < 0) {
+            guaranteeFeeNoteHyundai =
+                    " + Phí phát hành: thu phí phát hành thư bảo lãnh mới theo mức tối thiểu hiện nay là 800.000 đồng / lần";
+        }
+
+        BigDecimal guaranteeFeeSumHyundai =
+                guaranteeFeeHyundai.add(BigDecimal.valueOf(330000));
+
+
+        // ===== Map dữ liệu =====
+        data.put("{{GHTD}}", formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+        data.put("{{GHTDConSD}}", formatMoney(gHTDConSD));
+        data.put("{{GHTDaSuDung}}", formatMoney(gHTDaSuDung));
+
         data.put("{{GUARANTEE_NUMBER}}", safe(dto.getGuaranteeContractNumber()));
         data.put("{{GUARANTEE_DATE}}", formatDate(LocalDate.now()));
-        data.put("{{GUARANTEE_DATE_TITLE}}",
-                toVietnameseDate(dto.getGuaranteeContractDate()));
-//        data.put("{{GHTDaSuDung}}",
-//                formatMoney(dto.getTotalGuaranteeAmount()));
-        data.put("{{GHTDConSD}}", formatMoney(gHTDConSD));
-        // ===== GHTD đã s dụng =====
-       data.put("{{GHTDaSuDung}}",formatMoney(gHTDaSuDung));
+        data.put("{{GUARANTEE_DATE_TITLE}}", toVietnameseDate(dto.getGuaranteeContractDate()));
+
         data.put("{{SALE_CONTRACT}}", safe(dto.getSaleContract()));
-        data.put("{{SALE_CONTRACT_AMOUNT}}",
-                formatMoney(dto.getSaleContractAmount()));
+        data.put("{{SALE_CONTRACT_AMOUNT}}", formatMoney(dto.getSaleContractAmount()));
         data.put("{{GIAHDMB}}", formatMoney(dto.getSaleContractAmount()));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT}}",
-                formatMoney(expectedAmount));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
-                VietnameseNumberUtil.toVietnamese(expectedAmount));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG}}", formatMoney(guaranteeFeeSum));
+
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT}}", formatMoney(expectedAmount));
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}", VietnameseNumberUtil.toVietnamese(expectedAmount));
+
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI}}", formatMoney(guaranteeFee));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_TEXT}}",VietnameseNumberUtil.toVietnamese(guaranteeFeeSum));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_HYNDAI}}", formatMoney(guaranteeFeeSum_hyndai));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_HYNDAI}}", formatMoney(guaranteeFeeHyndai));
-        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_TEXT_HYNDAI}}",VietnameseNumberUtil.toVietnamese(guaranteeFeeSum_hyndai));
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG}}", formatMoney(guaranteeFeeSum));
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_TEXT}}",
+                VietnameseNumberUtil.toVietnamese(guaranteeFeeSum));
+
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_HYNDAI}}", formatMoney(guaranteeFeeHyundai));
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_HYNDAI}}", formatMoney(guaranteeFeeSumHyundai));
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_TEXT_HYNDAI}}",
+                VietnameseNumberUtil.toVietnamese(guaranteeFeeSumHyundai));
+
+        // ===== Note =====
+        data.put("{{guaranteeFeeNote}}", safe(guaranteeFeeNote));
+        data.put("{{guaranteeFeeNoteHyundai}}", safe(guaranteeFeeNoteHyundai));
+
+
+        // ===== Đại diện =====
         if (dto.getBranchAuthorizedRepresentativeDTO() != null) {
-            data.put("{{REPRESENTATIVE_NAME}}",
-                    safe(dto.getBranchAuthorizedRepresentativeDTO().getRepresentativeName()));
-            data.put("{{REPRESENTATIVE_TITLE}}",
-                    safe(dto.getBranchAuthorizedRepresentativeDTO().getRepresentativeTitle()));
-            data.put("{{AUTH_DOC_NO}}",
-                    safe(dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationDocNo()));
+            var rep = dto.getBranchAuthorizedRepresentativeDTO();
+
+            data.put("{{REPRESENTATIVE_NAME}}", safe(rep.getRepresentativeName()));
+            data.put("{{REPRESENTATIVE_TITLE}}", safe(rep.getRepresentativeTitle()));
+            data.put("{{AUTH_DOC_NO}}", safe(rep.getAuthorizationDocNo()));
             data.put("{{AUTH_DOC_DATE}}",
-                    dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationDocDate() != null
-                            ? formatDate(dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationDocDate())
+                    rep.getAuthorizationDocDate() != null
+                            ? formatDate(rep.getAuthorizationDocDate())
                             : "");
-            data.put("{{AUTH_ISSUER}}",
-                    safe(dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationIssuer()));
+            data.put("{{AUTH_ISSUER}}", safe(rep.getAuthorizationIssuer()));
         }
 
         data.put("{{EXPECTED_VEHICLE_COUNT}}",
@@ -366,6 +439,97 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
 
         return data;
     }
+//    private Map<String, String> buildCommonData(GuaranteeLetterDTO dto) {
+//
+//        Map<String, String> data = new HashMap<>();
+//        data.put("{{GHTD}}",
+//                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+//        data.put("{{GHTDConSD}}",
+//                formatMoney(gHTDConSD));
+//        // ===== GHTD đã sử dụng =====
+//        data.put("{{GHTDaSuDung}}",
+//                formatMoney(gHTDaSuDung));
+//        BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
+//        // ===== Tính phí bảo lãnh =====
+//        BigDecimal calculatedFee = calculateGuaranteeFee(expectedAmount);
+//
+//        BigDecimal minFee = BigDecimal.valueOf(800000);
+//
+//        // Biến ghi chú khi áp dụng mức tối thiểu
+//        String guaranteeFeeNote = " ";
+//
+//        // Áp dụng mức tối thiểu
+//        BigDecimal guaranteeFee =
+//                calculatedFee.compareTo(minFee) < 0 ? minFee : calculatedFee;
+//
+//        if (calculatedFee.compareTo(minFee) < 0) {
+//            guaranteeFeeNote =
+//                    " + Phí phát hành: thu phí phát hành thư bảo lãnh mới theo mức tối thiểu hiện nay là 800.000 đồng / lần";
+//        }
+//        BigDecimal guaranteeFeeSum =
+//                calculateGuaranteeFee(expectedAmount).add(BigDecimal.valueOf(330000));
+//        BigDecimal calculatedFeeHyundai =
+//                calculateGuaranteeFee_hyndai(expectedAmount);
+//
+//        String guaranteeFeeNoteHyundai = "";
+//
+//        BigDecimal guaranteeFeeHyndai =
+//                calculatedFeeHyundai.compareTo(minFee) < 0 ? minFee : calculatedFeeHyundai;
+//
+//        if (calculatedFeeHyundai.compareTo(minFee) < 0) {
+//            guaranteeFeeNoteHyundai =
+//                    " + Phí phát hành: thu phí phát hành thư bảo lãnh mới theo mức tối thiểu hiện nay là 800.000 đồng / lần";
+//        }
+//        data.put("guaranteeFeeNote",
+//                guaranteeFeeNote);
+//        data.put("guaranteeFeeNoteHyundai",safe(guaranteeFeeNote));
+//        BigDecimal guaranteeFeeSum_hyndai =
+//                calculateGuaranteeFee_hyndai(expectedAmount).add(BigDecimal.valueOf(330000));
+//        data.put("{{GUARANTEE_NUMBER}}", safe(dto.getGuaranteeContractNumber()));
+//        data.put("{{GUARANTEE_DATE}}", formatDate(LocalDate.now()));
+//        data.put("{{GUARANTEE_DATE_TITLE}}",
+//                toVietnameseDate(dto.getGuaranteeContractDate()));
+////        data.put("{{GHTDaSuDung}}",
+////                formatMoney(dto.getTotalGuaranteeAmount()));
+//        data.put("{{GHTDConSD}}", formatMoney(gHTDConSD));
+//        // ===== GHTD đã s dụng =====
+//       data.put("{{GHTDaSuDung}}",formatMoney(gHTDaSuDung));
+//        data.put("{{SALE_CONTRACT}}", safe(dto.getSaleContract()));
+//        data.put("{{SALE_CONTRACT_AMOUNT}}",
+//                formatMoney(dto.getSaleContractAmount()));
+//        data.put("{{GIAHDMB}}", formatMoney(dto.getSaleContractAmount()));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT}}",
+//                formatMoney(expectedAmount));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
+//                VietnameseNumberUtil.toVietnamese(expectedAmount));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG}}", formatMoney(guaranteeFeeSum));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI}}", formatMoney(guaranteeFee));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_TEXT}}",VietnameseNumberUtil.toVietnamese(guaranteeFeeSum));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_HYNDAI}}", formatMoney(guaranteeFeeSum_hyndai));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_HYNDAI}}", formatMoney(guaranteeFeeHyndai));
+//        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG_TEXT_HYNDAI}}",VietnameseNumberUtil.toVietnamese(guaranteeFeeSum_hyndai));
+//        if (dto.getBranchAuthorizedRepresentativeDTO() != null) {
+//            data.put("{{REPRESENTATIVE_NAME}}",
+//                    safe(dto.getBranchAuthorizedRepresentativeDTO().getRepresentativeName()));
+//            data.put("{{REPRESENTATIVE_TITLE}}",
+//                    safe(dto.getBranchAuthorizedRepresentativeDTO().getRepresentativeTitle()));
+//            data.put("{{AUTH_DOC_NO}}",
+//                    safe(dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationDocNo()));
+//            data.put("{{AUTH_DOC_DATE}}",
+//                    dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationDocDate() != null
+//                            ? formatDate(dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationDocDate())
+//                            : "");
+//            data.put("{{AUTH_ISSUER}}",
+//                    safe(dto.getBranchAuthorizedRepresentativeDTO().getAuthorizationIssuer()));
+//        }
+//
+//        data.put("{{EXPECTED_VEHICLE_COUNT}}",
+//                dto.getExpectedVehicleCount() != null
+//                        ? dto.getExpectedVehicleCount().toString()
+//                        : "");
+//
+//        return data;
+//    }
 
     // =====================================================
     // ================= TEMPLATE UTIL =====================

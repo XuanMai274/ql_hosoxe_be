@@ -42,7 +42,7 @@ public class VehicleDTO {
 
     private InvoiceDTO invoiceId;
     private List<Long> dossierIds;
-    private List<Long> documentIds;
+    private List<DocumentDTO> documents;
     private GuaranteeLetterDTO guaranteeLetterDTO;
 
     /* ================== OCR / VALIDATION FIELDS (MỚI) ================== */
