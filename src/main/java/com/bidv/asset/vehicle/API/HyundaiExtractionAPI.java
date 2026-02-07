@@ -40,7 +40,6 @@ public class HyundaiExtractionAPI {
 
             // Mapping Vietnamese column names to English keys
             Map<String, String> keyMapping = new java.util.HashMap<>();
-            keyMapping.put("stt", "index");
             keyMapping.put("tên xe", "vehicleDescription");
             keyMapping.put("số khung", "chassisNumber");
             keyMapping.put("vin", "chassisNumber");
@@ -62,11 +61,19 @@ public class HyundaiExtractionAPI {
                 for (Map.Entry<String, Object> entry : row.entrySet()) {
                     String originalKey = entry.getKey();
                     String lowerKey = originalKey.toLowerCase();
+                    // Chuẩn hóa khoảng trắng để so khớp chính xác: thay 2+ dấu cách bằng 1 dấu cách
+                    String normalizedKey = lowerKey.replaceAll("\\s+", " ").trim();
+
+                    // Loại bỏ cột STT (index)
+                    if (normalizedKey.equals("stt") || normalizedKey.contains("stt")) {
+                        continue;
+                    }
+
                     String englishKey = originalKey; // Default to original if no mapping found
 
                     // Find matching English key from mapping
                     for (Map.Entry<String, String> mapEntry : keyMapping.entrySet()) {
-                        if (lowerKey.contains(mapEntry.getKey())) {
+                        if (normalizedKey.contains(mapEntry.getKey())) {
                             englishKey = mapEntry.getValue();
                             break;
                         }
