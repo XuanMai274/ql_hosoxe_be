@@ -45,6 +45,22 @@ public class PdfServiceImplement implements PdfService {
             }
             response.setInvoiceNumber(invoiceNo);
 
+            // Extract Total Amount (e.g., Cộng tiền hàng: 719.040.000)
+            String totalAmount = findMatch(text, "Cộng tiền hàng\\s*[:\\s]*([\\d\\.,]+)", 1);
+            if (totalAmount == null) {
+                totalAmount = findMatch(text, "Tổng tiền thanh toán\\s*[:\\s]*([\\d\\.,]+)", 1);
+            }
+            response.setTotalAmount(totalAmount);
+
+            // Extract Date (e.g., Ngày (Date) 05 tháng(month) 12 năm(year) 2025)
+            String day = findMatch(text, "Ngày\\s*(?:\\(Date\\))?\\s*(\\d{1,2})", 1);
+            String month = findMatch(text, "tháng\\s*(?:\\(month\\))?\\s*(\\d{1,2})", 1);
+            String year = findMatch(text, "năm\\s*(?:\\(year\\))?\\s*(\\d{4})", 1);
+
+            response.setDay(day);
+            response.setMonth(month);
+            response.setYear(year);
+
             // Vehicle List
             List<VehicleInfo> vehicleList = new ArrayList<>();
             Pattern vinPattern = Pattern.compile("(?:SK|Số khung)\\s*[:\\s]*([A-Z0-9]+)", Pattern.CASE_INSENSITIVE);
@@ -61,6 +77,11 @@ public class PdfServiceImplement implements PdfService {
                 v.setEngineNumber(findMatch(suffix, "(?:SM|Số máy)\\s*[:\\s]*([A-Z0-9]+)", 1));
                 v.setColor(findMatch(prefix + suffix, "Màu\\s*[:\\s]*([^\\s;,\n]+)", 1));
                 v.setNumberOfSeats(findMatch(prefix + suffix, "(\\d+)\\s*chỗ", 1));
+
+                // Extract Unit Price (đơn giá)
+                // Often looks like: Cái 1 660.481.818 660.481.818
+                String pricePattern = "(?:Cái|Chiếc|Bộ|Lô|xe)\\s+\\d+\\s+([\\d\\.,]{7,})";
+                v.setUnitPrice(findMatch(suffix, pricePattern, 1));
 
                 // Description logic
                 String desc = null;

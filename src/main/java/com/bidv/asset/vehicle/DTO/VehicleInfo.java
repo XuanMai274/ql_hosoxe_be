@@ -14,4 +14,5 @@ public class VehicleInfo {
     private String color;
     private String numberOfSeats;
     private String quantity = "1";
+    private String unitPrice;
 }
