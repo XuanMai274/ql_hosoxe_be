@@ -85,7 +85,7 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
             vehicle.setDocsDeliveryDate(v.getDocsDeliveryDate());
             vehicle.setDescription(v.getDescription());
             vehicle.setCreatedAt(LocalDateTime.now());
-
+            vehicle.setImportDossier("(1) Phiếu kiểm tra chất lượng xuất xưởng (01 bản gốc + 02 bản sao y bản chính),SK: "+v.getChassisNumber()+",Giấy chứng nhận an toàn kỹ thuật và bảo vệ môi trường ô tô sản xuất, lắp ráp (Sao y bản chính), (3) Hóa đơn VAT số: "+v.getInvoiceId().getInvoiceNumber()+" ngày: "+v.getInvoiceId().getInvoiceDate() );
             /* GẮN HÓA ĐƠN */
             vehicle.setInvoice(invoice);
 

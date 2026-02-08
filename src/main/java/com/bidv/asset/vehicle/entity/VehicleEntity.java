@@ -40,13 +40,14 @@ public class VehicleEntity {
     private LocalDate docsDeliveryDate;
     private String description;
     private LocalDateTime createdAt;
-
+    // danh sách bộ hồ sơ nhập kho
+    @Column(name = "import_dossier")
+    private String importDossier;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "guarantee_letter_id", nullable = false)
     private GuaranteeLetterEntity guaranteeLetter;
     @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY)
     private List<VehicleDossierEntity> dossiers;
-
     @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY)
     private List<DocumentEntity> documents;
     @ManyToOne(fetch = FetchType.LAZY)

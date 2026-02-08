@@ -16,6 +16,15 @@ import java.util.Optional;
 
 @Repository
 public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
+    // tìm danh sách nhiều xe cùng 1 lúc
+    @Query("""
+        SELECT v FROM VehicleEntity v
+        LEFT JOIN FETCH v.guaranteeLetter g
+        LEFT JOIN FETCH g.creditContract
+        LEFT JOIN FETCH g.manufacturer
+        WHERE v.id IN :ids
+        """)
+    List<VehicleEntity> findAllWithGuaranteeByIds(List<Long> ids);
     Optional<VehicleEntity> findDetailById(Long id);
     // tìm xe theo số khug
     Optional<VehicleEntity> findByChassisNumber(String chassisNumber);

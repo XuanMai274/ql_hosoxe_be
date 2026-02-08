@@ -39,7 +39,7 @@ public class VehicleDTO {
     private LocalDate docsDeliveryDate;
     private String description;
     private LocalDateTime createdAt;
-
+    private String importDossier;
     private InvoiceDTO invoiceId;
     private List<Long> dossierIds;
     private List<DocumentDTO> documents;

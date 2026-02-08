@@ -30,7 +30,7 @@ public class VehicleExcelDTO {
     private String color;
     private Integer seats;
     private BigDecimal price;
-
+    private String importDossier;
     /* ====== NGÀY THÁNG ====== */
     private LocalDate importDate;
     private LocalDate exportDate;

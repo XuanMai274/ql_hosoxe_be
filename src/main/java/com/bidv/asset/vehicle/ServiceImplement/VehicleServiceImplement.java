@@ -1,8 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
-import com.bidv.asset.vehicle.DTO.InvoiceResponse;
-import com.bidv.asset.vehicle.DTO.VehicleDTO;
-import com.bidv.asset.vehicle.DTO.VehicleListDTO;
+import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.Mapper.GuaranteeLetterMapper;
 import com.bidv.asset.vehicle.Mapper.InvoiceMapper;
 import com.bidv.asset.vehicle.Mapper.VehicleMapper;
@@ -168,6 +166,21 @@ public class VehicleServiceImplement implements VehicleService {
 
         return "Đã quá hạn nhập kho " + Math.abs(diff) + " ngày";
     }
+    @Override
+    public List<VehicleDTO> findByIds(List<Long> ids) {
+
+        if (ids == null || ids.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
+        }
+
+        List<VehicleEntity> vehicles =
+                vehicleRepository.findAllWithGuaranteeByIds(ids);
+
+        return vehicles.stream()
+                .map(vehicleMapper::toDto)
+                .toList();
+    }
+
     /* ===== Mapper ===== */
     private VehicleDTO mapToDTO(VehicleEntity entity) {
         VehicleDTO dto = new VehicleDTO();
@@ -192,7 +205,15 @@ public class VehicleServiceImplement implements VehicleService {
         dto.setDocsDeliveryDate(entity.getDocsDeliveryDate());
         dto.setDescription(entity.getDescription());
         dto.setCreatedAt(entity.getCreatedAt());
-
+        dto.setImportDossier(entity.getImportDossier());
+        GuaranteeLetterDTO guaranteeLetterDTO=new GuaranteeLetterDTO();
+        ManufacturerDTO manufacturerDTO=new ManufacturerDTO();
+        manufacturerDTO.setName(entity.getGuaranteeLetter().getManufacturer().getName());
+        CreditContractDTO creditContractDTO=new CreditContractDTO();
+        creditContractDTO.setContractNumber(entity.getGuaranteeLetter().getCreditContract().getContractNumber());
+        creditContractDTO.setContractDate(entity.getGuaranteeLetter().getCreditContract().getContractDate());
+        guaranteeLetterDTO.setManufacturerDTO(manufacturerDTO);
+        guaranteeLetterDTO.setCreditContractDTO(creditContractDTO);
         return dto;
     }
 }

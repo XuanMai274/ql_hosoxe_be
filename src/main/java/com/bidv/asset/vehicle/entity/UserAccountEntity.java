@@ -27,7 +27,8 @@ public class UserAccountEntity {
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private RoleEntity role;
-
     @OneToOne(mappedBy = "userAccount")
     private EmployeeEntity employee;
+    @OneToOne(mappedBy = "userAccount")
+    private CustomerEntity customer;
 }

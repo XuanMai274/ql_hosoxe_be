@@ -35,12 +35,12 @@ public class VehicleMapper {
         dto.setColor(entity.getColor());
         dto.setSeats(entity.getSeats());
         dto.setPrice(entity.getPrice());
-
+        dto.setImportDossier(entity.getImportDossier());
         dto.setOriginalCopy(entity.getOriginalCopy());
         dto.setImportDocs(entity.getImportDocs());
         dto.setRegistrationOrderNumber(entity.getRegistrationOrderNumber());
         dto.setDocsDeliveryDate(entity.getDocsDeliveryDate());
-
+        dto.setImportDossier(entity.getImportDossier());
         dto.setDescription(entity.getDescription());
         dto.setCreatedAt(entity.getCreatedAt());
 
@@ -94,6 +94,10 @@ public class VehicleMapper {
             manufacturerDTO.setId(g.getManufacturer().getId());
             manufacturerDTO.setName(g.getManufacturer().getName());
             guaranteeDTO.setManufacturerDTO(manufacturerDTO);
+            CreditContractDTO creditContractDTO=new CreditContractDTO();
+            creditContractDTO.setContractNumber(entity.getGuaranteeLetter().getCreditContract().getContractNumber());
+            creditContractDTO.setContractDate(entity.getGuaranteeLetter().getCreditContract().getContractDate());
+            guaranteeDTO.setCreditContractDTO(creditContractDTO);
             dto.setGuaranteeLetterDTO(guaranteeDTO);
         }
 
@@ -122,7 +126,6 @@ public class VehicleMapper {
         entity.setColor(dto.getColor());
         entity.setSeats(dto.getSeats());
         entity.setPrice(dto.getPrice());
-
         entity.setOriginalCopy(dto.getOriginalCopy());
         entity.setImportDocs(dto.getImportDocs());
         entity.setRegistrationOrderNumber(dto.getRegistrationOrderNumber());
