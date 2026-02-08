@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.bidv.asset.vehicle.Mapper.VehicleOcrMapper.mapAndValidateVehicles;
 
@@ -40,6 +41,7 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
     InvoiceMapper invoiceMapper;
     @Autowired
     OcrClient ocrClient;
+
     @Override
     @Transactional
     public List<VehicleDTO> createInvoiceWithVehicles(CreateInvoiceVehicleRequest request) {
@@ -61,11 +63,10 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
         /* ================== 2. TẠO XE ================== */
         for (VehicleDTO v : request.getVehicles()) {
 
-            if (vehicleRepository.existsByChassisNumber(v.getChassisNumber())) {
-                throw new RuntimeException("Trùng số khung: " + v.getChassisNumber());
-            }
+            Optional<VehicleEntity> existing = vehicleRepository.findByChassisNumber(v.getChassisNumber());
+            VehicleEntity vehicle = existing.orElse(new VehicleEntity());
+            boolean isNew = existing.isEmpty();
 
-            VehicleEntity vehicle = new VehicleEntity();
             vehicle.setStt(v.getStt());
             vehicle.setVehicleName(v.getVehicleName());
             vehicle.setStatus(v.getStatus());
@@ -84,8 +85,20 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
             vehicle.setRegistrationOrderNumber(v.getRegistrationOrderNumber());
             vehicle.setDocsDeliveryDate(v.getDocsDeliveryDate());
             vehicle.setDescription(v.getDescription());
-            vehicle.setCreatedAt(LocalDateTime.now());
-            vehicle.setImportDossier("(1) Phiếu kiểm tra chất lượng xuất xưởng (01 bản gốc + 02 bản sao y bản chính),SK: "+v.getChassisNumber()+",Giấy chứng nhận an toàn kỹ thuật và bảo vệ môi trường ô tô sản xuất, lắp ráp (Sao y bản chính), (3) Hóa đơn VAT số: "+v.getInvoiceId().getInvoiceNumber()+" ngày: "+v.getInvoiceId().getInvoiceDate() );
+
+            if (isNew) {
+                vehicle.setCreatedAt(LocalDateTime.now());
+            }
+
+            String invNum = invoice.getInvoiceNumber() != null ? invoice.getInvoiceNumber() : "";
+            String invDate = invoice.getInvoiceDate() != null ? invoice.getInvoiceDate().toString() : "";
+
+            vehicle.setImportDossier(
+                    "(1) Phiếu kiểm tra chất lượng xuất xưởng (01 bản gốc + 02 bản sao y bản chính),SK: "
+                            + v.getChassisNumber() +
+                            ", Giấy chứng nhận an toàn kỹ thuật và bảo vệ môi trường ô tô sản xuất, lắp ráp (Sao y bản chính), (3) Hóa đơn VAT số: "
+                            +
+                            invNum + " ngày: " + invDate);
             /* GẮN HÓA ĐƠN */
             vehicle.setInvoice(invoice);
 
@@ -98,7 +111,9 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
 
             vehicle = vehicleRepository.save(vehicle);
             /* ================== 3. UPDATE GUARANTEE LETTER ================== */
-            guaranteeLetterService.updateAfterVehicleImported(gl, vehicle);
+            if (isNew) {
+                guaranteeLetterService.updateAfterVehicleImported(gl, vehicle);
+            }
             /* ================== 3. GẮN DOCUMENTS (NẾU CÓ) ================== */
             /* ================== GẮN DOCUMENTS ================== */
             if (v.getDocuments() != null && !v.getDocuments().isEmpty()) {
@@ -133,9 +148,9 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
 
     @Override
     public List<InvoiceDTO> findAll() {
-        List<InvoiceDTO> invoiceDTOs= new ArrayList<>();
-        List<InvoiceEntity> invoiceEntities= (List<InvoiceEntity>) invoiceRepository.findAll();
-        for(InvoiceEntity invoice:invoiceEntities){
+        List<InvoiceDTO> invoiceDTOs = new ArrayList<>();
+        List<InvoiceEntity> invoiceEntities = (List<InvoiceEntity>) invoiceRepository.findAll();
+        for (InvoiceEntity invoice : invoiceEntities) {
             invoiceDTOs.add(invoiceMapper.toDto(invoice));
         }
         return invoiceDTOs;
