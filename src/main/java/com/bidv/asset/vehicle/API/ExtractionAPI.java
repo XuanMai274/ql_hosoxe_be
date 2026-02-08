@@ -54,7 +54,7 @@ public class ExtractionAPI {
         }
 
         List<String> validVins = new ArrayList<>();
-        String soLDBL = "";
+        Map<String, String> vinToGuaranteeMap = new java.util.HashMap<>(); // VIN -> Mã bảo lãnh
 
         // Process Excel file for cross-validation if provided
         if (excelFile != null && !excelFile.isEmpty()) {
@@ -62,6 +62,9 @@ public class ExtractionAPI {
                 List<Map<String, Object>> excelData = excelService.extractExcel(excelFile);
                 if (!excelData.isEmpty()) {
                     for (Map<String, Object> row : excelData) {
+                        String currentVin = "";
+                        String currentGuarantee = "";
+
                         for (Map.Entry<String, Object> entry : row.entrySet()) {
                             String key = entry.getKey().trim().toLowerCase();
                             String value = String.valueOf(entry.getValue()).trim();
@@ -70,15 +73,22 @@ public class ExtractionAPI {
                                 if (entry.getValue() != null && !value.isEmpty()) {
                                     // Clean VIN: remove EVERYTHING except letters and numbers
                                     String cleanV = value.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
-                                    if (!cleanV.isEmpty())
+                                    if (!cleanV.isEmpty()) {
                                         validVins.add(cleanV);
+                                        currentVin = cleanV;
+                                    }
                                 }
                             }
-                            if (key.contains("ld/bl") || key.contains("lệnh điều")) {
-                                if (soLDBL.isEmpty() && entry.getValue() != null) {
-                                    soLDBL = value;
+                            if (key.contains("bảo lãnh") || key.contains("ld/bl") || key.contains("lệnh điều")) {
+                                if (entry.getValue() != null && !value.isEmpty()) {
+                                    currentGuarantee = value;
                                 }
                             }
+                        }
+
+                        // Map VIN to Guarantee Number
+                        if (!currentVin.isEmpty() && !currentGuarantee.isEmpty()) {
+                            vinToGuaranteeMap.put(currentVin, currentGuarantee);
                         }
                     }
                 }
@@ -151,11 +161,29 @@ public class ExtractionAPI {
             return ResponseEntity.badRequest().body(response);
         }
 
+        // Group by guarantee number
+        Map<String, List<InvoiceData>> groupedByGuarantee = new java.util.LinkedHashMap<>();
+
+        for (InvoiceData invoice : invoiceDataList) {
+            String guaranteeNumber = "Other";
+
+            // Find guarantee number from first vehicle's VIN
+            if (invoice.getVehicleList() != null && !invoice.getVehicleList().isEmpty()) {
+                String firstVin = invoice.getVehicleList().get(0).getChassisNumber();
+                if (firstVin != null) {
+                    String cleanVin = firstVin.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+                    guaranteeNumber = vinToGuaranteeMap.getOrDefault(cleanVin, "Other");
+                }
+            }
+
+            groupedByGuarantee.computeIfAbsent(guaranteeNumber, k -> new ArrayList<>()).add(invoice);
+        }
+
         response.setSuccess(true);
-        response.setData(invoiceDataList);
-        String successMsg = "Thành công" + (soLDBL.isEmpty() ? "" : " cho Số LD/BL: " + soLDBL);
+        response.setData(groupedByGuarantee);
+        String successMsg = "Thành công. Đã gom nhóm theo " + groupedByGuarantee.size() + " mã bảo lãnh.";
         response.setMessage(
-                errorMessages.length() > 0 ? successMsg + ". Lưu ý: " + errorMessages.toString() : successMsg);
+                errorMessages.length() > 0 ? successMsg + " Lưu ý: " + errorMessages.toString() : successMsg);
         return ResponseEntity.ok(response);
     }
 

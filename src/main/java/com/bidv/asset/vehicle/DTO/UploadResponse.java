@@ -11,6 +11,6 @@ import java.util.List;
 @AllArgsConstructor
 public class UploadResponse {
     private Boolean success;
-    private List<InvoiceData> data;
+    private Object data; // Can be List<InvoiceData> or Map<String, List<InvoiceData>>
     private String message;
 }
