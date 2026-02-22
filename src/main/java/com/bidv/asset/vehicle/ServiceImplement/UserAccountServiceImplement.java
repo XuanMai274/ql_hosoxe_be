@@ -59,16 +59,14 @@ public class UserAccountServiceImplement implements UserAccountService {
         return repo.save(account);
     }
 
-    @Override
-    public UserAccountDTO update(Long id, UserAccountDTO dto) {
+    <<<<<<<HEAD=======
 
-        UserAccountEntity entity = (UserAccountEntity) repo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Not found"));
+    UserAccountEntity entity = (UserAccountEntity) repo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Not found"));
 
-        entity.setStatus(dto.getStatus());
-        entity.setAccountType(dto.getAccountType());
+    entity.setStatus(dto.getStatus());entity.setAccountType(dto.getAccountType());
 
-        return new UserAccountMapper().toDto(repo.save(entity));
+    return new UserAccountMapper().toDto(repo.save(entity));
     }
 
     @Override

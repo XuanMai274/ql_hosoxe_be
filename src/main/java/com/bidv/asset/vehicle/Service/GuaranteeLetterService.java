@@ -6,31 +6,37 @@ import com.bidv.asset.vehicle.entity.VehicleEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 public interface GuaranteeLetterService {
     GuaranteeLetterDTO createGuaranteeLetter(GuaranteeLetterDTO dto);
+
     public Page<GuaranteeLetterDTO> getGuaranteeLetters(
             String manufacturerCode,
             LocalDate fromDate,
             LocalDate toDate,
-            Pageable pageable
-    );
+            Pageable pageable);
+
     public Page<GuaranteeLetterDTO> search(
             String keyword,
             String manufacturerCode,
             LocalDate fromDate,
             LocalDate toDate,
             Boolean hasLetterNumber,
-            Pageable pageable
-    );
+            Pageable pageable);
+
     public GuaranteeLetterDTO findById(long id);
+
     public GuaranteeLetterDTO updateGuaranteeLetter(Long id, GuaranteeLetterDTO dto);
+
     public List<GuaranteeLetterDTO> suggest(
             String keyword,
-            String manufacturerCode
-    );
-    public void updateAfterVehicleImported(Long glId,VehicleEntity vehicle);
+            String manufacturerCode);
+
+    public void updateAfterVehicleImported(Long glId,
+            BigDecimal guaranteeAmount);
+
     List<GuaranteeLetterDTO> findAll();
 }

@@ -20,109 +20,110 @@ import java.util.stream.Collectors;
 @Service
 public class CustomerServiceImplement implements CustomerService {
 
-    @Autowired
-    CustomerRepository customerRepo;
-    @Autowired
-    UserAccountRepository userRepo;
-    @Autowired
-    UserAccountService userAccountService;
+        @Autowired
+        CustomerRepository customerRepo;
+        @Autowired
+        UserAccountRepository userRepo;
+        @Autowired
+        UserAccountService userAccountService;
+        @Autowired
+        CustomerMapper customerMapper;
 
-    @Override
-    @Transactional
-    public CustomerDTO createCustomerWithAccount(CustomerCreateRequestDTO request) {
+        @Override
+        @Transactional
+        public CustomerDTO createCustomerWithAccount(CustomerCreateRequestDTO request) {
 
-        // ===== tạo account =====
-        UserAccountEntity account = userAccountService.create(
-                request.getUsername(),
-                request.getCustomer() != null ? request.getCustomer().getEmail() : null,
-                request.getPassword(),
-                request.getRoleId());
+                // ===== tạo account =====
+                UserAccountEntity account = userAccountService.create(
+                                request.getUsername(),
+                                request.getPassword(),
+                                request.getRoleId());
 
-        // ===== tạo customer =====
-        CustomerEntity customer = CustomerMapper.toEntity(request.getCustomer(), account);
+                // ===== tạo customer =====
+                CustomerEntity customer = customerMapper.toEntity(request.getCustomer(), account);
 
-        customer.setCreatedAt(LocalDateTime.now());
-        customer.setUpdatedAt(LocalDateTime.now());
+                customer.setCreatedAt(LocalDateTime.now());
+                customer.setUpdatedAt(LocalDateTime.now());
 
-        return CustomerMapper.toDTO(customerRepo.save(customer));
-    }
-
-    // ===== CREATE =====
-    @Override
-    public CustomerDTO create(CustomerDTO dto) {
-
-        if (customerRepo.existsByCif(dto.getCif())) {
-            throw new RuntimeException("CIF already exists");
+                return customerMapper.toDTO(customerRepo.save(customer));
         }
 
-        UserAccountEntity user = userRepo.findById(dto.getUserAccountId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // ===== CREATE =====
+        @Override
+        public CustomerDTO create(CustomerDTO dto) {
 
-        CustomerEntity entity = CustomerMapper.toEntity(dto, user);
+                if (customerRepo.existsByCif(dto.getCif())) {
+                        throw new RuntimeException("CIF already exists");
+                }
 
-        entity.setCreatedAt(LocalDateTime.now());
-        entity.setUpdatedAt(LocalDateTime.now());
+                UserAccountEntity user = userRepo.findById(dto.getUserAccountId())
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return CustomerMapper.toDTO(customerRepo.save(entity));
-    }
+                CustomerEntity entity = customerMapper.toEntity(dto, user);
 
-    // ===== UPDATE =====
-    @Override
-    public CustomerDTO update(Long id, CustomerDTO dto) {
+                entity.setCreatedAt(LocalDateTime.now());
+                entity.setUpdatedAt(LocalDateTime.now());
 
-        CustomerEntity entity = customerRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
-
-        UserAccountEntity user = userRepo.findById(dto.getUserAccountId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        entity.setCustomerName(dto.getCustomerName());
-        entity.setCustomerType(dto.getCustomerType());
-        entity.setBusinessRegistrationNo(dto.getBusinessRegistrationNo());
-        entity.setTaxCode(dto.getTaxCode());
-        entity.setAddress(dto.getAddress());
-        entity.setPhone(dto.getPhone());
-        entity.setFax(dto.getFax());
-        entity.setEmail(dto.getEmail());
-        entity.setRepresentativeName(dto.getRepresentativeName());
-        entity.setRepresentativeTitle(dto.getRepresentativeTitle());
-        entity.setBankAccountNo(dto.getBankAccountNo());
-        entity.setBankName(dto.getBankName());
-        entity.setStatus(dto.getStatus());
-        entity.setUserAccount(user);
-
-        entity.setUpdatedAt(LocalDateTime.now());
-
-        return CustomerMapper.toDTO(customerRepo.save(entity));
-    }
-
-    // ===== DELETE =====
-    @Override
-    public void delete(Long id) {
-
-        if (!customerRepo.existsById(id)) {
-            throw new RuntimeException("Customer not found");
+                return customerMapper.toDTO(customerRepo.save(entity));
         }
 
-        customerRepo.deleteById(id);
-    }
+        // ===== UPDATE =====
+        @Override
+        public CustomerDTO update(Long id, CustomerDTO dto) {
 
-    // ===== GET BY ID =====
-    @Override
-    public CustomerDTO getById(Long id) {
+                CustomerEntity entity = customerRepo.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        return customerRepo.findById(id)
-                .map(CustomerMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
-    }
+                UserAccountEntity user = userRepo.findById(dto.getUserAccountId())
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-    @Override
-    public List<CustomerDTO> getAll() {
+                entity.setCustomerName(dto.getCustomerName());
+                entity.setCustomerType(dto.getCustomerType());
+                entity.setBusinessRegistrationNo(dto.getBusinessRegistrationNo());
+                entity.setTaxCode(dto.getTaxCode());
+                entity.setAddress(dto.getAddress());
+                entity.setPhone(dto.getPhone());
+                entity.setFax(dto.getFax());
+                entity.setEmail(dto.getEmail());
+                entity.setRepresentativeName(dto.getRepresentativeName());
+                entity.setRepresentativeTitle(dto.getRepresentativeTitle());
+                entity.setBankAccountNo(dto.getBankAccountNo());
+                entity.setBankName(dto.getBankName());
+                entity.setStatus(dto.getStatus());
+                entity.setUserAccount(user);
 
-        return customerRepo.findAll()
-                .stream()
-                .map(CustomerMapper::toDTO)
-                .collect(Collectors.toList());
-    }
+                entity.setUpdatedAt(LocalDateTime.now());
+
+                return customerMapper.toDTO(customerRepo.save(entity));
+        }
+
+        // ===== DELETE =====
+        @Override
+        public void delete(Long id) {
+
+                if (!customerRepo.existsById(id)) {
+                        throw new RuntimeException("Customer not found");
+                }
+
+                customerRepo.deleteById(id);
+        }
+
+        // ===== GET BY ID =====
+        @Override
+        public CustomerDTO getById(Long id) {
+
+                return customerRepo.findById(id)
+                                .map(customerMapper::toDTO)
+                                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        }
+
+        @Override
+        public List<CustomerDTO> getAll() {
+
+                return customerRepo.findAll()
+                                .stream()
+                                .map(customerMapper::toDTO)
+                                .collect(Collectors.toList());
+        }
 
 }

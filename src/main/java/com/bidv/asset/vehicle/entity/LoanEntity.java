@@ -11,22 +11,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "loan",
-        indexes = {
-                @Index(name = "idx_loan_account", columnList = "account_number"),
-                @Index(name = "idx_loan_contract", columnList = "loan_contract_number"),
-                @Index(name = "idx_loan_docid", columnList = "doc_id"),
-                @Index(name = "idx_loan_customer", columnList = "customer_id"),
-                @Index(name = "idx_loan_vehicle", columnList = "vehicle_id"),
-                @Index(name = "idx_loan_guarantee", columnList = "guarantee_letter_id"),
-                @Index(name = "idx_loan_credit_contract", columnList = "credit_contract_id"),
-                @Index(name = "idx_loan_type", columnList = "loan_type"),
-                // composite index
-                @Index(name = "idx_loan_customer_status", columnList = "customer_id, loan_type")
-        }
-)
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Table(name = "loan", indexes = {
+        @Index(name = "idx_loan_account", columnList = "account_number"),
+        @Index(name = "idx_loan_contract", columnList = "loan_contract_number"),
+        @Index(name = "idx_loan_docid", columnList = "doc_id"),
+        @Index(name = "idx_loan_customer", columnList = "customer_id"),
+        @Index(name = "idx_loan_vehicle", columnList = "vehicle_id"),
+        @Index(name = "idx_loan_guarantee", columnList = "guarantee_letter_id"),
+        @Index(name = "idx_loan_credit_contract", columnList = "credit_contract_id"),
+        @Index(name = "idx_loan_type", columnList = "loan_type"),
+        // composite index
+        @Index(name = "idx_loan_customer_status", columnList = "customer_id, loan_type")
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoanEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "loan_id_seq")

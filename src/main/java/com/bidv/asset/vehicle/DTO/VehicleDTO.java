@@ -43,6 +43,7 @@ public class VehicleDTO {
     private InvoiceDTO invoiceId;
     private List<Long> dossierIds;
     private List<DocumentDTO> documents;
+    private BigDecimal guaranteeAmount;
     // ManyToOne -> GuaranteeLetter
     private Long guaranteeLetterId;
     private GuaranteeLetterDTO guaranteeLetterDTO;

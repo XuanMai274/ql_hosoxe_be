@@ -3,6 +3,10 @@ package com.bidv.asset.vehicle.Mapper;
 import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.entity.*;
 import lombok.RequiredArgsConstructor;
+<<<<<<< HEAD
+=======
+import org.springframework.beans.factory.annotation.Autowired;
+>>>>>>> origin/XuanMai
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -11,8 +15,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LoanMapper {
 
+<<<<<<< HEAD
     private final CreditContractMapper creditContractMapper;
     private final LoanFileMapper loanFileMapper;
+=======
+    @Autowired
+    CustomerMapper customerMapper;
+    @Autowired VehicleMapper vehicleMapper;
+    @Autowired GuaranteeLetterMapper guaranteeLetterMapper;
+    @Autowired CreditContractMapper creditContractMapper;
+    @Autowired LoanFileMapper loanFileMapper;
+>>>>>>> origin/XuanMai
 
     /* ================= ENTITY → DTO ================= */
     public LoanDTO toDto(LoanEntity entity) {
@@ -45,6 +58,7 @@ public class LoanMapper {
 
         /* ===== RELATION ===== */
 
+<<<<<<< HEAD
         if (entity.getCustomer() != null) {
             dto.setCustomerId(entity.getCustomer().getId());
         }
@@ -56,6 +70,19 @@ public class LoanMapper {
         if (entity.getGuaranteeLetter() != null) {
             dto.setGuaranteeLetterId(entity.getGuaranteeLetter().getId());
         }
+=======
+        dto.setCustomerDTO(
+                customerMapper.toDTO(entity.getCustomer())
+        );
+
+        dto.setVehicleDTO(
+                vehicleMapper.toDto(entity.getVehicle())
+        );
+
+        dto.setGuaranteeLetterDTO(
+                guaranteeLetterMapper.toDto(entity.getGuaranteeLetter())
+        );
+>>>>>>> origin/XuanMai
 
         dto.setCreditContractDTO(
                 creditContractMapper.toDto(entity.getCreditContract())
@@ -104,6 +131,7 @@ public class LoanMapper {
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setUpdatedAt(dto.getUpdatedAt());
 
+<<<<<<< HEAD
         /* ===== RELATION ===== */
 
         if (dto.getCustomerId() != null) {
@@ -121,6 +149,25 @@ public class LoanMapper {
         if (dto.getGuaranteeLetterId() != null) {
             GuaranteeLetterEntity g = new GuaranteeLetterEntity();
             g.setId(dto.getGuaranteeLetterId());
+=======
+        /* ===== RELATION (CHỈ set ID để tránh load nặng) ===== */
+
+        if (dto.getCustomerDTO() != null) {
+            CustomerEntity customer = new CustomerEntity();
+            customer.setId(dto.getCustomerDTO().getId());
+            entity.setCustomer(customer);
+        }
+
+        if (dto.getVehicleDTO() != null) {
+            VehicleEntity vehicle = new VehicleEntity();
+            vehicle.setId(dto.getVehicleDTO().getId());
+            entity.setVehicle(vehicle);
+        }
+
+        if (dto.getGuaranteeLetterDTO() != null) {
+            GuaranteeLetterEntity g = new GuaranteeLetterEntity();
+            g.setId(dto.getGuaranteeLetterDTO().getId());
+>>>>>>> origin/XuanMai
             entity.setGuaranteeLetter(g);
         }
 
@@ -130,6 +177,7 @@ public class LoanMapper {
             entity.setCreditContract(credit);
         }
 
+<<<<<<< HEAD
         /*
          * FILE mapping KHÔNG làm ở mapper
          * → xử lý ở Service
@@ -138,3 +186,10 @@ public class LoanMapper {
         return entity;
     }
 }
+=======
+        // FILE xử lý ở Service
+
+        return entity;
+    }
+}
+>>>>>>> origin/XuanMai

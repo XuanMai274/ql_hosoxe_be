@@ -18,10 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.bidv.asset.vehicle.Mapper.VehicleOcrMapper.mapAndValidateVehicles;
 
@@ -45,7 +45,8 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
     @Override
     @Transactional
     public List<VehicleDTO> createInvoiceWithVehicles(CreateInvoiceVehicleRequest request) {
-
+        System.out.println("Đang tạo hóa đơn số: " + request.getInvoice().getInvoiceNumber() + " với số lượng xe là: "
+                + request.getVehicles().size());
         /* ================== 1. TẠO HÓA ĐƠN ================== */
         InvoiceEntity invoice = new InvoiceEntity();
         InvoiceDTO inv = request.getInvoice();
@@ -85,22 +86,15 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
             vehicle.setRegistrationOrderNumber(v.getRegistrationOrderNumber());
             vehicle.setDocsDeliveryDate(v.getDocsDeliveryDate());
             vehicle.setDescription(v.getDescription());
-
-            if (isNew) {
-                vehicle.setCreatedAt(LocalDateTime.now());
-            }
-
-            String invNum = invoice.getInvoiceNumber() != null ? invoice.getInvoiceNumber() : "";
-            String invDate = invoice.getInvoiceDate() != null ? invoice.getInvoiceDate().toString() : "";
-
-            vehicle.setImportDossier(
-                    "(1) Phiếu kiểm tra chất lượng xuất xưởng (01 bản gốc + 02 bản sao y bản chính),SK: "
-                            + v.getChassisNumber() +
-                            ", Giấy chứng nhận an toàn kỹ thuật và bảo vệ môi trường ô tô sản xuất, lắp ráp (Sao y bản chính), (3) Hóa đơn VAT số: "
-                            +
-                            invNum + " ngày: " + invDate);
+            vehicle.setCreatedAt(LocalDateTime.now());
             /* GẮN HÓA ĐƠN */
             vehicle.setInvoice(invoice);
+            vehicle.setImportDossier(
+                    "(1) Phiếu kiểm tra chất lượng xuất xưởng (01 bản gốc + 02 bản sao y bản chính),SK: "
+                            + v.getChassisNumber()
+                            + ",Giấy chứng nhận an toàn kỹ thuật và bảo vệ môi trường ô tô sản xuất, lắp ráp (Sao y bản chính), (3) Hóa đơn VAT số: "
+                            + vehicle.getInvoice().getInvoiceNumber() + " ngày: "
+                            + vehicle.getInvoice().getInvoiceDate());
 
             /* GẮN THƯ BẢO LÃNH */
             GuaranteeLetterEntity gl = guaranteeLetterRepository
@@ -108,13 +102,19 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy thư bảo lãnh"));
 
             vehicle.setGuaranteeLetter(gl);
+            /* ===== TÍNH guaranteeAmount ===== */
+            BigDecimal rate = gl.getManufacturer()
+                    .getGuaranteeRate();
+
+            BigDecimal guaranteeAmount = vehicle.getPrice()
+                    .multiply(rate);
+            vehicle.setGuaranteeAmount(guaranteeAmount);
+
+            vehicle.setGuaranteeAmount(guaranteeAmount);
 
             vehicle = vehicleRepository.save(vehicle);
             /* ================== 3. UPDATE GUARANTEE LETTER ================== */
-            if (isNew) {
-                guaranteeLetterService.updateAfterVehicleImported(gl.getId(), vehicle);
-
-            }
+            guaranteeLetterService.updateAfterVehicleImported(gl.getId(), guaranteeAmount);
             /* ================== 3. GẮN DOCUMENTS (NẾU CÓ) ================== */
             /* ================== GẮN DOCUMENTS ================== */
             if (v.getDocuments() != null && !v.getDocuments().isEmpty()) {

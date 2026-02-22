@@ -7,8 +7,9 @@ import com.bidv.asset.vehicle.entity.UserAccountEntity;
 public class CustomerMapper {
 
     // ===== ENTITY -> DTO =====
-    public static CustomerDTO toDTO(CustomerEntity entity) {
-        if (entity == null) return null;
+    public CustomerDTO toDTO(CustomerEntity entity) {
+        if (entity == null)
+            return null;
 
         CustomerDTO dto = new CustomerDTO();
 
@@ -43,8 +44,9 @@ public class CustomerMapper {
     }
 
     // ===== DTO -> ENTITY =====
-    public static CustomerEntity toEntity(CustomerDTO dto, UserAccountEntity userAccount) {
-        if (dto == null) return null;
+    public CustomerEntity toEntity(CustomerDTO dto, UserAccountEntity userAccount) {
+        if (dto == null)
+            return null;
 
         CustomerEntity entity = new CustomerEntity();
 

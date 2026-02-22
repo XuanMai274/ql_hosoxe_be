@@ -1,9 +1,17 @@
 package com.bidv.asset.vehicle.Repository;
 
 import com.bidv.asset.vehicle.entity.GuaranteeLetterEntity;
+<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+=======
+import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+>>>>>>> origin/XuanMai
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +19,10 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+<<<<<<< HEAD
+=======
+import java.util.Optional;
+>>>>>>> origin/XuanMai
 
 @Repository
 public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetterEntity,Long> {
@@ -76,5 +88,11 @@ public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetter
             @Param("manufacturerCode") String manufacturerCode,
             Pageable pageable
     );
+<<<<<<< HEAD
+=======
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select g from GuaranteeLetterEntity g where g.id = :id")
+    Optional<GuaranteeLetterEntity> findByIdForUpdate(@Param("id") Long id);
+>>>>>>> origin/XuanMai
 
 }

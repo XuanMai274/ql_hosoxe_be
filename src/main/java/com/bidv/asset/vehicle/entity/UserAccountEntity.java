@@ -1,5 +1,9 @@
 package com.bidv.asset.vehicle.entity;
 
+<<<<<<<HEAD
+
+=======>>>>>>>origin/XuanMai
+
 import jakarta.persistence.*;
 import lombok.*;
 

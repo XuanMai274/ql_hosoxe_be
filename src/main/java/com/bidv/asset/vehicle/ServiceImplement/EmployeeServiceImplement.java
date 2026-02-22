@@ -23,11 +23,15 @@ public class EmployeeServiceImplement implements EmployeeService {
     EmployeeRepository employeeRepository;
     @Autowired
     EmployeeMapper employeeMapper;
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/XuanMai
     @Override
     public EmployeeDTO createEmployeeWithAccount(EmployeeCreateRequestDTO request) {
         UserAccountEntity account = userAccountService.create(
                 request.getUsername(),
+<<<<<<< HEAD
                 request.getEmployee() != null ? request.getEmployee().getEmail() : null,
                 request.getPassword(),
                 request.getRoleId());
@@ -39,6 +43,19 @@ public class EmployeeServiceImplement implements EmployeeService {
         return employeeMapper.toDto(employeeRepository.save(employee));
     }
 
+=======
+                request.getPassword(),
+                request.getRoleId()
+        );
+
+        EmployeeEntity employee = employeeMapper.toEntity(
+                request.getEmployee(),
+                account
+        );
+
+        return employeeMapper.toDto(employeeRepository.save(employee));
+    }
+>>>>>>> origin/XuanMai
     // ================= UPDATE =================
     @Override
     public EmployeeDTO update(Long id, EmployeeDTO dto) {
