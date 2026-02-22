@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component;
 public class UserAccountMapper {
 
     public UserAccountDTO toDto(UserAccountEntity entity) {
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         UserAccountDTO dto = new UserAccountDTO();
         dto.setId(entity.getId());
@@ -18,15 +19,19 @@ public class UserAccountMapper {
         dto.setPasswordHash(entity.getPasswordHash());
         dto.setStatus(entity.getStatus());
         dto.setAccountType(entity.getAccountType());
+        dto.setEmail(entity.getEmail());
         dto.setRoleId(entity.getRole() != null ? entity.getRole().getId() : null);
         dto.setEmployeeId(entity.getEmployee() != null ? entity.getEmployee().getId() : null);
         dto.setCreatedAt(entity.getCreateAt());
         dto.setUpdateAt(entity.getUpdateAt());
+        dto.setFailedAttempts(entity.getFailedAttempts());
+        dto.setLockUntil(entity.getLockUntil());
         return dto;
     }
 
     public UserAccountEntity toEntity(UserAccountDTO dto) {
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         UserAccountEntity entity = new UserAccountEntity();
         entity.setId(dto.getId());

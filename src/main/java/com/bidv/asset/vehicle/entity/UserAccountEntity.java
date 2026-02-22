@@ -1,4 +1,5 @@
 package com.bidv.asset.vehicle.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -6,7 +7,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_account")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class UserAccountEntity {
 
@@ -23,8 +25,14 @@ public class UserAccountEntity {
 
     private String status;
     private String accountType;
+    @Column(unique = true)
+    private String email;
+    @Column(name = "refresh_token", length = 512)
+    private String refreshToken;
     private LocalDateTime createAt;
     private LocalDateTime updateAt;
+    private Integer failedAttempts = 0;
+    private LocalDateTime lockUntil;
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private RoleEntity role;

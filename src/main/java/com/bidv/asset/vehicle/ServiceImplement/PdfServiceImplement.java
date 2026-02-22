@@ -5,6 +5,7 @@ import com.bidv.asset.vehicle.DTO.VehicleInfo;
 import com.bidv.asset.vehicle.Service.PdfService;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +17,9 @@ import java.util.regex.Pattern;
 
 @Service
 public class PdfServiceImplement implements PdfService {
+
+    @Autowired
+    private com.bidv.asset.vehicle.Service.VehicleCatalogService vehicleCatalogService;
 
     @Override
     public InvoiceResponse extractPdf(MultipartFile file) throws IOException {
@@ -76,7 +80,9 @@ public class PdfServiceImplement implements PdfService {
 
                 v.setEngineNumber(findMatch(suffix, "(?:SM|Số máy)\\s*[:\\s]*([A-Z0-9]+)", 1));
                 v.setColor(findMatch(prefix + suffix, "Màu\\s*[:\\s]*([^\\s;,\n]+)", 1));
-                v.setNumberOfSeats(findMatch(prefix + suffix, "(\\d+)\\s*chỗ", 1));
+
+                String seatsRaw = findMatch(prefix + suffix, "(\\d+)\\s*chỗ", 1);
+                v.setNumberOfSeats(seatsRaw);
 
                 // Extract Unit Price (đơn giá)
                 // Often looks like: Cái 1 660.481.818 660.481.818
@@ -108,7 +114,18 @@ public class PdfServiceImplement implements PdfService {
                         }
                     }
                 }
-                v.setVehicleDescription(desc != null ? desc.replace("\r", "").replace("\n", " ").trim() : null);
+                String finalDesc = desc != null ? desc.replace("\r", "").replace("\n", " ").trim() : null;
+                v.setVehicleDescription(finalDesc);
+
+                // Tự động điền số chỗ ngồi từ catalog nếu regex không tìm thấy hoặc để kiểm
+                // chứng
+                if ((v.getNumberOfSeats() == null || v.getNumberOfSeats().isEmpty()) && finalDesc != null) {
+                    Integer autoSeats = vehicleCatalogService.getSeatsByModelName(finalDesc);
+                    if (autoSeats != null) {
+                        v.setNumberOfSeats(autoSeats.toString());
+                    }
+                }
+
                 vehicleList.add(v);
             }
 

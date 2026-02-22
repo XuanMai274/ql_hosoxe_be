@@ -25,7 +25,7 @@ public class CustomerServiceImplement implements CustomerService {
     @Autowired
     UserAccountRepository userRepo;
     @Autowired
-    UserAccountService  userAccountService;
+    UserAccountService userAccountService;
 
     @Override
     @Transactional
@@ -34,19 +34,19 @@ public class CustomerServiceImplement implements CustomerService {
         // ===== tạo account =====
         UserAccountEntity account = userAccountService.create(
                 request.getUsername(),
+                request.getCustomer() != null ? request.getCustomer().getEmail() : null,
                 request.getPassword(),
-                request.getRoleId()
-        );
+                request.getRoleId());
 
         // ===== tạo customer =====
-        CustomerEntity customer =
-                CustomerMapper.toEntity(request.getCustomer(), account);
+        CustomerEntity customer = CustomerMapper.toEntity(request.getCustomer(), account);
 
         customer.setCreatedAt(LocalDateTime.now());
         customer.setUpdatedAt(LocalDateTime.now());
 
         return CustomerMapper.toDTO(customerRepo.save(customer));
     }
+
     // ===== CREATE =====
     @Override
     public CustomerDTO create(CustomerDTO dto) {
@@ -124,6 +124,5 @@ public class CustomerServiceImplement implements CustomerService {
                 .map(CustomerMapper::toDTO)
                 .collect(Collectors.toList());
     }
-
 
 }
