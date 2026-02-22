@@ -33,9 +33,25 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().permitAll() // Keep permitAll for now, but filter is active
-                )
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/officer/**").hasRole("OFFICER")
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception
+                        // Xử lý khi đã đăng nhập nhưng sai Role (403)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"success\": false, \"message\": \"Bạn không có quyền thực hiện hành động này\", \"status\": 403}");
+                        })
+                        // Xử lý khi chưa đăng nhập hoặc Token hết hạn (401)
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"success\": false, \"message\": \"Phiên đăng nhập hết hạn, vui lòng đăng nhập lại\", \"status\": 401}");
+                        }))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

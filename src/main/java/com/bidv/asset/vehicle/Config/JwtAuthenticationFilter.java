@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -40,9 +41,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (!jwtUtils.isTokenExpired(jwt)) {
-                    // Note: Here you can fetch user from DB to get authorities
+                    String role = jwtUtils.extractRole(jwt);
+                    List<org.springframework.security.core.GrantedAuthority> authorities = new ArrayList<>();
+                    if (role != null) {
+                        authorities.add(
+                                new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role));
+                    }
+
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            username, null, new ArrayList<>());
+                            username, null, authorities);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }

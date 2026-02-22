@@ -32,8 +32,14 @@ public class JwtUtils {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
 
-    public String generateAccessToken(String username) {
-        return createToken(new HashMap<>(), username, 15 * 60 * 1000); // 15 mins
+    public String generateAccessToken(String username, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        return createToken(claims, username, 15 * 60 * 1000); // 15 mins
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
     public String generateRefreshToken(String username) {

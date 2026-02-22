@@ -41,19 +41,29 @@ public class VehicleCatalogServiceImplement implements VehicleCatalogService {
         // 1. ƯU TIÊN HÀNG ĐẦU: Tra cứu trong Database do người dùng định nghĩa
         try {
             List<VehicleCatalogEntity> all = vehicleCatalogRepository.findAll();
+            String normalizedSearch = searchName.replaceAll("\\s+", " ").trim();
+
             for (VehicleCatalogEntity item : all) {
-                if (item.getModelName() == null)
-                    continue;
+                // Kiểm tra Model Name
+                if (item.getModelName() != null) {
+                    String catalogModel = item.getModelName().toUpperCase().replaceAll("\\s+", " ").trim();
+                    if (!catalogModel.isEmpty()
+                            && (normalizedSearch.contains(catalogModel) || catalogModel.contains(normalizedSearch))) {
+                        return item.getSeats();
+                    }
+                }
 
-                String catalogModel = item.getModelName().toUpperCase().trim();
-
-                // Khớp nếu tên xe trích xuất chứa từ khóa trong DB HOẶC ngược lại
-                if (searchName.contains(catalogModel) || catalogModel.contains(searchName)) {
-                    return item.getSeats();
+                // Kiểm tra Description trong Catalog (Người dùng có thể lưu từ khóa ở đây)
+                if (item.getDescription() != null) {
+                    String catalogDesc = item.getDescription().toUpperCase().replaceAll("\\s+", " ").trim();
+                    if (!catalogDesc.isEmpty()
+                            && (normalizedSearch.contains(catalogDesc) || catalogDesc.contains(normalizedSearch))) {
+                        return item.getSeats();
+                    }
                 }
             }
         } catch (Exception e) {
-            // Log error
+            System.err.println("Error searching vehicle catalog: " + e.getMessage());
         }
 
         // 2. PHƯƠNG ÁN DỰ PHÒNG 1: Hard-coded quy tắc chung (Chỉ chạy nếu DB không có)
