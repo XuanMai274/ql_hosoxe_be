@@ -17,6 +17,9 @@ public class HyundaiExtractionAPI {
     @Autowired
     private ExcelService excelService;
 
+    @Autowired
+    private com.bidv.asset.vehicle.Service.VehicleCatalogService vehicleCatalogService;
+
     @PostMapping("/excel")
     public ResponseEntity<ExtractionResult> extractExcel(
             @RequestPart(value = "file", required = false) MultipartFile file,
@@ -41,6 +44,7 @@ public class HyundaiExtractionAPI {
             // Mapping Vietnamese column names to English keys
             Map<String, String> keyMapping = new java.util.HashMap<>();
             keyMapping.put("tên xe", "vehicleDescription");
+            keyMapping.put("số chỗ", "numberOfSeats");
             keyMapping.put("số khung", "chassisNumber");
             keyMapping.put("vin", "chassisNumber");
             keyMapping.put("số máy", "engineNumber");
@@ -89,6 +93,21 @@ public class HyundaiExtractionAPI {
                         }
                     }
                 }
+
+                // Tự động điền số chỗ ngồi
+                Object seats = englishRow.get("numberOfSeats");
+                String finalSeats = (seats != null) ? seats.toString().trim() : "";
+
+                if (finalSeats.isEmpty()) {
+                    Object desc = englishRow.get("vehicleDescription");
+                    if (desc != null) {
+                        Integer autoSeats = vehicleCatalogService.getSeatsByModelName(desc.toString());
+                        if (autoSeats != null) {
+                            finalSeats = autoSeats.toString();
+                        }
+                    }
+                }
+                englishRow.put("numberOfSeats", finalSeats);
 
                 groupedData.computeIfAbsent(groupKey, k -> new java.util.ArrayList<>()).add(englishRow);
             }

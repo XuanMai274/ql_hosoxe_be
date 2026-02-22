@@ -25,15 +25,20 @@ public class UserAccountServiceImplement implements UserAccountService {
     RoleRepository roleRepo;
     @Autowired
     PasswordEncoder passwordEncoder;
+
     @Transactional
     public UserAccountEntity create(
             String username,
+            String email,
             String rawPassword,
-            Long roleId
-    ) {
+            Long roleId) {
 
         if (repo.existsByUsername(username)) {
             throw new RuntimeException("Username already exists");
+        }
+
+        if (email != null && repo.existsByEmail(email)) {
+            throw new RuntimeException("Email already exists");
         }
 
         RoleEntity role = roleRepo.findById(roleId)
@@ -41,6 +46,7 @@ public class UserAccountServiceImplement implements UserAccountService {
 
         UserAccountEntity account = new UserAccountEntity();
         account.setUsername(username);
+        account.setEmail(email);
 
         // nên encode password
         account.setPasswordHash(passwordEncoder.encode(rawPassword));
@@ -53,17 +59,14 @@ public class UserAccountServiceImplement implements UserAccountService {
         return repo.save(account);
     }
 
+    <<<<<<<HEAD=======
 
-    @Override
-    public UserAccountDTO update(Long id, UserAccountDTO dto) {
+    UserAccountEntity entity = (UserAccountEntity) repo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Not found"));
 
-        UserAccountEntity entity = (UserAccountEntity) repo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Not found"));
+    entity.setStatus(dto.getStatus());entity.setAccountType(dto.getAccountType());
 
-        entity.setStatus(dto.getStatus());
-        entity.setAccountType(dto.getAccountType());
-
-        return new UserAccountMapper().toDto(repo.save(entity));
+    return new UserAccountMapper().toDto(repo.save(entity));
     }
 
     @Override

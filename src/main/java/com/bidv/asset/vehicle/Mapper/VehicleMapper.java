@@ -43,7 +43,11 @@ public class VehicleMapper {
         dto.setImportDossier(entity.getImportDossier());
         dto.setDescription(entity.getDescription());
         dto.setCreatedAt(entity.getCreatedAt());
+<<<<<<< HEAD
+
+=======
         dto.setGuaranteeAmount(entity.getGuaranteeAmount());
+>>>>>>> origin/XuanMai
         /* ===== INVOICE ===== */
         if (entity.getInvoice() != null) {
             InvoiceEntity invoice = entity.getInvoice();
@@ -53,6 +57,10 @@ public class VehicleMapper {
             invoiceDTO.setInvoiceNumber(invoice.getInvoiceNumber());
             invoiceDTO.setInvoiceDate(invoice.getInvoiceDate());
             invoiceDTO.setTotalAmount(invoice.getTotalAmount());
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/XuanMai
             dto.setInvoiceId(invoiceDTO);
         }
 
@@ -136,7 +144,11 @@ public class VehicleMapper {
         entity.setImportDocs(dto.getImportDocs());
         entity.setRegistrationOrderNumber(dto.getRegistrationOrderNumber());
         entity.setDocsDeliveryDate(dto.getDocsDeliveryDate());
+<<<<<<< HEAD
+
+=======
         entity.setGuaranteeAmount(dto.getGuaranteeAmount());
+>>>>>>> origin/XuanMai
         entity.setDescription(dto.getDescription());
         entity.setCreatedAt(dto.getCreatedAt());
 

@@ -1,4 +1,5 @@
 package com.bidv.asset.vehicle.DTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -6,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -16,6 +18,7 @@ public class UserAccountDTO {
     private String username;
     private String status;
     private String accountType;
+    private String email;
     private Long roleId;
     private String roleCode;
     private String passwordHash;
@@ -23,4 +26,6 @@ public class UserAccountDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updateAt;
     private long employeeId;
+    private Integer failedAttempts;
+    private LocalDateTime lockUntil;
 }

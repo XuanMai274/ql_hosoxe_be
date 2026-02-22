@@ -19,27 +19,28 @@ import java.util.Map;
 @RequestMapping("/officer/vehicle-invoice")
 @RequiredArgsConstructor
 public class VehicleInvoiceAPI {
-    @Autowired
-    VehicleInvoiceService vehicleInvoiceService;
-    @PostMapping("/create")
-    public ResponseEntity<Map<String, Object>> createInvoiceWithVehicles(
-            @RequestBody CreateInvoiceVehicleRequest request
-    ) {
-        System.out.println("API Đang tạo hóa đơn số: "+request.getInvoice().getInvoiceNumber()+" với số lượng xe là: "+request.getVehicles().size());
-        List<VehicleDTO> vehicles =
-                vehicleInvoiceService.createInvoiceWithVehicles(request);
+        @Autowired
+        VehicleInvoiceService vehicleInvoiceService;
 
-        Map<String, Object> res = new HashMap<>();
-        res.put("success", true);
-        res.put("vehicles", vehicles);
+        @PostMapping("/create")
+        public ResponseEntity<Map<String, Object>> createInvoiceWithVehicles(
+                        @RequestBody CreateInvoiceVehicleRequest request) {
+                System.out.println("API Đang tạo hóa đơn số: " + request.getInvoice().getInvoiceNumber()
+                                + " với số lượng xe là: " + request.getVehicles().size());
+                List<VehicleDTO> vehicles = vehicleInvoiceService.createInvoiceWithVehicles(request);
 
-        return ResponseEntity.ok(res);
-    }
-    @GetMapping("/findAll")
-    public ResponseEntity<List<InvoiceDTO>> findAll(){
-        List<InvoiceDTO> result = vehicleInvoiceService.findAll();
+                Map<String, Object> res = new HashMap<>();
+                res.put("success", true);
+                res.put("vehicles", vehicles);
 
-        return ResponseEntity.ok(result);
-    }
+                return ResponseEntity.ok(res);
+        }
+
+        @GetMapping("/findAll")
+        public ResponseEntity<List<InvoiceDTO>> findAll() {
+                List<InvoiceDTO> result = vehicleInvoiceService.findAll();
+
+                return ResponseEntity.ok(result);
+        }
 
 }

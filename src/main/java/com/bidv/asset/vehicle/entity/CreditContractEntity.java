@@ -13,7 +13,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "credit_contract")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreditContractEntity {
@@ -52,15 +53,11 @@ public class CreditContractEntity {
     // ===== Dư vay BĐS (max 8 tỷ) =====
     @Column(name = "real_estate_loan_balance", precision = 18, scale = 2)
     private BigDecimal realEstateLoanBalance = BigDecimal.ZERO;
-    @Column(name="status")
+    @Column(name = "status")
     private String status;
     // ===== Liên kết HDBD =====
     @ManyToMany
-    @JoinTable(
-            name = "credit_contract_mortgage",
-            joinColumns = @JoinColumn(name = "credit_contract_id"),
-            inverseJoinColumns = @JoinColumn(name = "mortgage_contract_id")
-    )
+    @JoinTable(name = "credit_contract_mortgage", joinColumns = @JoinColumn(name = "credit_contract_id"), inverseJoinColumns = @JoinColumn(name = "mortgage_contract_id"))
     private List<MortgageContractEntity> mortgageContracts;
 
     // ===== Guarantee =====
@@ -77,4 +74,3 @@ public class CreditContractEntity {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-

@@ -10,7 +10,12 @@ import org.springframework.stereotype.Component;
 public class UserAccountMapper {
 
     public UserAccountDTO toDto(UserAccountEntity entity) {
+<<<<<<< HEAD
+        if (entity == null)
+            return null;
+=======
         if (entity == null) return null;
+>>>>>>> origin/XuanMai
 
         UserAccountDTO dto = new UserAccountDTO();
         dto.setId(entity.getId());
@@ -18,15 +23,29 @@ public class UserAccountMapper {
         dto.setPasswordHash(entity.getPasswordHash());
         dto.setStatus(entity.getStatus());
         dto.setAccountType(entity.getAccountType());
+<<<<<<< HEAD
+        dto.setEmail(entity.getEmail());
+=======
+>>>>>>> origin/XuanMai
         dto.setRoleId(entity.getRole() != null ? entity.getRole().getId() : null);
         dto.setEmployeeId(entity.getEmployee() != null ? entity.getEmployee().getId() : null);
         dto.setCreatedAt(entity.getCreateAt());
         dto.setUpdateAt(entity.getUpdateAt());
+<<<<<<< HEAD
+        dto.setFailedAttempts(entity.getFailedAttempts());
+        dto.setLockUntil(entity.getLockUntil());
+=======
+>>>>>>> origin/XuanMai
         return dto;
     }
 
     public UserAccountEntity toEntity(UserAccountDTO dto) {
+<<<<<<< HEAD
+        if (dto == null)
+            return null;
+=======
         if (dto == null) return null;
+>>>>>>> origin/XuanMai
 
         UserAccountEntity entity = new UserAccountEntity();
         entity.setId(dto.getId());

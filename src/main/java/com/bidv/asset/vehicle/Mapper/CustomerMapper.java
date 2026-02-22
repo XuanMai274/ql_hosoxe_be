@@ -3,14 +3,13 @@ package com.bidv.asset.vehicle.Mapper;
 import com.bidv.asset.vehicle.DTO.CustomerDTO;
 import com.bidv.asset.vehicle.entity.CustomerEntity;
 import com.bidv.asset.vehicle.entity.UserAccountEntity;
-import org.springframework.stereotype.Component;
 
-@Component
 public class CustomerMapper {
 
     // ===== ENTITY -> DTO =====
-    public  CustomerDTO toDTO(CustomerEntity entity) {
-        if (entity == null) return null;
+    public CustomerDTO toDTO(CustomerEntity entity) {
+        if (entity == null)
+            return null;
 
         CustomerDTO dto = new CustomerDTO();
 
@@ -45,8 +44,9 @@ public class CustomerMapper {
     }
 
     // ===== DTO -> ENTITY =====
-    public  CustomerEntity toEntity(CustomerDTO dto, UserAccountEntity userAccount) {
-        if (dto == null) return null;
+    public CustomerEntity toEntity(CustomerDTO dto, UserAccountEntity userAccount) {
+        if (dto == null)
+            return null;
 
         CustomerEntity entity = new CustomerEntity();
 

@@ -7,8 +7,7 @@ public interface UserAccountService {
     public UserAccountEntity create(
             String username,
             String rawPassword,
-            Long roleId
-    );
+            Long roleId);
 
     UserAccountDTO update(Long id, UserAccountDTO dto);
 
