@@ -1,28 +1,81 @@
 package com.bidv.asset.vehicle.Mapper;
 
-import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
-import com.bidv.asset.vehicle.DTO.GuaranteeLetterFileDTO;
+import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.entity.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class GuaranteeLetterMapper {
 
-    private final CreditContractMapper creditContractMapper;
-    private final ManufacturerMapper manufacturerMapper;
-    private final BranchAuthorizedRepresentativeMapper authorizedRepresentativeMapper;
-
-    /* ===================== ENTITY → DTO ===================== */
+    // =====================================================
+    // ENTITY → DTO
+    // =====================================================
     public GuaranteeLetterDTO toDto(GuaranteeLetterEntity entity) {
-        if (entity == null) return null;
+
+        if (entity == null) {
+            return null;
+        }
 
         GuaranteeLetterDTO dto = new GuaranteeLetterDTO();
 
         dto.setId(entity.getId());
+
+        // ===== RELATION =====
+        if (entity.getCreditContract() != null) {
+
+            CreditContractEntity credit = entity.getCreditContract();
+
+            CreditContractDTO cc = new CreditContractDTO();
+            cc.setId(credit.getId());
+            cc.setContractNumber(credit.getContractNumber());
+            cc.setContractDate(credit.getContractDate());
+
+            cc.setCreditLimit(credit.getCreditLimit());
+            cc.setUsedLimit(credit.getUsedLimit());
+            cc.setRemainingLimit(credit.getRemainingLimit());
+
+            cc.setGuaranteeBalance(credit.getGuaranteeBalance());
+            cc.setVehicleLoanBalance(credit.getVehicleLoanBalance());
+            cc.setRealEstateLoanBalance(credit.getRealEstateLoanBalance());
+
+            cc.setStatus(credit.getStatus());
+            cc.setCreatedAt(credit.getCreatedAt());
+            cc.setUpdatedAt(credit.getUpdatedAt());
+
+            dto.setCreditContractDTO(cc);
+        }
+        if (entity.getMortgageContract() != null) {
+            MortgageContractDTO mc = new MortgageContractDTO();
+            mc.setId(entity.getMortgageContract().getId());
+            dto.setMortgageContractDTO(mc);
+        }
+
+        if (entity.getManufacturer() != null) {
+            ManufacturerDTO manu = new ManufacturerDTO();
+            manu.setId(entity.getManufacturer().getId());
+            manu.setName(entity.getManufacturer().getName());
+            manu.setCode(entity.getManufacturer().getCode());
+            manu.setTemplateCode(entity.getManufacturer().getTemplateCode());
+            dto.setManufacturerDTO(manu);
+        }
+
+        if (entity.getAuthorizedRepresentative() != null) {
+            BranchAuthorizedRepresentativeDTO repDTO = new BranchAuthorizedRepresentativeDTO();
+            repDTO.setId(entity.getAuthorizedRepresentative().getId());
+            repDTO.setRepresentativeName(entity.getAuthorizedRepresentative().getRepresentativeName());
+            repDTO.setBranchName(entity.getAuthorizedRepresentative().getBranchName());
+            dto.setBranchAuthorizedRepresentativeDTO(repDTO);
+        }
+
+
+        if (entity.getCustomer() != null) {
+            CustomerDTO cus = new CustomerDTO();
+            cus.setId(entity.getCustomer().getId());
+            dto.setCustomerDTO(cus);
+        }
 
         // ===== GUARANTEE CONTRACT =====
         dto.setGuaranteeContractNumber(entity.getGuaranteeContractNumber());
@@ -31,7 +84,7 @@ public class GuaranteeLetterMapper {
         dto.setGuaranteeNoticeDate(entity.getGuaranteeNoticeDate());
         dto.setReferenceCode(entity.getReferenceCode());
 
-        // ===== AMOUNT =====
+        // ===== GUARANTEE AMOUNT =====
         dto.setExpectedGuaranteeAmount(entity.getExpectedGuaranteeAmount());
         dto.setTotalGuaranteeAmount(entity.getTotalGuaranteeAmount());
         dto.setUsedAmount(entity.getUsedAmount());
@@ -50,78 +103,60 @@ public class GuaranteeLetterMapper {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
 
-        // ===== RELATION =====
-        dto.setCreditContractDTO(
-                creditContractMapper.toDto(entity.getCreditContract())
-        );
-
-        dto.setManufacturerDTO(
-                manufacturerMapper.toDto(entity.getManufacturer())
-        );
-
-        dto.setBranchAuthorizedRepresentativeDTO(
-                authorizedRepresentativeMapper.toDto(entity.getAuthorizedRepresentative())
-        );
-
-        // ===== VEHICLES (ID ONLY) =====
+        // ===== VEHICLE IDS =====
         if (entity.getVehicles() != null) {
-            dto.setVehicles(
+            dto.setVehicleIds(
                     entity.getVehicles()
                             .stream()
                             .map(VehicleEntity::getId)
                             .collect(Collectors.toList())
             );
+        } else {
+            dto.setVehicleIds(Collections.emptyList());
         }
-        // ===== FILE METADATA =====
-        if (entity.getFile() != null && Boolean.TRUE.equals(entity.getFile().getIsActive())) {
-            GuaranteeLetterFileEntity fileEntity = entity.getFile();
 
+        // ===== FILE =====
+        if (entity.getFile() != null) {
             GuaranteeLetterFileDTO fileDTO = new GuaranteeLetterFileDTO();
-            fileDTO.setId(fileEntity.getId());
-            fileDTO.setGuaranteeLetterId(entity.getId());
-            fileDTO.setFileName(fileEntity.getFileName());
-            fileDTO.setFilePath(fileEntity.getFilePath());
-            fileDTO.setFileType(fileEntity.getFileType());
-            fileDTO.setFileSize(fileEntity.getFileSize());
-            fileDTO.setFileHash(fileEntity.getFileHash());
-            fileDTO.setVersion(fileEntity.getVersion());
-            fileDTO.setIsActive(fileEntity.getIsActive());
-            fileDTO.setCreatedAt(fileEntity.getCreatedAt());
-
-            dto.setFile(fileDTO);
+            fileDTO.setId(entity.getFile().getId());
+            fileDTO.setFileName(entity.getFile().getFileName());
+            fileDTO.setFileHash(entity.getFile().getFileHash());
+            fileDTO.setFilePath(entity.getFile().getFilePath());
+            fileDTO.setFileType(entity.getFile().getFileType());
+            fileDTO.setIsActive(entity.getFile().getIsActive());
+            dto.setFileId(fileDTO);
         }
-
 
         return dto;
     }
 
-    /* ===================== DTO → ENTITY ===================== */
+    // =====================================================
+    // DTO → ENTITY (CREATE)
+    // =====================================================
     public GuaranteeLetterEntity toEntity(GuaranteeLetterDTO dto) {
-        if (dto == null) return null;
+
+        if (dto == null) {
+            return null;
+        }
 
         GuaranteeLetterEntity entity = new GuaranteeLetterEntity();
 
-        entity.setId(dto.getId());
-
-        // ===== GUARANTEE CONTRACT =====
+        // ===== BASIC FIELD =====
         entity.setGuaranteeContractNumber(dto.getGuaranteeContractNumber());
         entity.setGuaranteeContractDate(dto.getGuaranteeContractDate());
         entity.setGuaranteeNoticeNumber(dto.getGuaranteeNoticeNumber());
         entity.setGuaranteeNoticeDate(dto.getGuaranteeNoticeDate());
         entity.setReferenceCode(dto.getReferenceCode());
 
-        // ===== AMOUNT =====
         entity.setExpectedGuaranteeAmount(dto.getExpectedGuaranteeAmount());
         entity.setTotalGuaranteeAmount(dto.getTotalGuaranteeAmount());
         entity.setUsedAmount(dto.getUsedAmount());
         entity.setRemainingAmount(dto.getRemainingAmount());
 
-        // ===== VEHICLE COUNT =====
         entity.setExpectedVehicleCount(dto.getExpectedVehicleCount());
         entity.setImportedVehicleCount(dto.getImportedVehicleCount());
         entity.setExportedVehicleCount(dto.getExportedVehicleCount());
 
-        // ===== SALE CONTRACT =====
         entity.setSaleContract(dto.getSaleContract());
         entity.setSaleContractAmount(dto.getSaleContractAmount());
 
@@ -129,29 +164,37 @@ public class GuaranteeLetterMapper {
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setUpdatedAt(dto.getUpdatedAt());
 
-        // ===== RELATION: SET ID ONLY =====
-        if (dto.getCreditContractDTO() != null) {
-            CreditContractEntity creditContract = new CreditContractEntity();
-            creditContract.setId(dto.getCreditContractDTO().getId());
-            entity.setCreditContract(creditContract);
-        }
-
-        if (dto.getManufacturerDTO() != null) {
-            ManufacturerEntity manufacturer = new ManufacturerEntity();
-            manufacturer.setId(dto.getManufacturerDTO().getId());
-            entity.setManufacturer(manufacturer);
-        }
-
-        if (dto.getBranchAuthorizedRepresentativeDTO() != null) {
-            BranchAuthorizedRepresentativeEntity rep =
-                    new BranchAuthorizedRepresentativeEntity();
-            rep.setId(dto.getBranchAuthorizedRepresentativeDTO().getId());
-            entity.setAuthorizedRepresentative(rep);
-        }
-
-        // KHÔNG map vehicles ở mapper
-        // → Service sẽ chịu trách nhiệm attach VehicleEntity vào GuaranteeLetter
-
         return entity;
+    }
+
+    // =====================================================
+    // UPDATE ENTITY
+    // =====================================================
+    public void updateEntity(GuaranteeLetterEntity entity, GuaranteeLetterDTO dto) {
+
+        if (entity == null || dto == null) {
+            return;
+        }
+
+        entity.setGuaranteeContractNumber(dto.getGuaranteeContractNumber());
+        entity.setGuaranteeContractDate(dto.getGuaranteeContractDate());
+        entity.setGuaranteeNoticeNumber(dto.getGuaranteeNoticeNumber());
+        entity.setGuaranteeNoticeDate(dto.getGuaranteeNoticeDate());
+        entity.setReferenceCode(dto.getReferenceCode());
+
+        entity.setExpectedGuaranteeAmount(dto.getExpectedGuaranteeAmount());
+        entity.setTotalGuaranteeAmount(dto.getTotalGuaranteeAmount());
+        entity.setUsedAmount(dto.getUsedAmount());
+        entity.setRemainingAmount(dto.getRemainingAmount());
+
+        entity.setExpectedVehicleCount(dto.getExpectedVehicleCount());
+        entity.setImportedVehicleCount(dto.getImportedVehicleCount());
+        entity.setExportedVehicleCount(dto.getExportedVehicleCount());
+
+        entity.setSaleContract(dto.getSaleContract());
+        entity.setSaleContractAmount(dto.getSaleContractAmount());
+
+        entity.setStatus(dto.getStatus());
+        entity.setUpdatedAt(dto.getUpdatedAt());
     }
 }

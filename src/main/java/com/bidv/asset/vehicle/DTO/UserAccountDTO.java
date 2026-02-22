@@ -21,5 +21,6 @@ public class UserAccountDTO {
     private String passwordHash;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
+    private LocalDateTime updateAt;
     private long employeeId;
 }

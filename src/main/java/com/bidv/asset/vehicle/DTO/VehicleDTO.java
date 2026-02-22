@@ -43,8 +43,14 @@ public class VehicleDTO {
     private InvoiceDTO invoiceId;
     private List<Long> dossierIds;
     private List<DocumentDTO> documents;
+    private BigDecimal guaranteeAmount;
+    // ManyToOne -> GuaranteeLetter
+    private Long guaranteeLetterId;
     private GuaranteeLetterDTO guaranteeLetterDTO;
+    // OneToMany -> Loans
+    private List<Long> loanIds;
     private String deadlineLabel;
+
     /* ================== OCR / VALIDATION FIELDS (MỚI) ================== */
 
     /** Giá trị VIN gốc từ OCR (để FE hiển thị & sửa) */

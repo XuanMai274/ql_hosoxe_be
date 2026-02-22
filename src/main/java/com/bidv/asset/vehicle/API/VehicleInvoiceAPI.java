@@ -25,6 +25,7 @@ public class VehicleInvoiceAPI {
     public ResponseEntity<Map<String, Object>> createInvoiceWithVehicles(
             @RequestBody CreateInvoiceVehicleRequest request
     ) {
+        System.out.println("API Đang tạo hóa đơn số: "+request.getInvoice().getInvoiceNumber()+" với số lượng xe là: "+request.getVehicles().size());
         List<VehicleDTO> vehicles =
                 vehicleInvoiceService.createInvoiceWithVehicles(request);
 

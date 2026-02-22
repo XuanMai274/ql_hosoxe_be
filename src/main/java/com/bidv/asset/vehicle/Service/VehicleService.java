@@ -13,7 +13,7 @@ public interface VehicleService {
             String chassisNumber,
             String status,
             String manufacturer,
-            String guaranteeContractNumber,
+            String ref,
             Pageable pageable
     );
     VehicleDTO getVehicleDetail(Long id);

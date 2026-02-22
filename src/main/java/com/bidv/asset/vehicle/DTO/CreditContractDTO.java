@@ -1,39 +1,33 @@
 package com.bidv.asset.vehicle.DTO;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class CreditContractDTO {
 
     private Long id;
 
-    // ===== SỐ HĐTD =====
     private String contractNumber;
-
-    // ===== NGÀY KÝ =====
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
     private LocalDate contractDate;
 
-    // ===== GHTD =====
-    private BigDecimal creditLimit;       // Tổng GHTD
-    private BigDecimal usedLimit;         // GHTD đã sử dụng
-    private BigDecimal remainingLimit;    // GHTD còn được sử dụng
+    private BigDecimal creditLimit;
+    private BigDecimal usedLimit;
+    private BigDecimal remainingLimit;
+    private BigDecimal guaranteeBalance;
+    private BigDecimal vehicleLoanBalance;
+    private BigDecimal realEstateLoanBalance;
 
-    // ===== AUDIT =====
+    private List<Long> mortgageContractIds;
+    private List<Long> guaranteeIds;
+    private List<Long> loanIds;
+    private String status;
+    private Long customerId;
+
     private LocalDateTime createdAt;
-
-    // ===== LIÊN KẾT =====
-    private List<Long> guaranteeLetterIds;
+    private LocalDateTime updatedAt;
 }

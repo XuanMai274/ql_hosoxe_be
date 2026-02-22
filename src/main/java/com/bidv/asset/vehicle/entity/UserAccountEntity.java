@@ -23,7 +23,8 @@ public class UserAccountEntity {
 
     private String status;
     private String accountType;
-
+    private LocalDateTime createAt;
+    private LocalDateTime updateAt;
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private RoleEntity role;
@@ -31,4 +32,5 @@ public class UserAccountEntity {
     private EmployeeEntity employee;
     @OneToOne(mappedBy = "userAccount")
     private CustomerEntity customer;
+
 }

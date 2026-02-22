@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class EmployeeMapper {
 
+    // ===== ENTITY -> DTO =====
     public EmployeeDTO toDto(EmployeeEntity entity) {
         if (entity == null) return null;
 
@@ -20,11 +21,15 @@ public class EmployeeMapper {
         dto.setEmail(entity.getEmail());
         dto.setPhone(entity.getPhone());
         dto.setStatus(entity.getStatus());
-        dto.setUserAccountId(entity.getUserAccount() != null ? entity.getUserAccount().getId() : null);
+
+        if (entity.getUserAccount() != null) {
+            dto.setUserAccountId(entity.getUserAccount().getId());
+        }
 
         return dto;
     }
 
+    // ===== DTO -> ENTITY (KHÔNG set account) =====
     public EmployeeEntity toEntity(EmployeeDTO dto) {
         if (dto == null) return null;
 
@@ -38,12 +43,16 @@ public class EmployeeMapper {
         entity.setPhone(dto.getPhone());
         entity.setStatus(dto.getStatus());
 
-        if (dto.getUserAccountId() != null) {
-            UserAccountEntity user = new UserAccountEntity();
-            user.setId(dto.getUserAccountId());
-            entity.setUserAccount(user);
-        }
+        return entity;
+    }
+
+    // ===== DTO + ACCOUNT -> ENTITY =====
+    public EmployeeEntity toEntity(EmployeeDTO dto, UserAccountEntity account) {
+
+        EmployeeEntity entity = toEntity(dto);
+        entity.setUserAccount(account);
 
         return entity;
     }
 }
+

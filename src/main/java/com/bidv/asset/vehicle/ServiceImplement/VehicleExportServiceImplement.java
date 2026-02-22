@@ -35,7 +35,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
             String chassisNumber,
             String status,
             String manufacturer,
-            String guaranteeContractNumber
+            String ref
     ) {
 
         List<VehicleEntity> vehicles =
@@ -43,7 +43,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
                         chassisNumber,
                         status,
                         manufacturer,
-                        guaranteeContractNumber
+                        ref
                 );
 
         List<VehicleExcelDTO> excelData = new ArrayList<>();
@@ -76,8 +76,9 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         }
 
         replaceVehicleTable(doc, vehicles);
+        // HEADER
+        Map<String,String> header = buildHeaderData(vehicles);
 
-        Map<String, String> header = new HashMap<>();
         header.put("{{TONG}}", formatMoney(total));
         header.put("{{TONG_TEXT}}",
                 VietnameseNumberUtil.toVietnamese(total));
@@ -100,7 +101,8 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         BigDecimal total = calculateTotal(vehicles);
 
         replaceVehicleTable(doc, vehicles);
-
+        // HEADER
+        Map<String,String> header = buildHeaderData(vehicles);
         Map<String,String> map = new HashMap<>();
         map.put("{{TONG}}", formatMoney(total));
         map.put("{{TONG_TEXT}}",
@@ -123,7 +125,8 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         BigDecimal total = calculateTotal(vehicles);
 
         replaceVehicleTable(doc, vehicles);
-
+        // HEADER
+        Map<String,String> header = buildHeaderData(vehicles);
         Map<String,String> map = new HashMap<>();
 
         map.put("{{CURRENT_DATE}}", formatDate(LocalDate.now()));
@@ -147,7 +150,8 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         BigDecimal total = calculateTotal(vehicles);
 
         replaceVehicleTable(doc, vehicles);
-
+        // HEADER
+        Map<String,String> header = buildHeaderData(vehicles);
         Map<String,String> map = new HashMap<>();
         map.put("{{TONG}}", formatMoney(total));
         map.put("{{TONG_TEXT}}",
@@ -168,7 +172,8 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         BigDecimal total = calculateTotal(vehicles);
 
         replaceVehicleTable(doc, vehicles);
-
+        // HEADER
+        Map<String,String> header = buildHeaderData(vehicles);
         Map<String,String> map = new HashMap<>();
         map.put("{{TONG}}", formatMoney(total));
         map.put("{{TONG_TEXT}}",
@@ -245,14 +250,14 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         map.put("{{seats}}", v.getSeats() == null ? "" : v.getSeats().toString());
         map.put("{{price}}", formatMoney(v.getPrice()));
         map.put("{{importDossier}}", safe(v.getImportDossier()));
-        if (v.getGuaranteeLetterDTO()!=null &&
-                v.getGuaranteeLetterDTO().getManufacturerDTO()!=null) {
-
-            map.put("{{manufacturer}}",
-                    safe(v.getGuaranteeLetterDTO()
-                            .getManufacturerDTO()
-                            .getName()));
-        }
+//        if (v.getGuaranteeLetterDTO()!=null &&
+//                v.getGuaranteeLetterDTO().getManufacturerDTO()!=null) {
+//
+//            map.put("{{manufacturer}}",
+//                    safe(v.getGuaranteeLetterDTO()
+//                            .getManufacturerDTO()
+//                            .getName()));
+//        }
 
         if (v.getGuaranteeLetterDTO() != null) {
             map.put("{{HDBD}}",
@@ -260,6 +265,27 @@ public class VehicleExportServiceImplement implements VehicleExportService {
 
             map.put("{{HDBD_DATE}}",
                     formatDate(v.getGuaranteeLetterDTO().getGuaranteeContractDate()));
+        }
+
+        return map;
+    }
+    private Map<String,String> buildHeaderData(List<VehicleDTO> vehicles) {
+
+        Map<String,String> map = new HashMap<>();
+
+        if (vehicles == null || vehicles.isEmpty()) return map;
+
+        VehicleDTO first = vehicles.get(0);
+
+        if (first.getGuaranteeLetterDTO() != null) {
+
+            map.put("{{HDBD}}",
+                    safe(first.getGuaranteeLetterDTO()
+                            .getGuaranteeContractNumber()));
+
+            map.put("{{HDBD_DATE}}",
+                    formatDate(first.getGuaranteeLetterDTO()
+                            .getGuaranteeContractDate()));
         }
 
         return map;

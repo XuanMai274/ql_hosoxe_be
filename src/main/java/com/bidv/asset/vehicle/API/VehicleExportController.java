@@ -28,14 +28,14 @@ public class VehicleExportController {
             @RequestParam(required = false) String chassisNumber,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String manufacturer,
-            @RequestParam(required = false) String guaranteeContractNumber
+            @RequestParam(required = false) String ref
     ) {
 
         byte[] file = vehicleExportService.exportVehicleExcel(
                 chassisNumber,
                 status,
                 manufacturer,
-                guaranteeContractNumber
+                ref
         );
 
         return ResponseEntity.ok()

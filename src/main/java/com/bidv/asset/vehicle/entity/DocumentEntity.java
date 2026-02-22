@@ -6,7 +6,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "documents")
+@Table(name = "documents",
+        indexes = {
+                @Index(name = "idx_document_vehicle", columnList = "vehicle_id")
+        })
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class DocumentEntity {

@@ -9,7 +9,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "vehicles")
+@Table(name = "vehicles",
+    indexes = {
+        @Index(name = "idx_vehicle_chassis", columnList = "chassis_number"),
+        @Index(name = "idx_vehicle_engine", columnList = "engine_number"),
+        @Index(name = "idx_vehicle_guarantee", columnList = "guarantee_letter_id"),
+        @Index(name = "idx_vehicle_invoice", columnList = "invoice_id"),
+        @Index(name = "idx_vehicle_status", columnList = "status"),
+            //composite index
+            @Index(name = "idx_vehicle_gl_status", columnList = "guarantee_letter_id, status")
+    }
+)
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class VehicleEntity {
@@ -40,6 +50,7 @@ public class VehicleEntity {
     private LocalDate docsDeliveryDate;
     private String description;
     private LocalDateTime createdAt;
+    private BigDecimal guaranteeAmount;
     // danh sách bộ hồ sơ nhập kho
     @Column(name = "import_dossier")
     private String importDossier;
@@ -53,4 +64,6 @@ public class VehicleEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id")
     private InvoiceEntity invoice;
+    @OneToMany(mappedBy = "vehicle")
+    private List<LoanEntity> loans;
 }

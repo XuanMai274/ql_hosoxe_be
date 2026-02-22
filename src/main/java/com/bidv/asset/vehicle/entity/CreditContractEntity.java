@@ -1,7 +1,9 @@
 package com.bidv.asset.vehicle.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -11,52 +13,68 @@ import java.util.List;
 
 @Entity
 @Table(name = "credit_contract")
-@Getter
-@Setter
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreditContractEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "credit_contract_id_seq")
-    @SequenceGenerator(
-            name = "credit_contract_id_seq",
-            sequenceName = "credit_contract_id_seq",
-            allocationSize = 1
-    )
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "credit_contract_seq")
+    @SequenceGenerator(name = "credit_contract_seq", sequenceName = "credit_contract_seq")
     private Long id;
 
-    // ===== SỐ HĐTD =====
-    @Column(name = "contract_number", nullable = false, unique = true)
+    @Column(name = "contract_number", nullable = false)
     private String contractNumber;
 
-    // ===== NGÀY KÝ HĐTD =====
     @Column(name = "contract_date")
     private LocalDate contractDate;
-    @Column(name="update_at")
-    private LocalDateTime updateAt;
-    // ===== GHTD =====
-    @Column(name = "credit_limit", nullable = false, precision = 19, scale = 0)
-    private BigDecimal creditLimit;              // GHTD
 
-    @Column(name = "used_limit", nullable = false, precision = 19, scale = 0)
-    private BigDecimal usedLimit;                // GHTD đã sử dụng
+    // ===== Tổng hạn mức =====
+    @Column(name = "creditLimit", precision = 18, scale = 2)
+    private BigDecimal creditLimit;
 
-    @Column(name = "remaining_limit", nullable = false, precision = 19, scale = 0)
-    private BigDecimal remainingLimit;           // GHTD còn được sử dụng
+    // ===== Đã sử dụng =====
+    @Column(name = "used_limit", precision = 18, scale = 2)
+    private BigDecimal usedLimit = BigDecimal.ZERO;
 
-    // ===== AUDIT =====
-    @Column(name = "created_at")
+    // ===== Còn sử dụng =====
+    @Column(name = "remaining_limit", precision = 18, scale = 2)
+    private BigDecimal remainingLimit = BigDecimal.ZERO;
+
+    // ===== Dư bảo lãnh =====
+    @Column(name = "guarantee_balance", precision = 18, scale = 2)
+    private BigDecimal guaranteeBalance = BigDecimal.ZERO;
+
+    // ===== Dư nợ vay xe =====
+    @Column(name = "vehicle_loan_balance", precision = 18, scale = 2)
+    private BigDecimal vehicleLoanBalance = BigDecimal.ZERO;
+
+    // ===== Dư vay BĐS (max 8 tỷ) =====
+    @Column(name = "real_estate_loan_balance", precision = 18, scale = 2)
+    private BigDecimal realEstateLoanBalance = BigDecimal.ZERO;
+    @Column(name="status")
+    private String status;
+    // ===== Liên kết HDBD =====
+    @ManyToMany
+    @JoinTable(
+            name = "credit_contract_mortgage",
+            joinColumns = @JoinColumn(name = "credit_contract_id"),
+            inverseJoinColumns = @JoinColumn(name = "mortgage_contract_id")
+    )
+    private List<MortgageContractEntity> mortgageContracts;
+
+    // ===== Guarantee =====
+    @OneToMany(mappedBy = "creditContract")
+    private List<GuaranteeLetterEntity> guarantees;
+
+    // ===== Loan =====
+    @OneToMany(mappedBy = "creditContract")
+    private List<LoanEntity> loans;
+    @ManyToOne(fetch = FetchType.LAZY)
+    // ===== Khách hàng =====
+    @JoinColumn(name = "customer_id", nullable = false)
+    private CustomerEntity customer;
     private LocalDateTime createdAt;
-
-    // ===== QUAN HỆ =====
-    @OneToMany(mappedBy = "creditContract", fetch = FetchType.LAZY)
-    private List<GuaranteeLetterEntity> guaranteeLetters;
-
-    // ===== TỰ ĐỘNG TÍNH =====
-    @PrePersist
-    @PreUpdate
-    public void calculateRemainingLimit() {
-        if (creditLimit == null) creditLimit = BigDecimal.ZERO;
-        if (usedLimit == null) usedLimit = BigDecimal.ZERO;
-        this.remainingLimit = creditLimit.subtract(usedLimit);
-    }
+    private LocalDateTime updatedAt;
 }
+

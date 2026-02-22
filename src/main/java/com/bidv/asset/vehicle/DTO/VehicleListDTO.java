@@ -19,5 +19,5 @@ public class VehicleListDTO {
     private String chassisNumber;
     private String engineNumber;
     private BigDecimal price;
-    private String guaranteeContractNumber;
+    private String ref;
 }

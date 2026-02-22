@@ -28,13 +28,13 @@ public class VehicleAPI {
             @RequestParam(required = false) String chassisNumber,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String manufacturer,
-            @RequestParam(required = false) String guaranteeContractNumber,
+            @RequestParam(required = false) String ref,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         chassisNumber = normalize(chassisNumber);
         manufacturer = normalize(manufacturer);
-        guaranteeContractNumber = normalize(guaranteeContractNumber);
+        ref = normalize(ref);
         manufacturer = (manufacturer == null || manufacturer.isBlank())
                 ? null
                 : manufacturer.trim().toLowerCase();
@@ -48,7 +48,7 @@ public class VehicleAPI {
                 chassisNumber,
                 status,
                 manufacturer,
-                guaranteeContractNumber,
+                ref,
                 pageable
         );
     }

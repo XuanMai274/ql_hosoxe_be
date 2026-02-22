@@ -107,8 +107,8 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         data.put("{{GUARANTEE_DATE_TITLE}}", toVietnameseDate(dto.getGuaranteeContractDate()));
 
         // ===== GHTD =====
-        data.put("{{GHTD}}",
-                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+//        data.put("{{GHTD}}",
+//                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
 
         // ===== GHTD đã sử dụng =====
         data.put("{{GHTDaSuDung}}",
@@ -154,8 +154,8 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         data.put("{{GUARANTEE_DATE_TITLE}}", toVietnameseDate(dto.getGuaranteeContractDate()));
 
         // ===== GHTD =====
-        data.put("{{GHTD}}",
-                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+//        data.put("{{GHTD}}",
+//                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
 
         // ===== GHTD đã sử dụng =====
         data.put("{{GHTDaSuDung}}",
@@ -197,8 +197,8 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
 //        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
         // ===== GHTD =====
-        data.put("{{GHTD}}",
-                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+//        data.put("{{GHTD}}",
+//                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
 
         // ===== GHTD đã sử dụng =====
         data.put("{{GHTDaSuDung}}",
@@ -240,8 +240,8 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
         BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
         // ===== GHTD =====
-        data.put("{{GHTD}}",
-                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+//        data.put("{{GHTD}}",
+//                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
 
         // ===== GHTD đã sử dụng =====
         data.put("{{GHTDaSuDung}}",
@@ -388,7 +388,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
 
 
         // ===== Map dữ liệu =====
-        data.put("{{GHTD}}", formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+//        data.put("{{GHTD}}", formatMoney(dto.getCreditContractDTO().getCreditLimit()));
         data.put("{{GHTDConSD}}", formatMoney(gHTDConSD));
         data.put("{{GHTDaSuDung}}", formatMoney(gHTDaSuDung));
 
@@ -419,18 +419,18 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
 
 
         // ===== Đại diện =====
-        if (dto.getBranchAuthorizedRepresentativeDTO() != null) {
-            var rep = dto.getBranchAuthorizedRepresentativeDTO();
-
-            data.put("{{REPRESENTATIVE_NAME}}", safe(rep.getRepresentativeName()));
-            data.put("{{REPRESENTATIVE_TITLE}}", safe(rep.getRepresentativeTitle()));
-            data.put("{{AUTH_DOC_NO}}", safe(rep.getAuthorizationDocNo()));
-            data.put("{{AUTH_DOC_DATE}}",
-                    rep.getAuthorizationDocDate() != null
-                            ? formatDate(rep.getAuthorizationDocDate())
-                            : "");
-            data.put("{{AUTH_ISSUER}}", safe(rep.getAuthorizationIssuer()));
-        }
+//        if (dto.getBranchAuthorizedRepresentativeDTO() != null) {
+//            var rep = dto.getBranchAuthorizedRepresentativeDTO();
+//
+//            data.put("{{REPRESENTATIVE_NAME}}", safe(rep.getRepresentativeName()));
+//            data.put("{{REPRESENTATIVE_TITLE}}", safe(rep.getRepresentativeTitle()));
+//            data.put("{{AUTH_DOC_NO}}", safe(rep.getAuthorizationDocNo()));
+//            data.put("{{AUTH_DOC_DATE}}",
+//                    rep.getAuthorizationDocDate() != null
+//                            ? formatDate(rep.getAuthorizationDocDate())
+//                            : "");
+//            data.put("{{AUTH_ISSUER}}", safe(rep.getAuthorizationIssuer()));
+//        }
 
         data.put("{{EXPECTED_VEHICLE_COUNT}}",
                 dto.getExpectedVehicleCount() != null

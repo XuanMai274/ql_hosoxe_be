@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.DTO;
 
+import com.bidv.asset.vehicle.entity.BranchAuthorizedRepresentativeEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,32 +16,43 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GuaranteeLetterDTO {
+
     private Long id;
+
+    // ===== RELATION =====
     private CreditContractDTO creditContractDTO;
+    private MortgageContractDTO mortgageContractDTO;
+    private ManufacturerDTO manufacturerDTO;
+    private BranchAuthorizedRepresentativeDTO branchAuthorizedRepresentativeDTO;
+    private CustomerDTO customerDTO;
+
     // ===== GUARANTEE CONTRACT =====
     private String guaranteeContractNumber;
     private LocalDate guaranteeContractDate;
     private String guaranteeNoticeNumber;
     private LocalDate guaranteeNoticeDate;
     private String referenceCode;
+
     // ===== GUARANTEE AMOUNT =====
-    private BigDecimal expectedGuaranteeAmount; // số tiền bảo lãnh dự kiến ban đầu được nhập khi tạo bảo lãnh
-    private BigDecimal totalGuaranteeAmount; // tổng số tiền bảo lãnh thực tế(được cộng thêm hoặc trừ đi khi nhập/xuất xe)
-    private BigDecimal usedAmount; // số tiền đã sử dụng
-    private BigDecimal remainingAmount; // còn lại
+    private BigDecimal expectedGuaranteeAmount;
+    private BigDecimal totalGuaranteeAmount;
+    private BigDecimal usedAmount;
+    private BigDecimal remainingAmount;
+
     // ===== VEHICLE COUNT =====
-    private Integer expectedVehicleCount;// số xe dự kiến
-    private Integer importedVehicleCount;// số xe đã nhập
-    private Integer exportedVehicleCount;// số xe đã xuất
-    // ===== SALE CONTRACT (HỢP ĐỒNG MUA BÁN) =====
-    private String saleContract;          // Tên HĐ mua bán
-    private BigDecimal saleContractAmount;      // Giá trị HĐ mua bán (tổng tiền hóa đơn)
+    private Integer expectedVehicleCount;
+    private Integer importedVehicleCount;
+    private Integer exportedVehicleCount;
+
+    // ===== SALE CONTRACT =====
+    private String saleContract;
+    private BigDecimal saleContractAmount;
+
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private BranchAuthorizedRepresentativeDTO branchAuthorizedRepresentativeDTO;
-    private ManufacturerDTO manufacturerDTO;
-    private List<Long> vehicles;
-    private GuaranteeLetterFileDTO file;
 
+    // ===== CHILD =====
+    private List<Long> vehicleIds;
+    private GuaranteeLetterFileDTO fileId;
 }

@@ -12,11 +12,12 @@ import java.util.stream.Collectors;
 @Component
 public class BranchAuthorizedRepresentativeMapper {
 
-    /* ===================== ENTITY -> DTO ===================== */
     public BranchAuthorizedRepresentativeDTO toDto(BranchAuthorizedRepresentativeEntity entity) {
+
         if (entity == null) return null;
 
         BranchAuthorizedRepresentativeDTO dto = new BranchAuthorizedRepresentativeDTO();
+
         dto.setId(entity.getId());
         dto.setBranchCode(entity.getBranchCode());
         dto.setBranchName(entity.getBranchName());
@@ -29,25 +30,26 @@ public class BranchAuthorizedRepresentativeMapper {
         dto.setEffectiveTo(entity.getEffectiveTo());
         dto.setIsActive(entity.getIsActive());
 
-        // Map danh sách GuaranteeLetterEntity -> List<Long>
         if (entity.getGuaranteeLetterEntity() != null) {
             List<Long> guaranteeIds = entity.getGuaranteeLetterEntity()
                     .stream()
                     .map(GuaranteeLetterEntity::getId)
                     .collect(Collectors.toList());
-            dto.setGuaranteeLetterDTOS(guaranteeIds);
+
+            dto.setGuaranteeLetterIds(guaranteeIds);
         } else {
-            dto.setGuaranteeLetterDTOS(Collections.emptyList());
+            dto.setGuaranteeLetterIds(Collections.emptyList());
         }
 
         return dto;
     }
 
-    /* ===================== DTO -> ENTITY ===================== */
     public BranchAuthorizedRepresentativeEntity toEntity(BranchAuthorizedRepresentativeDTO dto) {
+
         if (dto == null) return null;
 
         BranchAuthorizedRepresentativeEntity entity = new BranchAuthorizedRepresentativeEntity();
+
         entity.setId(dto.getId());
         entity.setBranchCode(dto.getBranchCode());
         entity.setBranchName(dto.getBranchName());
@@ -59,13 +61,6 @@ public class BranchAuthorizedRepresentativeMapper {
         entity.setEffectiveFrom(dto.getEffectiveFrom());
         entity.setEffectiveTo(dto.getEffectiveTo());
         entity.setIsActive(dto.getIsActive());
-
-        /*
-         * KHÔNG map guaranteeLetterEntity ở đây
-         * → Quan hệ này phải xử lý trong Service:
-         *   - load GuaranteeLetterEntity theo id
-         *   - set authorizedRepresentative
-         */
 
         return entity;
     }

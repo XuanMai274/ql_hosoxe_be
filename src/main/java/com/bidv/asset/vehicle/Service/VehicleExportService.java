@@ -11,7 +11,7 @@ public interface VehicleExportService {
             String chassisNumber,
             String status,
             String manufacturer,
-            String guaranteeContractNumber
+            String ref
     );
     public byte[] generatePNK(List<VehicleDTO> vehicles) throws IOException;
     void replaceVehicleTable(XWPFDocument doc, List<VehicleDTO> vehicles);

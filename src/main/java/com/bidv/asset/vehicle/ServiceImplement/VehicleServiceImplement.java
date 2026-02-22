@@ -41,14 +41,14 @@ public class VehicleServiceImplement implements VehicleService {
             String chassisNumber,
             String status,
             String manufacturer,
-            String guaranteeContractNumber,
+            String ref,
             Pageable pageable
     ) {
         return vehicleRepository.searchVehicles(
                 chassisNumber,
                 status,
                 manufacturer,
-                guaranteeContractNumber,
+                ref,
                 pageable
         );
     }
@@ -212,8 +212,8 @@ public class VehicleServiceImplement implements VehicleService {
         CreditContractDTO creditContractDTO=new CreditContractDTO();
         creditContractDTO.setContractNumber(entity.getGuaranteeLetter().getCreditContract().getContractNumber());
         creditContractDTO.setContractDate(entity.getGuaranteeLetter().getCreditContract().getContractDate());
-        guaranteeLetterDTO.setManufacturerDTO(manufacturerDTO);
-        guaranteeLetterDTO.setCreditContractDTO(creditContractDTO);
+//        guaranteeLetterDTO.setManufacturerDTO(manufacturerDTO);
+//        guaranteeLetterDTO.setCreditContractDTO(creditContractDTO);
         return dto;
     }
 }

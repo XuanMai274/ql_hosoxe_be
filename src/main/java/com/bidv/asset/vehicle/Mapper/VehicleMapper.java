@@ -43,7 +43,7 @@ public class VehicleMapper {
         dto.setImportDossier(entity.getImportDossier());
         dto.setDescription(entity.getDescription());
         dto.setCreatedAt(entity.getCreatedAt());
-
+        dto.setGuaranteeAmount(entity.getGuaranteeAmount());
         /* ===== INVOICE ===== */
         if (entity.getInvoice() != null) {
             InvoiceEntity invoice = entity.getInvoice();
@@ -53,7 +53,6 @@ public class VehicleMapper {
             invoiceDTO.setInvoiceNumber(invoice.getInvoiceNumber());
             invoiceDTO.setInvoiceDate(invoice.getInvoiceDate());
             invoiceDTO.setTotalAmount(invoice.getTotalAmount());
-
             dto.setInvoiceId(invoiceDTO);
         }
 
@@ -66,7 +65,14 @@ public class VehicleMapper {
                             .collect(Collectors.toList())
             );
         }
-
+        if (entity.getLoans() != null) {
+            dto.setLoanIds(
+                    entity.getLoans()
+                            .stream()
+                            .map(LoanEntity::getId)
+                            .collect(Collectors.toList())
+            );
+        }
         /* ===== DOCUMENTS ===== */
         if (entity.getDocuments() != null) {
             dto.setDocuments(
@@ -93,11 +99,11 @@ public class VehicleMapper {
             manufacturerDTO.setTemplateCode(g.getManufacturer().getTemplateCode());
             manufacturerDTO.setId(g.getManufacturer().getId());
             manufacturerDTO.setName(g.getManufacturer().getName());
-            guaranteeDTO.setManufacturerDTO(manufacturerDTO);
+//            guaranteeDTO.setManufacturerDTO(manufacturerDTO);
             CreditContractDTO creditContractDTO=new CreditContractDTO();
             creditContractDTO.setContractNumber(entity.getGuaranteeLetter().getCreditContract().getContractNumber());
             creditContractDTO.setContractDate(entity.getGuaranteeLetter().getCreditContract().getContractDate());
-            guaranteeDTO.setCreditContractDTO(creditContractDTO);
+//            guaranteeDTO.setCreditContractDTO(creditContractDTO);
             dto.setGuaranteeLetterDTO(guaranteeDTO);
         }
 
@@ -130,7 +136,7 @@ public class VehicleMapper {
         entity.setImportDocs(dto.getImportDocs());
         entity.setRegistrationOrderNumber(dto.getRegistrationOrderNumber());
         entity.setDocsDeliveryDate(dto.getDocsDeliveryDate());
-
+        entity.setGuaranteeAmount(dto.getGuaranteeAmount());
         entity.setDescription(dto.getDescription());
         entity.setCreatedAt(dto.getCreatedAt());
 

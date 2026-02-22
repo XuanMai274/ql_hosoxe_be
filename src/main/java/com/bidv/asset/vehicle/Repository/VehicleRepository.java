@@ -2,9 +2,12 @@ package com.bidv.asset.vehicle.Repository;
 
 import com.bidv.asset.vehicle.DTO.VehicleListDTO;
 import com.bidv.asset.vehicle.entity.VehicleEntity;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
+public interface VehicleRepository extends JpaRepository<VehicleEntity,Long> {
     // tìm danh sách nhiều xe cùng 1 lúc
     @Query("""
         SELECT v FROM VehicleEntity v
@@ -42,7 +45,7 @@ public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
         v.chassisNumber,
         v.engineNumber,
         v.price,
-        gl.guaranteeContractNumber
+        gl.referenceCode
     )
     from VehicleEntity v
     join v.guaranteeLetter gl
@@ -57,27 +60,26 @@ public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
     )
     and (
         coalesce(:manufacturerCode, '') = ''
-        or lower(m.code) = lower(:manufacturerCode)
+        or m.code = :manufacturerCode
     )
     and (
-        coalesce(:guaranteeContractNumber, '') = ''
-        or lower(gl.guaranteeContractNumber) like lower(concat('%', :guaranteeContractNumber, '%'))
+        coalesce(:ref, '') = ''
+        or lower(gl.referenceCode)
+            like lower(concat('%', :ref, '%'))
     )
-    order by v.createdAt desc
 """)
-    // phần tìm kiếm tại danh sách hồ sơ xe
     Page<VehicleListDTO> searchVehicles(
             @Param("chassisNumber") String chassisNumber,
             @Param("status") String status,
             @Param("manufacturerCode") String manufacturerCode,
-            @Param("guaranteeContractNumber") String guaranteeContractNumber,
+            @Param("ref") String ref,
             Pageable pageable
     );
     @Query("""
     select v
     from VehicleEntity v
-    join v.guaranteeLetter gl
-    join gl.manufacturer m
+    join fetch v.guaranteeLetter gl
+    join fetch gl.manufacturer m
     where (
         coalesce(:chassisNumber, '') = ''
         or lower(v.chassisNumber) like lower(concat('%', :chassisNumber, '%'))
@@ -87,21 +89,21 @@ public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
         or v.status = :status
     )
     and (
-        coalesce(:manufacturer, '') = ''
-        or m.code = :manufacturer
+        coalesce(:manufacturerCode, '') = ''
+        or m.code = :manufacturerCode
     )
     and (
-        coalesce(:guaranteeContractNumber, '') = ''
-        or lower(gl.guaranteeContractNumber)
-            like lower(concat('%', :guaranteeContractNumber, '%'))
+        coalesce(:ref, '') = ''
+        or lower(gl.referenceCode)
+            like lower(concat('%', :ref, '%'))
     )
     order by v.createdAt desc
-    """)
+""")
     List<VehicleEntity> searchVehiclesForExcel(
             @Param("chassisNumber") String chassisNumber,
             @Param("status") String status,
-            @Param("manufacturer") String manufacturer,
-            @Param("guaranteeContractNumber") String guaranteeContractNumber
+            @Param("manufacturerCode") String manufacturerCode,
+            @Param("ref") String ref
     );
     // lấy lên thông tin xe
     @EntityGraph(attributePaths = {
@@ -157,5 +159,8 @@ public interface VehicleRepository extends CrudRepository<VehicleEntity,Long> {
         left join fetch g.authorizedRepresentative
     """)
     List<VehicleEntity> findAllForExcel();
-
+    // tránh 2 user cùng nhập kho xe cùng 1 lúc
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select v from VehicleEntity v where v.id = :id")
+    Optional<VehicleEntity> findByIdForUpdate(@Param("id") Long id);
 }

@@ -11,7 +11,10 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-@Table(name = "guarantee_letter_file")
+@Table(name = "guarantee_letter_file",
+        indexes = {
+                @Index(name = "idx_gl_file_gl", columnList = "guarantee_letter_id")
+        })
 @AllArgsConstructor
 @NoArgsConstructor
 public class GuaranteeLetterFileEntity {

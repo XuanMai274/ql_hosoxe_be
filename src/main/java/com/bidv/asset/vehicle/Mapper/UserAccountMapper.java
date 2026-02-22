@@ -20,7 +20,8 @@ public class UserAccountMapper {
         dto.setAccountType(entity.getAccountType());
         dto.setRoleId(entity.getRole() != null ? entity.getRole().getId() : null);
         dto.setEmployeeId(entity.getEmployee() != null ? entity.getEmployee().getId() : null);
-
+        dto.setCreatedAt(entity.getCreateAt());
+        dto.setUpdateAt(entity.getUpdateAt());
         return dto;
     }
 

@@ -8,7 +8,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "invoices")
+@Table(name = "invoices",
+        indexes = {
+                @Index(name = "idx_invoice_number", columnList = "invoice_number"),
+        })
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class InvoiceEntity {
