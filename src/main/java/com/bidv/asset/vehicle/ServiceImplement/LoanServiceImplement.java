@@ -5,8 +5,13 @@ import com.bidv.asset.vehicle.Mapper.LoanMapper;
 import com.bidv.asset.vehicle.entity.*;
 import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.LoanService;
+import com.bidv.asset.vehicle.enums.LoanStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +51,7 @@ public class LoanServiceImplement implements LoanService {
 
         /* ================= LOAD DATA ================= */
 
-        VehicleEntity vehicle = vehicleRepository.findByIdForUpdate(dto.getVehicleDTO().getId())
+        VehicleEntity vehicle = vehicleRepository.findByIdForUpdate(dto.getVehicleId())
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
         GuaranteeLetterEntity guaranteeLetterEntity = vehicle.getGuaranteeLetter();
@@ -253,6 +258,76 @@ public class LoanServiceImplement implements LoanService {
 
         return loanMapper.toDto(existing);
     }
+    @Override
+    public Page<LoanDTO> getAllLoans(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        return loanRepository.findAll(pageable)
+                .map(loanMapper::toDtoList);
+    }
+
+    @Override
+    public Page<LoanDTO> getLoansByStatus(LoanStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        return loanRepository.findAllByLoanStatus(status, pageable)
+                .map(loanMapper::toDtoList);
+    }
+
+    @Override
+    public Page<LoanDTO> searchLoans(
+            String loanContractNumber,
+            String chassisNumber,
+            LoanStatus status,
+            String docId,
+            Integer dueInDays,
+            int page,
+            int size
+    ) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        if (loanContractNumber != null && !loanContractNumber.isBlank()) {
+            loanContractNumber = "%" + loanContractNumber + "%";
+        }
+
+        if (chassisNumber != null && !chassisNumber.isBlank()) {
+            chassisNumber = "%" + chassisNumber + "%";
+        }
+
+        if (docId != null && !docId.isBlank()) {
+            docId = "%" + docId + "%";
+        }
+
+        LocalDate dueDateFrom = null;
+        LocalDate dueDateTo = null;
+
+        if (dueInDays != null) {
+            dueDateFrom = LocalDate.now();
+            dueDateTo = LocalDate.now().plusDays(dueInDays);
+        }
+
+        Page<LoanEntity> loans = loanRepository.searchLoans(
+                loanContractNumber,
+                chassisNumber,
+                status,
+                docId,
+                dueDateFrom,
+                dueDateTo,
+                pageable
+        );
+
+        return loans.map(loanMapper::toDto);
+    }
+    @Override
+    public LoanDTO getDetail(Long id) {
+
+        LoanEntity entity = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản vay"));
+
+        return loanMapper.toDto(entity);
+    }
+
     // hàm bổ trợ
     private BigDecimal nvl(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;

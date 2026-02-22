@@ -153,4 +153,75 @@ public class LoanMapper {
 
         return entity;
     }
+    /* ================= ENTITY → DTO ================= */
+    public LoanDTO toDtoList(LoanEntity entity) {
+
+        if (entity == null) return null;
+
+        LoanDTO dto = new LoanDTO();
+
+        dto.setId(entity.getId());
+
+        dto.setAccountNumber(entity.getAccountNumber());
+        dto.setLoanContractNumber(entity.getLoanContractNumber());
+        dto.setLoanTerm(entity.getLoanTerm());
+        dto.setLoanDate(entity.getLoanDate());
+        dto.setDueDate(entity.getDueDate());
+        dto.setLoanAmount(entity.getLoanAmount());
+        dto.setDocId(entity.getDocId());
+
+        dto.setLastPaymentDate(entity.getLastPaymentDate());
+        dto.setTotalPaidAmount(entity.getTotalPaidAmount());
+
+        dto.setCollateralAndPurpose(entity.getCollateralAndPurpose());
+        dto.setWithdrawnChassisNumber(entity.getWithdrawnChassisNumber());
+
+        dto.setLoanStatus(entity.getLoanStatus());
+        dto.setLoanType(entity.getLoanType());
+
+        dto.setCreatedAt(entity.getCreatedAt());
+        dto.setUpdatedAt(entity.getUpdatedAt());
+
+//        /* ===== RELATION ===== */
+//
+//        if (entity.getCustomer() != null) {
+//            dto.setCustomerId(entity.getCustomer().getId());
+//        }
+//
+        if (entity.getVehicle() != null) {
+            dto.setVehicleDTO(vehicleMapper.toDto(entity.getVehicle()));
+        }
+//
+//        if (entity.getGuaranteeLetter() != null) {
+//            dto.setGuaranteeLetterId(entity.getGuaranteeLetter().getId());
+//        }
+//        dto.setCustomerDTO(
+//                customerMapper.toDTO(entity.getCustomer())
+//        );
+//
+//        dto.setVehicleDTO(
+//                vehicleMapper.toDto(entity.getVehicle())
+//        );
+//
+//        dto.setGuaranteeLetterDTO(
+//                guaranteeLetterMapper.toDto(entity.getGuaranteeLetter())
+//        );
+//
+//        dto.setCreditContractDTO(
+//                creditContractMapper.toDto(entity.getCreditContract())
+//        );
+
+        /* ===== FILES ===== */
+
+        if (entity.getFiles() != null) {
+            dto.setFiles(
+                    entity.getFiles()
+                            .stream()
+                            .map(loanFileMapper::toDto)
+                            .collect(Collectors.toList())
+            );
+        }
+
+        return dto;
+    }
 }
