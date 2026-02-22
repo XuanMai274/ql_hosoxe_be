@@ -3,7 +3,9 @@ package com.bidv.asset.vehicle.Mapper;
 import com.bidv.asset.vehicle.DTO.CustomerDTO;
 import com.bidv.asset.vehicle.entity.CustomerEntity;
 import com.bidv.asset.vehicle.entity.UserAccountEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CustomerMapper {
 
     // ===== ENTITY -> DTO =====

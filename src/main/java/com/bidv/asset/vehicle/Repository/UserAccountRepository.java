@@ -13,7 +13,6 @@ public interface UserAccountRepository
 
     Optional<UserAccountEntity> findByUsername(String username);
 
-<<<<<<< HEAD
     Optional<UserAccountEntity> findByEmail(String email);
 
     Optional<UserAccountEntity> findByRefreshToken(String refreshToken);
@@ -21,7 +20,5 @@ public interface UserAccountRepository
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
-=======
-    boolean existsByUsername(String username);
->>>>>>> origin/XuanMai
+
 }

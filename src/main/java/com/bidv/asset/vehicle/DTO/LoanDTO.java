@@ -38,15 +38,12 @@ public class LoanDTO {
     private LoanType loanType;
 
     // ===== Relation =====
-<<<<<<< HEAD
     private Long customerId;
     private Long vehicleId;
     private Long guaranteeLetterId;
-=======
     private CustomerDTO customerDTO;
     private VehicleDTO vehicleDTO;
     private GuaranteeLetterDTO guaranteeLetterDTO;
->>>>>>> origin/XuanMai
 
     private CreditContractDTO creditContractDTO;
 

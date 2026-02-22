@@ -36,6 +36,7 @@ public class CustomerServiceImplement implements CustomerService {
                 // ===== tạo account =====
                 UserAccountEntity account = userAccountService.create(
                                 request.getUsername(),
+                                request.getCustomer() != null ? request.getCustomer().getEmail() : null,
                                 request.getPassword(),
                                 request.getRoleId());
 

@@ -26,6 +26,7 @@ public class UserAccountServiceImplement implements UserAccountService {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Override
     @Transactional
     public UserAccountEntity create(
             String username,
@@ -58,15 +59,15 @@ public class UserAccountServiceImplement implements UserAccountService {
 
         return repo.save(account);
     }
+    @Override
+    public UserAccountDTO update(Long id, UserAccountDTO dto) {
+        UserAccountEntity entity = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Not found"));
 
-    <<<<<<<HEAD=======
+        entity.setStatus(dto.getStatus());
+        entity.setAccountType(dto.getAccountType());
 
-    UserAccountEntity entity = (UserAccountEntity) repo.findById(id)
-            .orElseThrow(() -> new RuntimeException("Not found"));
-
-    entity.setStatus(dto.getStatus());entity.setAccountType(dto.getAccountType());
-
-    return new UserAccountMapper().toDto(repo.save(entity));
+        return new UserAccountMapper().toDto(repo.save(entity));
     }
 
     @Override

@@ -25,7 +25,7 @@ public class UserAccountDTO {
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
     private LocalDateTime updateAt;
-    private long employeeId;
+    private Long employeeId;
     private Integer failedAttempts;
     private LocalDateTime lockUntil;
 }

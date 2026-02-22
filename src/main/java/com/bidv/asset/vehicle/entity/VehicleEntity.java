@@ -50,6 +50,7 @@ public class VehicleEntity {
     private LocalDate docsDeliveryDate;
     private String description;
     private LocalDateTime createdAt;
+    private BigDecimal guaranteeAmount;
     // danh sách bộ hồ sơ nhập kho
     @Column(name = "import_dossier")
     private String importDossier;
