@@ -83,7 +83,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         header.put("{{TONG_TEXT}}",
                 VietnameseNumberUtil.toVietnamese(total));
         header.put("{{CURRENT _DATE}}", formatDate(LocalDate.now()));
-        header.put("{{CURRENT _DATE_TITLE}}", formatDateTitle(LocalDate.now()));
+        header.put("{{CURRENT_DATE_TITLE}}", formatDateTitle(LocalDate.now()));
 
         replaceAll(doc, header);
 

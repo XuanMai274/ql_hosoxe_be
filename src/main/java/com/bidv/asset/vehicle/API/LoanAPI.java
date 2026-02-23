@@ -4,7 +4,9 @@ package com.bidv.asset.vehicle.API;
 import com.bidv.asset.vehicle.DTO.BatchLoanResponse;
 import com.bidv.asset.vehicle.DTO.LoanDTO;
 import com.bidv.asset.vehicle.Service.LoanService;
+import com.bidv.asset.vehicle.enums.LoanStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,41 @@ public class LoanAPI {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(result);
+    }
+//    @GetMapping
+//    public ResponseEntity<Page<LoanDTO>> getAllLoans(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size
+//    ) {
+//        Page<LoanDTO> result;
+//
+//        result = loanService.getAllLoans(page, size);
+//
+//        return ResponseEntity.ok(result);
+//    }
+    @GetMapping
+    public ResponseEntity<Page<LoanDTO>> searchLoans(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+
+            @RequestParam(required = false) String loanContractNumber,
+            @RequestParam(required = false) String chassisNumber,
+            @RequestParam(required = false) LoanStatus status,
+            @RequestParam(required = false) String docId,
+            @RequestParam(required = false) Integer dueInDays   // lọc gần đến hạn
+    ) {
+
+        Page<LoanDTO> result = loanService.searchLoans(
+                loanContractNumber,
+                chassisNumber,
+                status,
+                docId,
+                dueInDays,
+                page,
+                size
+        );
+
+        return ResponseEntity.ok(result);
     }
 
     /* ================= CREATE BATCH ================= */
@@ -56,5 +93,10 @@ public class LoanAPI {
     ) {
         LoanDTO result = loanService.updateLoan(id, dto);
         return ResponseEntity.ok(result);
+    }
+    // ================= VIEW DETAIL =================
+    @GetMapping("/{id}")
+    public ResponseEntity<LoanDTO> getDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(loanService.getDetail(id));
     }
 }
