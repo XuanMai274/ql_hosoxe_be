@@ -18,12 +18,13 @@ public class CreditContractServiceImplement implements CreditContractService {
     CreditContractRepository creditContractRepository;
     @Autowired
     CreditContractMapper creditContractMapper;
+
     @Override
     public CreditContractDTO createCreditContract(CreditContractDTO creditContractDTO) {
-        CreditContractEntity creditContract= creditContractMapper.toEntity(creditContractDTO);
+        CreditContractEntity creditContract = creditContractMapper.toEntity(creditContractDTO);
         creditContract.setCreatedAt(LocalDateTime.now());
         try {
-            CreditContractEntity creditContract1=creditContractRepository.save(creditContract);
+            CreditContractEntity creditContract1 = creditContractRepository.save(creditContract);
             return creditContractMapper.toDto(creditContract1);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -32,11 +33,32 @@ public class CreditContractServiceImplement implements CreditContractService {
 
     @Override
     public List<CreditContractDTO> findAll() {
-        List<CreditContractEntity> creditContractEntities=creditContractRepository.findAll();
-        List<CreditContractDTO> creditContractDTOS=new ArrayList<>();
-        for(CreditContractEntity creditContract:creditContractEntities){
+        List<CreditContractEntity> creditContractEntities = creditContractRepository.findAll();
+        List<CreditContractDTO> creditContractDTOS = new ArrayList<>();
+        for (CreditContractEntity creditContract : creditContractEntities) {
             creditContractDTOS.add(creditContractMapper.toDto(creditContract));
         }
         return creditContractDTOS;
+    }
+
+    @Override
+    public CreditContractDTO updateCreditContract(Long id, CreditContractDTO creditContractDTO) {
+        CreditContractEntity existingEntity = creditContractRepository.findById(id).orElse(null);
+        if (existingEntity != null) {
+            existingEntity.setContractNumber(creditContractDTO.getContractNumber());
+            existingEntity.setContractDate(creditContractDTO.getContractDate());
+            existingEntity.setStatus(creditContractDTO.getStatus());
+            existingEntity.setCreditLimit(creditContractDTO.getCreditLimit());
+            existingEntity.setUsedLimit(creditContractDTO.getUsedLimit());
+            existingEntity.setRemainingLimit(creditContractDTO.getRemainingLimit());
+            existingEntity.setGuaranteeBalance(creditContractDTO.getGuaranteeBalance());
+            existingEntity.setVehicleLoanBalance(creditContractDTO.getVehicleLoanBalance());
+            existingEntity.setRealEstateLoanBalance(creditContractDTO.getRealEstateLoanBalance());
+            existingEntity.setUpdatedAt(LocalDateTime.now());
+
+            CreditContractEntity updatedEntity = creditContractRepository.save(existingEntity);
+            return creditContractMapper.toDto(updatedEntity);
+        }
+        return null;
     }
 }
