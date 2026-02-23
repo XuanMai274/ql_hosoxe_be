@@ -44,6 +44,7 @@ public class VehicleServiceImplement implements VehicleService {
             String ref,
             Pageable pageable
     ) {
+        System.out.println("Manufacturer param: " + manufacturer);
         return vehicleRepository.searchVehicles(
                 chassisNumber,
                 status,

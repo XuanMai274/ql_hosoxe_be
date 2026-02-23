@@ -66,4 +66,7 @@ public class VehicleEntity {
     private InvoiceEntity invoice;
     @OneToMany(mappedBy = "vehicle")
     private List<LoanEntity> loans;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="manufacturer_id")
+    private ManufacturerEntity manufacturerEntity;
 }

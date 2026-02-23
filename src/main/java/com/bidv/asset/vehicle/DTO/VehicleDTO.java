@@ -50,7 +50,7 @@ public class VehicleDTO {
     // OneToMany -> Loans
     private List<Long> loanIds;
     private String deadlineLabel;
-
+    private ManufacturerDTO manufacturerDTO;
     /* ================== OCR / VALIDATION FIELDS (MỚI) ================== */
 
     /** Giá trị VIN gốc từ OCR (để FE hiển thị & sửa) */

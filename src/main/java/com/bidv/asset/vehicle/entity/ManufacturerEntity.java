@@ -45,4 +45,7 @@ public class ManufacturerEntity {
     // HDBD
     @OneToMany(mappedBy = "manufacturer",fetch = FetchType.LAZY)
     private  List<MortgageContractEntity> mortgageContractEntities;
+    // liên kết với xe
+    @OneToMany(mappedBy="manufacturerEntity",fetch = FetchType.LAZY)
+    private List<VehicleEntity> vehicleEntities;
 }

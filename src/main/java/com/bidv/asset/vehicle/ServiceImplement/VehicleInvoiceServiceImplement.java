@@ -2,17 +2,11 @@ package com.bidv.asset.vehicle.ServiceImplement;
 
 import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.Mapper.InvoiceMapper;
-import com.bidv.asset.vehicle.Repository.DocumentRepository;
-import com.bidv.asset.vehicle.Repository.GuaranteeLetterRepository;
-import com.bidv.asset.vehicle.Repository.InvoiceRepository;
-import com.bidv.asset.vehicle.Repository.VehicleRepository;
+import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterService;
 import com.bidv.asset.vehicle.Service.OcrClient;
 import com.bidv.asset.vehicle.Service.VehicleInvoiceService;
-import com.bidv.asset.vehicle.entity.DocumentEntity;
-import com.bidv.asset.vehicle.entity.GuaranteeLetterEntity;
-import com.bidv.asset.vehicle.entity.InvoiceEntity;
-import com.bidv.asset.vehicle.entity.VehicleEntity;
+import com.bidv.asset.vehicle.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +35,8 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
     InvoiceMapper invoiceMapper;
     @Autowired
     OcrClient ocrClient;
-
+    @Autowired
+    ManufacturerRepository manufacturerRepository;
     @Override
     @Transactional
     public List<VehicleDTO> createInvoiceWithVehicles(CreateInvoiceVehicleRequest request) {
@@ -87,7 +82,10 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
             vehicle.setDocsDeliveryDate(v.getDocsDeliveryDate());
             vehicle.setDescription(v.getDescription());
             vehicle.setCreatedAt(LocalDateTime.now());
+//            Gắn loại xe
             /* GẮN HÓA ĐƠN */
+            ManufacturerEntity manufacturerEntity=manufacturerRepository.findByIdManu(v.getManufacturerDTO().getId());
+            vehicle.setManufacturerEntity(manufacturerEntity);
             vehicle.setInvoice(invoice);
             vehicle.setImportDossier(
                     "(1) Phiếu kiểm tra chất lượng xuất xưởng (01 bản gốc + 02 bản sao y bản chính),SK: "

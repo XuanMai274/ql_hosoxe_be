@@ -33,7 +33,7 @@ public class LoanEntity {
     @SequenceGenerator(name = "loan_id_seq", sequenceName = "loan_id_seq")
     private Long id;
     // ===== Thông tin hợp đồng vay =====
-    @Column(name = "account_number", nullable = false)
+    @Column(name = "account_number")
     private String accountNumber; // SỐ TK
     @Column(name = "loan_contract_number", nullable = false)
     private String loanContractNumber; // HĐ VAY

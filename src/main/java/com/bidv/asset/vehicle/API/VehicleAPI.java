@@ -37,7 +37,7 @@ public class VehicleAPI {
         ref = normalize(ref);
         manufacturer = (manufacturer == null || manufacturer.isBlank())
                 ? null
-                : manufacturer.trim().toLowerCase();
+                : manufacturer.trim();
         Pageable pageable = PageRequest.of(
                 page,
                 size,
@@ -53,10 +53,11 @@ public class VehicleAPI {
         );
     }
 
-    private String normalize(String value) {
-        return (value == null || value.isBlank())
-                ? null
-                : value.trim().toLowerCase();
+    private String normalize(String input) {
+        if (input == null || input.isBlank()) {
+            return null;
+        }
+        return input.trim();
     }
     @GetMapping("/status/{status}")
     public ResponseEntity<List<VehicleDTO>> getByStatus(

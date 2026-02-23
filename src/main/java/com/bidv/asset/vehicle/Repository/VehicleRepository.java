@@ -55,7 +55,7 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
                 )
                 from VehicleEntity v
                 join v.guaranteeLetter gl
-                join gl.manufacturer m
+                join v.manufacturerEntity m
                 where (
                     coalesce(:chassisNumber, '') = ''
                     or lower(v.chassisNumber) like lower(concat('%', :chassisNumber, '%'))
@@ -85,24 +85,24 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
                 select v
                 from VehicleEntity v
                 join fetch v.guaranteeLetter gl
-                join fetch gl.manufacturer m
+                join fetch v.manufacturerEntity m
                 where (
-                    coalesce(:chassisNumber, '') = ''
-                    or lower(v.chassisNumber) like lower(concat('%', :chassisNumber, '%'))
-                )
-                and (
-                    coalesce(:status, '') = ''
-                    or v.status = :status
-                )
-                and (
-                    coalesce(:manufacturerCode, '') = ''
-                    or m.code = :manufacturerCode
-                )
-                and (
-                    coalesce(:ref, '') = ''
-                    or lower(gl.referenceCode)
-                        like lower(concat('%', :ref, '%'))
-                )
+                         :chassisNumber is null
+                         or lower(v.chassisNumber) like lower(concat('%', :chassisNumber, '%'))
+                     )
+                     and (
+                         :status is null
+                         or v.status = :status
+                     )
+                     and (
+                         :manufacturerCode is null
+                         or lower(m.code) = lower(:manufacturerCode)
+                     )
+                     and (
+                         :ref is null
+                         or lower(gl.referenceCode)
+                             like lower(concat('%', :ref, '%'))
+                     )
                 order by v.createdAt desc
             """)
     List<VehicleEntity> searchVehiclesForExcel(

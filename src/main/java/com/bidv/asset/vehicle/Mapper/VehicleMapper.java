@@ -3,6 +3,7 @@ package com.bidv.asset.vehicle.Mapper;
 import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.entity.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -11,8 +12,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VehicleMapper {
 
-    private final DocumentMapper documentMapper;
-
+    @Autowired
+    DocumentMapper documentMapper;
+    @Autowired ManufacturerMapper manufacturerMapper;
     /* ===================== ENTITY → DTO ===================== */
     public VehicleDTO toDto(VehicleEntity entity) {
         if (entity == null) return null;
@@ -83,6 +85,16 @@ public class VehicleMapper {
                             .map(documentMapper::toDto)
                             .collect(Collectors.toList())
             );
+        }
+        // loại xe
+        if(entity.getManufacturerEntity()!=null){
+           ManufacturerDTO manufacturerDTO=new ManufacturerDTO();
+           manufacturerDTO.setId(entity.getManufacturerEntity().getId());
+           manufacturerDTO.setCode(entity.getManufacturerEntity().getCode());
+           manufacturerDTO.setTemplateCode(entity.getManufacturerEntity().getTemplateCode());
+           manufacturerDTO.setName(entity.getManufacturerEntity().getName());
+           dto.setManufacturerDTO(manufacturerDTO);
+
         }
 
         /* ===== GUARANTEE LETTER ===== */
@@ -158,12 +170,14 @@ public class VehicleMapper {
             g.setId(dto.getGuaranteeLetterDTO().getId());
             entity.setGuaranteeLetter(g);
         }
-
-        /*
-         * Documents & Dossiers:
-         * KHÔNG mapping ở đây
-         * → xử lý ở Service layer
-         */
+        // loại xe
+        if(dto.getManufacturerDTO()!=null){
+            ManufacturerEntity manufacturerEntity= new ManufacturerEntity();
+            manufacturerEntity.setId(dto.getManufacturerDTO().getId());
+            manufacturerEntity.setCode(dto.getManufacturerDTO().getCode());
+            manufacturerEntity.setTemplateCode(dto.getManufacturerDTO().getTemplateCode());
+            entity.setManufacturerEntity(manufacturerEntity);
+        }
 
         return entity;
     }
