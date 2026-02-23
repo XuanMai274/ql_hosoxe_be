@@ -49,10 +49,12 @@ public class PdfServiceImplement implements PdfService {
             }
             response.setInvoiceNumber(invoiceNo);
 
-            // Extract Total Amount (e.g., Cộng tiền hàng: 719.040.000)
-            String totalAmount = findMatch(text, "Cộng tiền hàng\\s*[:\\s]*([\\d\\.,]+)", 1);
+            // Extract Total Amount (VAT included - Grand total)
+            String totalAmount = findMatch(text,
+                    "(?:Tổng cộng \\(Grand Total\\)|Tổng cộng tiền thanh toán|Tổng tiền thanh toán)\\s*[:\\s]*([\\d\\.,]+)",
+                    1);
             if (totalAmount == null) {
-                totalAmount = findMatch(text, "Tổng tiền thanh toán\\s*[:\\s]*([\\d\\.,]+)", 1);
+                totalAmount = findMatch(text, "Cộng tiền hàng\\s*[:\\s]*([\\d\\.,]+)", 1);
             }
             response.setTotalAmount(totalAmount);
 
@@ -129,6 +131,9 @@ public class PdfServiceImplement implements PdfService {
                 vehicleList.add(v);
             }
 
+            if (vehicleList.size() == 1 && totalAmount != null) {
+                vehicleList.get(0).setUnitPrice(totalAmount);
+            }
             response.setVehicleList(vehicleList);
             return response;
         }
