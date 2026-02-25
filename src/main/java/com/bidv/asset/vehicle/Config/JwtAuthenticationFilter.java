@@ -30,12 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
+        jwt = authHeader.substring(7).trim();
         try {
             username = jwtUtils.extractUsername(jwt);
 
@@ -54,8 +54,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            System.err.println("JWT Token đã hết hạn: " + e.getMessage());
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            System.err.println("Chữ ký JWT không hợp lệ: " + e.getMessage());
         } catch (Exception e) {
-            // Silent failure for filter, context will remain unauthorized
+            System.err.println("Lỗi xác thực JWT: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
