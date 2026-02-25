@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/officer/vehicles/export")
 @RequiredArgsConstructor
-public class VehicleExportController {
+public class VehicleWarehouse {
     @Autowired
     VehicleExportService vehicleExportService;
     @Autowired
@@ -99,38 +99,19 @@ public class VehicleExportController {
                 .body(file);
     }
 
-    @PostMapping("/export-phu-luc-hyundai")
-    public ResponseEntity<byte[]> exportPhuLucHyundai(
-            @RequestBody ExportPNKRequest request) throws IOException {
+    @PostMapping("/phu-luc-hop-dong-the-chap")
+    public ResponseEntity<byte[]> exportPhuLuc(
+            @RequestBody List<Long> vehicleIds
+    ) throws IOException {
 
         List<VehicleDTO> vehicles =
-                vehicleService.findByIds(request.getVehicleIds());
+                vehicleService.findByIds(vehicleIds);
 
         byte[] file =
-                ((VehicleExportServiceImplement)vehicleExportService)
-                        .generatePhuLucHyundai(vehicles);
+                vehicleExportService
+                        .generatePhuLucHopDongTheChap(vehicles);
 
-        return ResponseEntity.ok()
-                .header("Content-Disposition",
-                        "attachment; filename=PHU_LUC_HYUNDAI.docx")
-                .body(file);
-    }
-
-    @PostMapping("/export-phu-luc-vinfast")
-    public ResponseEntity<byte[]> exportPhuLucVinfast(
-            @RequestBody ExportPNKRequest request) throws IOException {
-
-        List<VehicleDTO> vehicles =
-                vehicleService.findByIds(request.getVehicleIds());
-
-        byte[] file =
-                ((VehicleExportServiceImplement)vehicleExportService)
-                        .generatePhuLucVinfast(vehicles);
-
-        return ResponseEntity.ok()
-                .header("Content-Disposition",
-                        "attachment; filename=PHU_LUC_VINFAST.docx")
-                .body(file);
+        return buildResponse(file, "PhuLuc.docx");
     }
 
     private ResponseEntity<byte[]> buildResponse(byte[] file, String fileName) {
