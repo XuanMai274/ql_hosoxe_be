@@ -11,7 +11,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "loan", indexes = {
+@Table(name = "loan",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_credit_contract_child_seq",
+                        columnNames = {"credit_contract_id", "child_sequence"}
+                )
+        },
+        indexes = {
         @Index(name = "idx_loan_account", columnList = "account_number"),
         @Index(name = "idx_loan_contract", columnList = "loan_contract_number"),
         @Index(name = "idx_loan_docid", columnList = "doc_id"),
@@ -66,7 +73,9 @@ public class LoanEntity {
     // ===== Audit =====
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
+    // tự tăng số ca hợp đồng con
+    @Column(name = "child_sequence")
+    private Integer childSequence;
     // ===== File đính kèm =====
     @OneToMany(mappedBy = "loan", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<LoanFileEntity> files;

@@ -48,12 +48,8 @@ public class CreditContractEntity {
     // ===== Dư bảo lãnh phát hành =====
     @Column(name="issued_guarantee_balance", precision = 18, scale = 2)
     private BigDecimal issuedGuaranteeBalance;
-    // ===== Còn sử dụng phát hành =====
-    @Column(name = "issued_remaining_limit", precision = 18, scale = 2)
-    private BigDecimal issuedRemainingLimit = BigDecimal.ZERO;
-    // ===== Đã sử dụng phát hành =====
-    @Column(name = "issued_used_limit", precision = 18, scale = 2)
-    private BigDecimal issuedUsedLimit = BigDecimal.ZERO;
+    @Column(name = "outstanding_guarantee_amount", precision = 18, scale = 2)
+    private BigDecimal outstandingGuaranteeAmount;
     // ===== Dư nợ vay xe =====
     @Column(name = "vehicle_loan_balance", precision = 18, scale = 2)
     private BigDecimal vehicleLoanBalance = BigDecimal.ZERO;
@@ -81,4 +77,7 @@ public class CreditContractEntity {
     private CustomerEntity customer;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    // đề xuất bảo lãnh
+    @OneToMany(mappedBy = "creditContract", fetch = FetchType.LAZY)
+    private List<GuaranteeApplicationEntity> guaranteeApplications;
 }

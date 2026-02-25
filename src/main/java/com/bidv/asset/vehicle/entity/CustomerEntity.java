@@ -69,4 +69,7 @@ public class CustomerEntity {
     // ===== HDTD =====
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<CreditContractEntity> creditContracts;
+    //======== Đề xuất cấp bảo lãnh========
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
+    private List<GuaranteeApplicationEntity> guaranteeApplications;
 }

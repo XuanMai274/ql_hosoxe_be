@@ -51,7 +51,7 @@ public class GuaranteeLetterEntity {
     @Column(name = "expected_guarantee_amount", precision = 18, scale = 2)
     private BigDecimal expectedGuaranteeAmount; // so tien bao lanh du kien(nhap khi tao bao lanh)
     @Column(name = "total_guarantee_amount", precision = 18, scale = 2)
-    private BigDecimal totalGuaranteeAmount;// số tiền bảo lãnh thực te(Thay doi khi co xe them/rut ho so)
+    private BigDecimal totalGuaranteeAmount;// số tiền bảo lãnh thực te(Thay doi khi co xe them)
     @Column(name = "used_amount")
     private BigDecimal usedAmount;
     @Column(name = "remaining_amount")
@@ -71,6 +71,15 @@ public class GuaranteeLetterEntity {
     // Trạng thái
     @Column(name = "status")
     private String status;
+    // thời gian hết hạn của bảo lãnh
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+    // số tiền đã giải ngân
+    @Column(name="disbursement")
+    private BigDecimal disbursement;
+    // số xe đã nhập kho
+    @Column(name="vehicle_warehouse_count")
+    private Integer vehicleWarehouseCount;
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
@@ -104,4 +113,8 @@ public class GuaranteeLetterEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mortgage_contract_id")
     private MortgageContractEntity mortgageContract;
+    // liên kết với đơn đề nghị cấp bảo lãnh
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guarantee_application_id")
+    private GuaranteeApplicationEntity guaranteeApplication;
 }

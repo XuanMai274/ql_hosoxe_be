@@ -43,7 +43,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
         MortgageContractRepository mortgageContractRepository;
         @Autowired
         CustomerRepository customerRepository;
-
+        @Autowired GuaranteeApplicationRepository guaranteeApplicationRepository;
         @Transactional
         @Override
         public GuaranteeLetterDTO createGuaranteeLetter(GuaranteeLetterDTO dto) {
@@ -68,6 +68,10 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                         "authorizedRepresentative không được null");
                 }
+                if(dto.getGuaranteeApplicationDTO()==null||dto.getGuaranteeApplicationDTO().getId()==null){
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Đơn đề nghị không được trống");
+                }
 
                 if (dto.getExpectedGuaranteeAmount() == null
                                 || dto.getExpectedGuaranteeAmount().compareTo(BigDecimal.ZERO) <= 0) {
@@ -77,7 +81,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 Long customerId = dto.getCustomerDTO().getId();
                 Long manufacturerId = dto.getManufacturerDTO().getId();
                 Long repId = dto.getBranchAuthorizedRepresentativeDTO().getId();
-
+                Long guaranteeApp=dto.getGuaranteeApplicationDTO().getId();
                 // =====================================================
                 // 2. LOAD CUSTOMER
                 // =====================================================
@@ -126,27 +130,33 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                                                 "Không tìm thấy người đại diện"));
 
                 // =====================================================
+                // 6. LOAD ĐƠN ĐỀ NGHỊ
+                // =====================================================
+                GuaranteeApplicationEntity guaranteeApplicationEntity=guaranteeApplicationRepository.findById(guaranteeApp).orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Không tìm thấy thư đề nghị"));;
+                // =====================================================
                 // 7. CHECK CREDIT LIMIT
                 // =====================================================
-                // BigDecimal creditLimit = creditContract.getCreditLimit();
-                //
-                // BigDecimal currentUsedLimit =
-                // creditContract.getUsedLimit() == null
-                // ? BigDecimal.ZERO
-                // : creditContract.getUsedLimit();
-                //
-                // BigDecimal newUsedLimit =
-                // currentUsedLimit.add(dto.getExpectedGuaranteeAmount());
-                //
-                // if (newUsedLimit.compareTo(creditLimit) > 0) {
-                // throw new ResponseStatusException(
-                // HttpStatus.BAD_REQUEST,
-                // "Vượt hạn mức tín dụng"
-                // );
-                // }
-                //
-                // BigDecimal newRemainingLimit =
-                // creditLimit.subtract(newUsedLimit);
+                 BigDecimal creditLimit = creditContract.getCreditLimit();
+
+                 BigDecimal currentUsedLimit =
+                 creditContract.getUsedLimit() == null
+                 ? BigDecimal.ZERO
+                 : creditContract.getUsedLimit();
+
+                 BigDecimal newUsedLimit =
+                 currentUsedLimit.add(dto.getExpectedGuaranteeAmount());
+
+                 if (newUsedLimit.compareTo(creditLimit) > 0) {
+                 throw new ResponseStatusException(
+                 HttpStatus.BAD_REQUEST,
+                 "Vượt hạn mức tín dụng"
+                 );
+                 }
+
+                 BigDecimal newRemainingLimit =
+                 creditLimit.subtract(newUsedLimit);
 
                 // =====================================================
                 // 8. MAP ENTITY
@@ -169,11 +179,13 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // =====================================================
                 // 9. UPDATE CREDIT CONTRACT
                 // =====================================================
-                // creditContract.setUsedLimit(newUsedLimit);
-                // creditContract.setRemainingLimit(newRemainingLimit);
-                // creditContract.setUpdatedAt(LocalDateTime.now());
-
-                // creditContractRepository.save(creditContract);
+                // khi tạo bảo lãnh thì tăng dư bảo lãnh lên
+                 creditContract.setIssuedGuaranteeBalance(creditContract.getIssuedGuaranteeBalance().add(dto.getExpectedGuaranteeAmount()));
+                 creditContract.setUsedLimit(newUsedLimit);
+                 creditContract.setRemainingLimit(newRemainingLimit);
+                 creditContract.setUpdatedAt(LocalDateTime.now());
+                 creditContract.setOutstandingGuaranteeAmount(creditContract.getIssuedGuaranteeBalance().subtract(creditContract.getGuaranteeBalance()));
+                 creditContractRepository.save(creditContract);
 
                 // =====================================================
                 // 10. RETURN DTO
@@ -442,8 +454,9 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
 
                 // ===== Set lại =====
                 contract.setGuaranteeBalance(newGuaranteeBalance);
-                contract.setUsedLimit(newUsedLimit);
-                contract.setRemainingLimit(newRemaining);
+//                contract.setUsedLimit(contract.getIssuedGuaranteeBalance().add(contract.getVehicleLoanBalance().add(contract.getRealEstateLoanBalance())));
+//                contract.setRemainingLimit(newRemaining);
+                contract.setOutstandingGuaranteeAmount(contract.getIssuedGuaranteeBalance().subtract(contract.getGuaranteeBalance()));
                 contract.setUpdatedAt(LocalDateTime.now());
 
                 creditContractRepository.saveAndFlush(contract);

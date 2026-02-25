@@ -1,8 +1,5 @@
 package com.bidv.asset.vehicle.entity;
 
-import com.bidv.asset.vehicle.entity.CreditContractEntity;
-import com.bidv.asset.vehicle.entity.CustomerEntity;
-import com.bidv.asset.vehicle.entity.MortgageContractEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,7 +30,7 @@ public class GuaranteeApplicationEntity {
     private Long id;
 
     // ===== BASIC INFO =====
-    @Column(name = "application_number", nullable = false, unique = true)
+    @Column(name = "application_number", unique = true)
     private String applicationNumber; // Số đơn đề nghị
 
     @Column(name = "sub_guarantee_contract_number")
@@ -88,5 +85,11 @@ public class GuaranteeApplicationEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<VehiclesProposalEntity> vehicles;
+    private List<GuaranteeApplicationVehicleEntity> vehicles;
+    // liên kết với thư bảo lãnh thực tế
+    @OneToMany(
+            mappedBy = "guaranteeApplication",
+            fetch = FetchType.LAZY
+    )
+    private List<GuaranteeLetterEntity> guaranteeLetters;
 }

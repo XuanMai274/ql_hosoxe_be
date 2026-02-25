@@ -1,6 +1,7 @@
 package com.bidv.asset.vehicle.DTO;
 
 import com.bidv.asset.vehicle.entity.BranchAuthorizedRepresentativeEntity;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,12 +39,14 @@ public class GuaranteeLetterDTO {
     private BigDecimal totalGuaranteeAmount;
     private BigDecimal usedAmount;
     private BigDecimal remainingAmount;
-
+    // số tiền đã giải ngân
+    private BigDecimal disbursement;
     // ===== VEHICLE COUNT =====
     private Integer expectedVehicleCount;
     private Integer importedVehicleCount;
     private Integer exportedVehicleCount;
-
+    // số xe đã nhập kho
+    private Integer vehicleWarehouseCount;
     // ===== SALE CONTRACT =====
     private String saleContract;
     private BigDecimal saleContractAmount;
@@ -51,8 +54,10 @@ public class GuaranteeLetterDTO {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
+    // thời gian hết hạn của bảo lãnh
+    private LocalDate expiryDate;
     // ===== CHILD =====
     private List<Long> vehicleIds;
     private GuaranteeLetterFileDTO fileId;
+    private GuaranteeApplicationDTO guaranteeApplicationDTO;
 }

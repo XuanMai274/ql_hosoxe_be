@@ -32,4 +32,5 @@ public interface CreditContractRepository extends JpaRepository<CreditContractEn
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from CreditContractEntity c where c.id = :id")
     Optional<CreditContractEntity> findByIdForUpdate(@Param("id") Long id);
+
 }

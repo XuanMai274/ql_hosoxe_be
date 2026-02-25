@@ -41,6 +41,8 @@ public class ManufacturerEntity {
     @Column()
     private String templateCode; // VINFAST_V1 / HYUNDAI_V1
     @OneToMany(mappedBy = "manufacturer", fetch = FetchType.LAZY)
+    private List<GuaranteeApplicationEntity> guaranteeApplications;
+    @OneToMany(mappedBy = "manufacturer", fetch = FetchType.LAZY)
     private List<GuaranteeLetterEntity> guaranteeLetterEntities;
     // HDBD
     @OneToMany(mappedBy = "manufacturer",fetch = FetchType.LAZY)

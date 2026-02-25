@@ -28,6 +28,8 @@ public class CreditContractMapper {
         dto.setVehicleLoanBalance(entity.getVehicleLoanBalance());
         dto.setRealEstateLoanBalance(entity.getRealEstateLoanBalance());
         dto.setStatus(entity.getStatus());
+        dto.setIssuedGuaranteeBalance(entity.getIssuedGuaranteeBalance());
+        dto.setOutstandingGuaranteeAmount(entity.getOutstandingGuaranteeAmount());
         if (entity.getMortgageContracts() != null) {
 
             List<MortgageContractDTO> mortgageDtos =

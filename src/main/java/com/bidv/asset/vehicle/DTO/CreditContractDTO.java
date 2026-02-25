@@ -1,13 +1,17 @@
 package com.bidv.asset.vehicle.DTO;
 
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
+@Builder
 public class CreditContractDTO {
 
     private Long id;
@@ -20,8 +24,7 @@ public class CreditContractDTO {
     private BigDecimal remainingLimit;// còn lại thực tế
     private BigDecimal guaranteeBalance;// bảo lãnh thực tế
     private BigDecimal issuedGuaranteeBalance; // bảo lãnh phát hành
-    private BigDecimal issuedRemainingLimit = BigDecimal.ZERO; // còn sử dụng phát hành
-    private BigDecimal issuedUsedLimit = BigDecimal.ZERO; // sử dụng phát hành
+    private BigDecimal outstandingGuaranteeAmount;
     private BigDecimal vehicleLoanBalance;
     private BigDecimal realEstateLoanBalance;
 

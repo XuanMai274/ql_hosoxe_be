@@ -5,19 +5,21 @@ import com.bidv.asset.vehicle.Mapper.MortgageContractMapper;
 import com.bidv.asset.vehicle.Repository.CreditContractRepository;
 import com.bidv.asset.vehicle.Repository.ManufacturerRepository;
 import com.bidv.asset.vehicle.Repository.MortgageContractRepository;
+import com.bidv.asset.vehicle.Service.MortgageSequenceService;
 import com.bidv.asset.vehicle.entity.*;
 import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.MortgageContractService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+
 public class MortgageContractServiceImplement implements MortgageContractService {
 
     @Autowired
@@ -27,9 +29,11 @@ public class MortgageContractServiceImplement implements MortgageContractService
     ManufacturerRepository manufacturerRepo;
     @Autowired
     CreditContractRepository creditRepo;
-
+    @Autowired
+    MortgageSequenceService mortgageSequenceService;
     // ===== CREATE =====
     @Override
+    @Transactional
     public MortgageContractDTO create(MortgageContractDTO dto) {
 
         if (mortgageRepo.existsByContractNumber(dto.getContractNumber())) {
@@ -57,7 +61,12 @@ public class MortgageContractServiceImplement implements MortgageContractService
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
 
-        return MortgageContractMapper.toDTO(mortgageRepo.save(entity));
+        MortgageContractEntity saved = mortgageRepo.save(entity);
+
+        // tạo sequence trong cùng transaction
+        mortgageSequenceService.createSequence(saved.getId());
+
+        return MortgageContractMapper.toDTO(saved);
     }
 
     // ===== UPDATE =====

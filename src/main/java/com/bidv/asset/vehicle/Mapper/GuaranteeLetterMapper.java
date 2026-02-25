@@ -2,6 +2,7 @@ package com.bidv.asset.vehicle.Mapper;
 
 import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.entity.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -9,7 +10,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class GuaranteeLetterMapper {
-
+    @Autowired GuaranteeApplicationMapper guaranteeApplicationMapper;
     // =====================================================
     // ENTITY → DTO
     // =====================================================
@@ -22,7 +23,9 @@ public class GuaranteeLetterMapper {
         GuaranteeLetterDTO dto = new GuaranteeLetterDTO();
 
         dto.setId(entity.getId());
-
+        dto.setDisbursement(entity.getDisbursement());
+        dto.setVehicleWarehouseCount(entity.getVehicleWarehouseCount());
+        dto.setExpiryDate(entity.getExpiryDate());
         // ===== RELATION =====
         if (entity.getCreditContract() != null) {
 
@@ -36,7 +39,8 @@ public class GuaranteeLetterMapper {
             cc.setCreditLimit(credit.getCreditLimit());
             cc.setUsedLimit(credit.getUsedLimit());
             cc.setRemainingLimit(credit.getRemainingLimit());
-
+            cc.setIssuedGuaranteeBalance(credit.getIssuedGuaranteeBalance());
+            cc.setOutstandingGuaranteeAmount(credit.getOutstandingGuaranteeAmount());
             cc.setGuaranteeBalance(credit.getGuaranteeBalance());
             cc.setVehicleLoanBalance(credit.getVehicleLoanBalance());
             cc.setRealEstateLoanBalance(credit.getRealEstateLoanBalance());
@@ -80,7 +84,10 @@ public class GuaranteeLetterMapper {
             cus.setId(entity.getCustomer().getId());
             dto.setCustomerDTO(cus);
         }
+        if(entity.getGuaranteeApplication()!=null){
+            dto.setGuaranteeApplicationDTO(guaranteeApplicationMapper.toDTO(entity.getGuaranteeApplication()));
 
+        }
         // ===== GUARANTEE CONTRACT =====
         dto.setGuaranteeContractNumber(entity.getGuaranteeContractNumber());
         dto.setGuaranteeContractDate(entity.getGuaranteeContractDate());
@@ -151,7 +158,6 @@ public class GuaranteeLetterMapper {
         entity.setGuaranteeNoticeNumber(dto.getGuaranteeNoticeNumber());
         entity.setGuaranteeNoticeDate(dto.getGuaranteeNoticeDate());
         entity.setReferenceCode(dto.getReferenceCode());
-
         entity.setExpectedGuaranteeAmount(dto.getExpectedGuaranteeAmount());
         entity.setTotalGuaranteeAmount(dto.getTotalGuaranteeAmount());
         entity.setUsedAmount(dto.getUsedAmount());

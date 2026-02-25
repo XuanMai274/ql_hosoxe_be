@@ -59,8 +59,34 @@ public class LoanServiceImplement implements LoanService {
         if (guaranteeLetterEntity == null) {
             throw new RuntimeException("Vehicle not linked to guarantee letter");
         }
+        // Số hợp đồng tín dụng cụ thể tự tăng
+        // 1️⃣ Lock hợp đồng gốc
+        CreditContractEntity credit =
+                creditContractRepository.findByIdForUpdate(
+                        guaranteeLetterEntity.getCreditContract().getId()
+                ).orElseThrow(() -> new RuntimeException("Không tìm thấy HĐTD"));
 
-        CreditContractEntity credit = guaranteeLetterEntity.getCreditContract();
+        // 2️⃣ Lấy số lớn nhất hiện tại
+        Integer maxSeq = loanRepository
+                .findMaxChildSequence(credit.getId());
+
+        int nextSeq = maxSeq + 1;
+
+        // 3️⃣ Format 01, 02, 03
+        String seqFormatted = String.format("%02d", nextSeq);
+
+        // 4️⃣ Build số hợp đồng
+        String masterNumber = credit.getContractNumber();
+        // ví dụ: 01/2025/10987477/HDTD
+
+        String rootCode = masterNumber.split("/")[0]; // 01
+        String rest = masterNumber.substring(masterNumber.indexOf("/"));
+
+        String loanContractNumber =
+                rootCode + "." + seqFormatted
+                        + rest.replace("HDTD", "HDTDCT");
+
+//        CreditContractEntity credit = guaranteeLetterEntity.getCreditContract();
 
         if (credit == null) {
             throw new RuntimeException("Guarantee not linked to credit contract");
@@ -86,24 +112,36 @@ public class LoanServiceImplement implements LoanService {
        =============== UPDATE GUARANTEE LETTER =================
        ========================================================= */
 
-        // giảm tổng bảo lãnh thực tế
-        guaranteeLetterEntity.setTotalGuaranteeAmount(
-                nvl(guaranteeLetterEntity.getTotalGuaranteeAmount()).subtract(loanAmount)
+//        // giảm tổng bảo lãnh thực tế
+//        guaranteeLetterEntity.setTotalGuaranteeAmount(
+//                nvl(guaranteeLetterEntity.getTotalGuaranteeAmount()).subtract(loanAmount)
+//        );
+//
+//        // tăng bảo lãnh còn lại
+//        guaranteeLetterEntity.setRemainingAmount(
+//                nvl(guaranteeLetterEntity.getRemainingAmount()).add(loanAmount)
+//        );
+//
+//        // giảm số tiền đã sử dụng
+//        guaranteeLetterEntity.setUsedAmount(
+//                nvl(guaranteeLetterEntity.getUsedAmount()).subtract(loanAmount)
+//        );
+//
+//        // giảm số lượng xe đã nhập
+//        guaranteeLetterEntity.setImportedVehicleCount(
+//                nvlInt(guaranteeLetterEntity.getImportedVehicleCount()) - 1
+//        );
+        // tăng lên số dư xe nhập kho
+        guaranteeLetterEntity.setVehicleWarehouseCount(
+                guaranteeLetterEntity.getVehicleWarehouseCount() == null
+                        ? 1
+                        : guaranteeLetterEntity.getVehicleWarehouseCount() + 1
         );
-
-        // tăng bảo lãnh còn lại
-        guaranteeLetterEntity.setRemainingAmount(
-                nvl(guaranteeLetterEntity.getRemainingAmount()).add(loanAmount)
-        );
-
-        // giảm số tiền đã sử dụng
-        guaranteeLetterEntity.setUsedAmount(
-                nvl(guaranteeLetterEntity.getUsedAmount()).subtract(loanAmount)
-        );
-
-        // giảm số lượng xe đã nhập
-        guaranteeLetterEntity.setImportedVehicleCount(
-                nvlInt(guaranteeLetterEntity.getImportedVehicleCount()) - 1
+        // tăng tiền xe đã giải ngân
+        guaranteeLetterEntity.setDisbursement(
+                guaranteeLetterEntity.getDisbursement() == null
+                        ? loanAmount
+                        : guaranteeLetterEntity.getDisbursement().add(loanAmount)
         );
 
         guaranteeLetterEntity.setUpdatedAt(LocalDateTime.now());
@@ -112,21 +150,22 @@ public class LoanServiceImplement implements LoanService {
        ================= UPDATE CREDIT CONTRACT =================
        ========================================================= */
 
-        // giảm dư bảo lãnh
+        // giảm dư bảo lãnh phát hành
         credit.setGuaranteeBalance(
-                nvl(credit.getGuaranteeBalance()).subtract(loanAmount)
+                nvl(credit.getIssuedGuaranteeBalance()).subtract(loanAmount)
         );
-
+        // giảm dư bảo lãnh thực tế
+        credit.setGuaranteeBalance(nvl(credit.getGuaranteeBalance().subtract(loanAmount)));
         // tăng dư nợ vay xe
         credit.setVehicleLoanBalance(
                 nvl(credit.getVehicleLoanBalance()).add(loanAmount)
         );
-
         // tính lại hạn mức đã sử dụng=dư nợ vay xe+dư bảo lãnh+dư nợ vay BDS
         credit.setUsedLimit(
                 nvl(credit.getRealEstateLoanBalance().add(credit.getVehicleLoanBalance()).add(credit.getGuaranteeBalance()))
         );
-
+        // Tính số dư bảo lãnh chênh lệch
+        credit.setOutstandingGuaranteeAmount(credit.getIssuedGuaranteeBalance().subtract(credit.getGuaranteeBalance()));
         // tính lại hạn mức còn lại= tổng hạn mức - hạn mức đã sử dụng
         credit.setRemainingLimit(
                 nvl(credit.getCreditLimit()).subtract(credit.getUsedLimit())
@@ -140,7 +179,8 @@ public class LoanServiceImplement implements LoanService {
         /* ================= CREATE LOAN ================= */
 
         LoanEntity entity = loanMapper.toEntity(dto);
-
+        entity.setChildSequence(nextSeq);
+        entity.setLoanContractNumber(loanContractNumber);
         entity.setLoanAmount(loanAmount);
         entity.setCustomer(
                 customerRepository.findById(dto.getCustomerDTO().getId())
@@ -196,7 +236,7 @@ public class LoanServiceImplement implements LoanService {
                 oldGuarantee.getUsedAmount().subtract(oldAmount)
         );
 
-        oldVehicle.setStatus("Trong kho");
+        oldVehicle.setStatus("Giữ trong kho");
 
         /* ================= APPLY NEW ================= */
 
