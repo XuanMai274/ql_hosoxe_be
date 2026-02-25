@@ -110,6 +110,9 @@ public class GuaranteeLetterMapper {
         dto.setSaleContract(entity.getSaleContract());
         dto.setSaleContractAmount(entity.getSaleContractAmount());
 
+        // ===== THỜI HẠN BẢO LÃNH =====
+        dto.setExpiryDate(entity.getExpiryDate());
+
         dto.setStatus(entity.getStatus());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
@@ -170,6 +173,8 @@ public class GuaranteeLetterMapper {
         entity.setSaleContract(dto.getSaleContract());
         entity.setSaleContractAmount(dto.getSaleContractAmount());
 
+        entity.setExpiryDate(dto.getExpiryDate());
+
         entity.setStatus(dto.getStatus());
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setUpdatedAt(dto.getUpdatedAt());
@@ -203,6 +208,8 @@ public class GuaranteeLetterMapper {
 
         entity.setSaleContract(dto.getSaleContract());
         entity.setSaleContractAmount(dto.getSaleContractAmount());
+
+        entity.setExpiryDate(dto.getExpiryDate());
 
         entity.setStatus(dto.getStatus());
         entity.setUpdatedAt(dto.getUpdatedAt());

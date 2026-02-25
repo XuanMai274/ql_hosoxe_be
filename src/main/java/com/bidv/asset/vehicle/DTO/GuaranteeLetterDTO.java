@@ -51,6 +51,9 @@ public class GuaranteeLetterDTO {
     private String saleContract;
     private BigDecimal saleContractAmount;
 
+    // ===== THỜI HẠN BẢO LÃNH =====
+    private LocalDate expiryDate; // ngày hết hạn thư bảo lãnh
+
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
