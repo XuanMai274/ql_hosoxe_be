@@ -3,7 +3,7 @@ package com.bidv.asset.vehicle.ServiceImplement;
 import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.Repository.VehicleRepository;
-import com.bidv.asset.vehicle.Service.NhapKhoExportService;
+import com.bidv.asset.vehicle.Service.VehicleWarehouseExportService;
 import com.bidv.asset.vehicle.Utill.VietnameseNumberUtil;
 import org.apache.poi.xwpf.usermodel.*;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
@@ -16,7 +16,7 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.*;
 @Service
-public class NhapKhoExportImplement implements NhapKhoExportService {
+public class VehicleWarehouseExportImplement implements VehicleWarehouseExportService {
     @Autowired
     VehicleRepository vehicleRepository;
 
@@ -224,7 +224,7 @@ public class NhapKhoExportImplement implements NhapKhoExportService {
 
         BigDecimal total = calculateTotal(vehicles);
 
-        replaceVehicleTable(doc, vehicles);
+        replaceVehicleTableDeep(doc, vehicles);
 
         Map<String,String> map =
                 buildCommonData(vehicles, total);
@@ -244,7 +244,7 @@ public class NhapKhoExportImplement implements NhapKhoExportService {
 
         BigDecimal total = calculateTotal(vehicles);
 
-        replaceVehicleTable(doc, vehicles);
+        replaceVehicleTableDeep(doc, vehicles);
 
         Map<String,String> map =
                 buildCommonData(vehicles, total);
@@ -253,6 +253,58 @@ public class NhapKhoExportImplement implements NhapKhoExportService {
         forceTimesNewRoman(doc);
         return writeDoc(doc);
     }
+    /* ========================================================= */
+    /* =================THAY THẾ BẢNG CHO ĐĂNG KÝ GIAO DỊCH ĐẢM BẢO ============= */
+    /* ========================================================= */
+    private void replaceVehicleTableDeep(XWPFDocument doc, List<VehicleDTO> vehicles) {
+        for (XWPFTable table : doc.getTables()) {
+            processTableRecursive(table, vehicles);
+        }
+    }
+    private void processTableRecursive(XWPFTable table, List<VehicleDTO> vehicles) {
+
+        // ===== xử lý chính bảng hiện tại =====
+        for (int i = 0; i < table.getRows().size(); i++) {
+
+            XWPFTableRow row = table.getRow(i);
+            if (row.getCell(0) == null) continue;
+
+            String firstCell = row.getCell(0).getText();
+
+            if (firstCell != null && firstCell.toLowerCase().contains("{{stt}}")) {
+
+                int templateIndex = i;
+
+                for (int j = 0; j < vehicles.size(); j++) {
+
+                    VehicleDTO v = vehicles.get(j);
+
+                    XWPFTableRow newRow =
+                            table.insertNewTableRow(templateIndex + j);
+
+                    copyRow(row, newRow);
+
+                    Map<String, String> data =
+                            buildVehicleData(v, j + 1);
+
+                    replaceRowPlaceholders(newRow, data);
+                }
+
+                table.removeRow(templateIndex + vehicles.size());
+                break;
+            }
+        }
+
+        for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+
+                for (XWPFTable nested : cell.getTables()) {
+                    processTableRecursive(nested, vehicles);
+                }
+            }
+        }
+    }
+
     /* ========================================================= */
     /* ================= TABLE REPLACEMENT ====================== */
     /* ========================================================= */

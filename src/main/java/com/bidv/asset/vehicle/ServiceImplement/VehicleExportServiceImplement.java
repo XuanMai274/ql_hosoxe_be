@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.DTO.VehicleExcelDTO;
 import com.bidv.asset.vehicle.Repository.VehicleRepository;
@@ -65,27 +66,30 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     @Override
     public byte[] generatePNK(List<VehicleDTO> vehicles) throws IOException {
 
-        XWPFDocument doc = loadTemplate("/templates/NhapKho/PNK.docx");
-
-        BigDecimal total = BigDecimal.ZERO;
-
-        for (VehicleDTO v : vehicles) {
-            if (v.getPrice() != null) {
-                total = total.add(v.getPrice());
-            }
+        if (vehicles == null || vehicles.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
         }
 
-        replaceVehicleTable(doc, vehicles);
-        // HEADER
-        Map<String,String> header = buildHeaderData(vehicles);
+        String manufacturer =
+                vehicles.get(0).getManufacturerDTO().getName();
 
-        header.put("{{TONG}}", formatMoney(total));
-        header.put("{{TONG_TEXT}}",
-                VietnameseNumberUtil.toVietnamese(total));
-        header.put("{{CURRENT _DATE}}", formatDate(LocalDate.now()));
-        header.put("{{CURRENT_DATE_TITLE}}", formatDateTitle(LocalDate.now()));
+        List<VehicleDTO> filtered =
+                filterByManufacturer(vehicles, manufacturer);
 
-        replaceAll(doc, header);
+        if (filtered.isEmpty()) {
+            throw new RuntimeException("Không có xe thuộc loại " + manufacturer);
+        }
+
+        XWPFDocument doc = loadTemplate("/templates/NhapKho/PNK.docx");
+
+        BigDecimal total = calculateTotal(filtered);
+
+        replaceVehicleTable(doc, filtered);
+
+        Map<String,String> map =
+                buildCommonData(filtered, total);
+
+        replaceAll(doc, map);
 
         return writeDoc(doc);
     }
@@ -94,22 +98,31 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     /* =================== BÁO CÁO ĐỊNH GIÁ ===================== */
     /* ========================================================= */
 
-    public byte[] generateBaoCaoDinhGia(List<VehicleDTO> vehicles) throws IOException {
+    public byte[] generateBaoCaoDinhGia(
+            List<VehicleDTO> vehicles
+    ) throws IOException {
 
-        XWPFDocument doc = loadTemplate("/templates/NhapKho/bao-cao-dinh-gia-tai-san.docx");
+        if (vehicles == null || vehicles.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
+        }
 
-        BigDecimal total = calculateTotal(vehicles);
+        String manufacturer =
+                vehicles.get(0).getManufacturerDTO().getName();
 
-        replaceVehicleTable(doc, vehicles);
-        // HEADER
-        Map<String,String> header = buildHeaderData(vehicles);
-        Map<String,String> map = new HashMap<>();
-        map.put("{{TONG}}", formatMoney(total));
-        map.put("{{TONG_TEXT}}",
-                VietnameseNumberUtil.toVietnamese(total));
-        map.put("{{TONG_80%}}", formatMoney(total.multiply(BigDecimal.valueOf(0.8))));
+        List<VehicleDTO> filtered =
+                filterByManufacturer(vehicles, manufacturer);
 
-        replaceAll(doc,map);
+        XWPFDocument doc =
+                loadTemplate("/templates/NhapKho/bao-cao-dinh-gia-tai-san.docx");
+
+        BigDecimal total = calculateTotal(filtered);
+
+        replaceVehicleTable(doc, filtered);
+
+        Map<String,String> map =
+                buildCommonData(filtered, total);
+
+        replaceAll(doc, map);
 
         return writeDoc(doc);
     }
@@ -118,23 +131,31 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     /* ================= BIÊN BẢN ĐỊNH GIÁ ====================== */
     /* ========================================================= */
 
-    public byte[] generateBienBanDinhGia(List<VehicleDTO> vehicles) throws IOException {
+    public byte[] generateBienBanDinhGia(
+            List<VehicleDTO> vehicles
+    ) throws IOException {
 
-        XWPFDocument doc = loadTemplate("/templates/NhapKho/bien-ban-dinh-gia-NK.docx");
+        if (vehicles == null || vehicles.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
+        }
 
-        BigDecimal total = calculateTotal(vehicles);
+        String manufacturer =
+                vehicles.get(0).getManufacturerDTO().getName();
 
-        replaceVehicleTable(doc, vehicles);
-        // HEADER
-        Map<String,String> header = buildHeaderData(vehicles);
-        Map<String,String> map = new HashMap<>();
+        List<VehicleDTO> filtered =
+                filterByManufacturer(vehicles, manufacturer);
 
-        map.put("{{CURRENT_DATE}}", formatDate(LocalDate.now()));
-        map.put("{{TONG}}", formatMoney(total));
-        map.put("{{TONG_TEXT}}",
-                VietnameseNumberUtil.toVietnamese(total));
+        XWPFDocument doc =
+                loadTemplate("/templates/NhapKho/bien-ban-dinh-gia-NK.docx");
 
-        replaceAll(doc,map);
+        BigDecimal total = calculateTotal(filtered);
+
+        replaceVehicleTable(doc, filtered);
+
+        Map<String,String> map =
+                buildCommonData(filtered, total);
+
+        replaceAll(doc, map);
 
         return writeDoc(doc);
     }
@@ -142,21 +163,42 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     /* ========================================================= */
     /* ================= PHỤ LỤC HĐ HYUNDAI ===================== */
     /* ========================================================= */
+    public byte[] generatePhuLucHopDongTheChap(
+            List<VehicleDTO> vehicles
+    ) throws IOException {
 
-    public byte[] generatePhuLucHyundai(List<VehicleDTO> vehicles) throws IOException {
+        String manufacturerCode = validateAndGetManufacturerCode(vehicles);
 
-        XWPFDocument doc = loadTemplate("/templates/NhapKho/phu-luc-hop-dong-thue-chap-hyndai.docx");
+        switch (manufacturerCode.toUpperCase()) {
+
+            case "HYUNDAI":
+                return generatePhuLucHyundai(vehicles);
+
+            case "VINFAST":
+                return generatePhuLucVinfast(vehicles);
+
+            default:
+                throw new RuntimeException(
+                        "Chưa cấu hình template cho hãng: " + manufacturerCode);
+        }
+    }
+    public byte[] generatePhuLucHyundai(
+            List<VehicleDTO> vehicles
+    ) throws IOException {
+
+        validateSingleManufacturer(vehicles, "HYUNDAI");
+
+        XWPFDocument doc =
+                loadTemplate("/templates/NhapKho/phu-luc-hop-dong-thue-chap-hyndai.docx");
 
         BigDecimal total = calculateTotal(vehicles);
 
         replaceVehicleTable(doc, vehicles);
-        // HEADER
-        Map<String,String> header = buildHeaderData(vehicles);
-        Map<String,String> map = new HashMap<>();
-        map.put("{{TONG}}", formatMoney(total));
-        map.put("{{TONG_TEXT}}",
-                VietnameseNumberUtil.toVietnamese(total));
-        replaceAll(doc,map);
+
+        Map<String,String> map =
+                buildCommonData(vehicles, total);
+
+        replaceAll(doc, map);
 
         return writeDoc(doc);
     }
@@ -165,26 +207,47 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     /* ================= PHỤ LỤC HĐ VINFAST ===================== */
     /* ========================================================= */
 
-    public byte[] generatePhuLucVinfast(List<VehicleDTO> vehicles) throws IOException {
+    public byte[] generatePhuLucVinfast(
+            List<VehicleDTO> vehicles
+    ) throws IOException {
 
-        XWPFDocument doc = loadTemplate("/templates/NhapKho/phu-luc-hop-dong-thue-chap-vinfast.docx");
+        validateSingleManufacturer(vehicles, "VINFAST");
+
+        XWPFDocument doc =
+                loadTemplate("/templates/NhapKho/phu-luc-hop-dong-thue-chap-vinfast.docx");
 
         BigDecimal total = calculateTotal(vehicles);
 
         replaceVehicleTable(doc, vehicles);
-        // HEADER
-        Map<String,String> header = buildHeaderData(vehicles);
-        Map<String,String> map = new HashMap<>();
-        map.put("{{TONG}}", formatMoney(total));
-        map.put("{{TONG_TEXT}}",
-                VietnameseNumberUtil.toVietnamese(total));
-        map.put("{{CURRENT_DATE_TITLE}}", formatDateTitle(LocalDate.now()));
 
-        replaceAll(doc,map);
+        Map<String,String> map =
+                buildCommonData(vehicles, total);
+
+        replaceAll(doc, map);
 
         return writeDoc(doc);
     }
-
+    // ĐĂNG KÝ GIAO DỊCH ĐẢM BẢO
+//    public byte[] generateDangKiGiaoDichDamBao(
+//            List<VehicleDTO> vehicles
+//    ) throws IOException {
+//
+//        String manufacturerCode = validateAndGetManufacturerCode(vehicles);
+//
+//        switch (manufacturerCode.toUpperCase()) {
+//
+//            case "HYUNDAI":
+//                return generateDangKyHyundai(vehicles);
+//
+//            case "VINFAST":
+//                return generateDangKyVinfast(vehicles);
+//
+//            default:
+//                throw new RuntimeException(
+//                        "Chưa cấu hình đăng ký giao dịch đảm bảo cho hãng: "
+//                                + manufacturerCode);
+//        }
+//    }
     /* ========================================================= */
     /* ================= TABLE REPLACEMENT ====================== */
     /* ========================================================= */
@@ -250,6 +313,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         map.put("{{seats}}", v.getSeats() == null ? "" : v.getSeats().toString());
         map.put("{{price}}", formatMoney(v.getPrice()));
         map.put("{{importDossier}}", safe(v.getImportDossier()));
+        map.put("{{manufacturer}}",safe(v.getManufacturerDTO().getCode()));
 //        if (v.getGuaranteeLetterDTO()!=null &&
 //                v.getGuaranteeLetterDTO().getManufacturerDTO()!=null) {
 //
@@ -259,13 +323,13 @@ public class VehicleExportServiceImplement implements VehicleExportService {
 //                            .getName()));
 //        }
 
-        if (v.getGuaranteeLetterDTO() != null) {
-            map.put("{{HDBD}}",
-                    safe(v.getGuaranteeLetterDTO().getGuaranteeContractNumber()));
-
-            map.put("{{HDBD_DATE}}",
-                    formatDate(v.getGuaranteeLetterDTO().getGuaranteeContractDate()));
-        }
+//        if (v.getGuaranteeLetterDTO() != null) {
+//            map.put("{{HDBD}}",
+//                    safe(v.getGuaranteeLetterDTO().getGuaranteeContractNumber()));
+//
+//            map.put("{{HDBD_DATE}}",
+//                    formatDate(v.getGuaranteeLetterDTO().getGuaranteeContractDate()));
+//        }
 
         return map;
     }
@@ -277,20 +341,97 @@ public class VehicleExportServiceImplement implements VehicleExportService {
 
         VehicleDTO first = vehicles.get(0);
 
-        if (first.getGuaranteeLetterDTO() != null) {
-
-            map.put("{{HDBD}}",
-                    safe(first.getGuaranteeLetterDTO()
-                            .getGuaranteeContractNumber()));
-
-            map.put("{{HDBD_DATE}}",
-                    formatDate(first.getGuaranteeLetterDTO()
-                            .getGuaranteeContractDate()));
-        }
+//        if (first.getGuaranteeLetterDTO() != null) {
+//
+//            map.put("{{HDBD}}",
+//                    safe(first.getGuaranteeLetterDTO()
+//                            .getGuaranteeContractNumber()));
+//
+//            map.put("{{HDBD_DATE}}",
+//                    formatDate(first.getGuaranteeLetterDTO()
+//                            .getGuaranteeContractDate()));
+//        }
 
         return map;
     }
+    // hàm build thông tin chung
+    private Map<String, String> buildCommonData(
+            List<VehicleDTO> vehicles,
+            BigDecimal total
+    ) {
 
+        Map<String, String> map = new HashMap<>();
+
+        if (vehicles == null || vehicles.isEmpty()) {
+            return map;
+        }
+
+        VehicleDTO first = vehicles.get(0);
+
+        /* ================= HDBD THEO LOẠI XE ================= */
+        System.out.println("Vehicle ID: " + first.getId());
+
+        System.out.println("GuaranteeLetter: "
+                + first.getGuaranteeLetterDTO());
+
+        if (first.getGuaranteeLetterDTO() != null) {
+            System.out.println("CreditContract: "
+                    + first.getGuaranteeLetterDTO().getCreditContractDTO());
+        }
+        MortgageContractDTO matchedMortgage =
+                findMortgageByVehicle(first);
+        System.out.println("HDBD"+matchedMortgage.getContractNumber());
+        System.out.println("HDBD"+matchedMortgage.getContractDate());
+        if (matchedMortgage != null) {
+
+            System.out.println("HDBD " + matchedMortgage.getContractNumber());
+            System.out.println("HDBD DATE " + matchedMortgage.getContractDate());
+
+            map.put("{{HDBD}}",
+                    safe(matchedMortgage.getContractNumber()));
+
+            map.put("{{HDBD_DATE}}",
+                    formatDate(matchedMortgage.getContractDate()));
+        }
+
+        /* ================= CREDIT CONTRACT ================= */
+
+        if (first.getGuaranteeLetterDTO() != null
+                && first.getGuaranteeLetterDTO().getCreditContractDTO() != null) {
+
+            var credit =
+                    first.getGuaranteeLetterDTO().getCreditContractDTO();
+
+            map.put("{{HDTD}}",
+                    safe(credit.getContractNumber()));
+
+            map.put("{{HDTD_DATE}}",
+                    formatDate(credit.getContractDate()));
+        }
+
+        /* ================= TỔNG TIỀN ================= */
+
+        if (total != null) {
+
+            map.put("{{TONG}}",
+                    formatMoney(total));
+
+            map.put("{{TONG_TEXT}}",
+                    VietnameseNumberUtil.toVietnamese(total));
+
+            map.put("{{TONG_80%}}",
+                    formatMoney(total.multiply(BigDecimal.valueOf(0.8))));
+        }
+
+        /* ================= NGÀY ================= */
+
+        LocalDate now = LocalDate.now();
+
+        map.put("{{CURRENT_DATE}}", formatDate(now));
+        map.put("{{CURRENT_DATE_TITLE}}", formatDateTitle(now));
+
+        return map;
+    }
     /* ========================================================= */
     /* ================= HELPER ================================ */
     /* ========================================================= */
@@ -489,5 +630,109 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         dto.setVehicleCreatedAt(v.getCreatedAt());
 
         return dto;
+    }
+    private List<VehicleDTO> filterByManufacturer(
+            List<VehicleDTO> vehicles,
+            String manufacturerName
+    ) {
+
+        if (vehicles == null || vehicles.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return vehicles.stream()
+                .filter(v -> v.getManufacturerDTO() != null
+                        && manufacturerName.equalsIgnoreCase(
+                        v.getManufacturerDTO().getName()))
+                .toList();
+    }
+    private void validateSingleManufacturer(
+            List<VehicleDTO> vehicles,
+            String requiredCode
+    ) {
+
+        if (vehicles == null || vehicles.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
+        }
+
+        for (VehicleDTO v : vehicles) {
+            String actualCode =
+                    v.getManufacturerDTO() != null
+                            ? v.getManufacturerDTO().getCode()
+                            : null;
+
+            System.out.println("Required: " + requiredCode);
+            System.out.println("Actual  : " + actualCode);
+            if (v.getManufacturerDTO() == null
+                    || v.getManufacturerDTO().getCode() == null) {
+
+                throw new RuntimeException("Xe thiếu thông tin hãng");
+            }
+
+            if (!requiredCode.equalsIgnoreCase(
+                    v.getManufacturerDTO().getCode())) {
+
+                throw new RuntimeException(
+                        "Danh sách không phải xe " + requiredCode);
+            }
+        }
+    }
+    private String validateAndGetManufacturerCode(
+            List<VehicleDTO> vehicles
+    ) {
+
+        if (vehicles == null || vehicles.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
+        }
+
+        if (vehicles.get(0).getManufacturerDTO() == null
+                || vehicles.get(0).getManufacturerDTO().getCode() == null) {
+            throw new RuntimeException("Xe thiếu thông tin hãng");
+        }
+
+        String code =
+                vehicles.get(0).getManufacturerDTO().getCode();
+
+        for (VehicleDTO v : vehicles) {
+
+            if (v.getManufacturerDTO() == null
+                    || v.getManufacturerDTO().getCode() == null
+                    || !code.equalsIgnoreCase(
+                    v.getManufacturerDTO().getCode())) {
+
+                throw new RuntimeException(
+                        "Danh sách chứa nhiều hãng xe khác nhau");
+            }
+        }
+
+        return code;
+    }
+    private MortgageContractDTO findMortgageByVehicle(VehicleDTO vehicle) {
+
+        if (vehicle.getManufacturerDTO() == null
+                || vehicle.getManufacturerDTO().getCode() == null
+                || vehicle.getGuaranteeLetterDTO() == null
+                || vehicle.getGuaranteeLetterDTO().getCreditContractDTO() == null
+                || vehicle.getGuaranteeLetterDTO()
+                .getCreditContractDTO()
+                .getMortgageContractIds() == null) {
+            return null;
+        }
+
+        String manufacturerCode =
+                vehicle.getManufacturerDTO().getCode();
+        System.out.println("Mortgage list: " +
+                vehicle.getGuaranteeLetterDTO()
+                        .getCreditContractDTO()
+                        .getMortgageContractIds());
+        return vehicle.getGuaranteeLetterDTO()
+                .getCreditContractDTO()
+                .getMortgageContractIds()
+                .stream()
+                .filter(m -> m.getManufacturerDTO() != null
+                        && manufacturerCode.equalsIgnoreCase(
+                        m.getManufacturerDTO().getCode()))
+                .findFirst()
+                .orElse(null);
     }
 }

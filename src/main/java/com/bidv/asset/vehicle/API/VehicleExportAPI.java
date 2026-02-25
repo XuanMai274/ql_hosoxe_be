@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/officer/vehicles/export")
 @RequiredArgsConstructor
-public class VehicleWarehouse {
+public class VehicleExportAPI {
     @Autowired
     VehicleExportService vehicleExportService;
     @Autowired

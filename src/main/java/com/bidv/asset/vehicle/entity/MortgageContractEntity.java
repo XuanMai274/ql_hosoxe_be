@@ -34,6 +34,13 @@ public class MortgageContractEntity {
 
     @Column(name = "remaining_collateral_value", precision = 18, scale = 2)
     private BigDecimal remainingCollateralValue;
+    @Column(name="security_registration_number")
+    private String securityRegistrationNumber; // số đơn đăng kí giao dịch đảm bảo
+    @Column(name="personal_id_number")
+    private String personalIdNumber; // mã cá nhân
+    // loại xe
+    @Column(name = "template_code")
+    private String templateCode;
     @Column
     private String status;
     // ===== CUSTOMER =====

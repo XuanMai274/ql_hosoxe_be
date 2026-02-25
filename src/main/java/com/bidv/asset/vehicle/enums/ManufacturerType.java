@@ -1,4 +1,9 @@
 package com.bidv.asset.vehicle.enums;
 
-public class ManufacturerType {
+
+public enum ManufacturerType {
+
+    HYUNDAI,
+    VINFAST
+
 }

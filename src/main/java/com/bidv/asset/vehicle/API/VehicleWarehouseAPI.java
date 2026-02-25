@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/officer/vehicles/nhapkho")
-public class API {
+public class VehicleWarehouseAPI {
     @Autowired
     VehicleWarehouseExportService vehicleWarehouseExportService;
     @Autowired

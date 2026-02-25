@@ -6,7 +6,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import java.io.IOException;
 import java.util.List;
 
-public interface NhapKhoExportService {
+public interface VehicleWarehouseExportService {
     void replaceVehicleTable(XWPFDocument doc, List<VehicleDTO> vehicles);
     byte[] generatePNK(List<VehicleDTO> vehicles) throws IOException;
 

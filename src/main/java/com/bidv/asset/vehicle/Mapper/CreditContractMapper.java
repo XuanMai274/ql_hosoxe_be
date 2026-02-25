@@ -1,10 +1,12 @@
 package com.bidv.asset.vehicle.Mapper;
 
 import com.bidv.asset.vehicle.DTO.CreditContractDTO;
+import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.entity.*;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,12 +29,15 @@ public class CreditContractMapper {
         dto.setRealEstateLoanBalance(entity.getRealEstateLoanBalance());
         dto.setStatus(entity.getStatus());
         if (entity.getMortgageContracts() != null) {
-            dto.setMortgageContractIds(
+
+            List<MortgageContractDTO> mortgageDtos =
                     entity.getMortgageContracts()
                             .stream()
-                            .map(MortgageContractEntity::getId)
-                            .collect(Collectors.toList())
-            );
+                            .map(this::mapMortgageToDto)
+                            .collect(Collectors.toList());
+
+            dto.setMortgageContractIds(mortgageDtos);
+
         } else {
             dto.setMortgageContractIds(Collections.emptyList());
         }
@@ -84,6 +89,16 @@ public class CreditContractMapper {
         entity.setGuaranteeBalance(dto.getGuaranteeBalance());
         entity.setVehicleLoanBalance(dto.getVehicleLoanBalance());
         entity.setRealEstateLoanBalance(dto.getRealEstateLoanBalance());
+        if (dto.getMortgageContractIds() != null) {
+
+            List<MortgageContractEntity> mortgageEntities =
+                    dto.getMortgageContractIds()
+                            .stream()
+                            .map(this::mapMortgageToEntity)
+                            .collect(Collectors.toList());
+
+            entity.setMortgageContracts(mortgageEntities);
+        }
 
 //        if (dto.getCustomerId() != null) {
 //            CustomerEntity customer = new CustomerEntity();
@@ -96,4 +111,31 @@ public class CreditContractMapper {
 
         return entity;
     }
+    /* ===================================================== */
+    /* ============== MORTGAGE MAPPING ===================== */
+    /* ===================================================== */
+
+    private MortgageContractDTO mapMortgageToDto(MortgageContractEntity entity) {
+
+        if (entity == null) return null;
+
+        MortgageContractDTO dto = new MortgageContractDTO();
+        dto.setId(entity.getId());
+        dto.setContractNumber(entity.getContractNumber());
+        dto.setContractDate(entity.getContractDate());
+
+        return dto;
+    }
+
+    private MortgageContractEntity mapMortgageToEntity(MortgageContractDTO dto) {
+
+        if (dto == null) return null;
+
+        MortgageContractEntity entity = new MortgageContractEntity();
+        entity.setId(dto.getId());
+
+        // Nếu chỉ cần set id để attach quan hệ thì vậy là đủ
+        return entity;
+    }
 }
+

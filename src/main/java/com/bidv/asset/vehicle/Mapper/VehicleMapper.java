@@ -15,6 +15,7 @@ public class VehicleMapper {
     @Autowired
     DocumentMapper documentMapper;
     @Autowired ManufacturerMapper manufacturerMapper;
+    @Autowired GuaranteeLetterMapper guaranteeLetterMapper;
     /* ===================== ENTITY → DTO ===================== */
     public VehicleDTO toDto(VehicleEntity entity) {
         if (entity == null) return null;
@@ -99,26 +100,26 @@ public class VehicleMapper {
 
         /* ===== GUARANTEE LETTER ===== */
         if (entity.getGuaranteeLetter() != null) {
-            GuaranteeLetterEntity g = entity.getGuaranteeLetter();
-
-            GuaranteeLetterDTO guaranteeDTO = new GuaranteeLetterDTO();
-            guaranteeDTO.setId(g.getId());
-            guaranteeDTO.setGuaranteeContractNumber(g.getGuaranteeContractNumber());
-            guaranteeDTO.setTotalGuaranteeAmount(g.getTotalGuaranteeAmount());
-            guaranteeDTO.setRemainingAmount(g.getRemainingAmount());
-            guaranteeDTO.setReferenceCode(g.getReferenceCode());
-            guaranteeDTO.setGuaranteeNoticeNumber(g.getGuaranteeNoticeNumber());
-            ManufacturerDTO manufacturerDTO=new ManufacturerDTO();
-            manufacturerDTO.setCode(g.getManufacturer().getCode());
-            manufacturerDTO.setTemplateCode(g.getManufacturer().getTemplateCode());
-            manufacturerDTO.setId(g.getManufacturer().getId());
-            manufacturerDTO.setName(g.getManufacturer().getName());
-//            guaranteeDTO.setManufacturerDTO(manufacturerDTO);
-            CreditContractDTO creditContractDTO=new CreditContractDTO();
-            creditContractDTO.setContractNumber(entity.getGuaranteeLetter().getCreditContract().getContractNumber());
-            creditContractDTO.setContractDate(entity.getGuaranteeLetter().getCreditContract().getContractDate());
+            dto.setGuaranteeLetterDTO(guaranteeLetterMapper.toDto(entity.getGuaranteeLetter()));
+//            GuaranteeLetterEntity g = entity.getGuaranteeLetter();
+//            GuaranteeLetterDTO guaranteeDTO = new GuaranteeLetterDTO();
+//            guaranteeDTO.setId(g.getId());
+//            guaranteeDTO.setGuaranteeContractNumber(g.getGuaranteeContractNumber());
+//            guaranteeDTO.setTotalGuaranteeAmount(g.getTotalGuaranteeAmount());
+//            guaranteeDTO.setRemainingAmount(g.getRemainingAmount());
+//            guaranteeDTO.setReferenceCode(g.getReferenceCode());
+//            guaranteeDTO.setGuaranteeNoticeNumber(g.getGuaranteeNoticeNumber());
+//            ManufacturerDTO manufacturerDTO=new ManufacturerDTO();
+//            manufacturerDTO.setCode(g.getManufacturer().getCode());
+//            manufacturerDTO.setTemplateCode(g.getManufacturer().getTemplateCode());
+//            manufacturerDTO.setId(g.getManufacturer().getId());
+//            manufacturerDTO.setName(g.getManufacturer().getName());
+////            guaranteeDTO.setManufacturerDTO(manufacturerDTO);
+//            CreditContractDTO creditContractDTO=new CreditContractDTO();
+//            creditContractDTO.setContractNumber(entity.getGuaranteeLetter().getCreditContract().getContractNumber());
+//            creditContractDTO.setContractDate(entity.getGuaranteeLetter().getCreditContract().getContractDate());
 //            guaranteeDTO.setCreditContractDTO(creditContractDTO);
-            dto.setGuaranteeLetterDTO(guaranteeDTO);
+//            dto.setGuaranteeLetterDTO(guaranteeDTO);
         }
 
         return dto;
