@@ -146,14 +146,32 @@ public class AuthServiceImplement implements AuthService {
             return LoginResponse.builder().success(false).message("Refresh token không tồn tại trong hệ thống").build();
         }
 
+        // Tạo tokens mới (Rotation)
         String roleCode = account.getRole() != null ? account.getRole().getCode() : "USER";
         String newAccessToken = jwtUtils.generateAccessToken(account.getUsername(), roleCode);
+        String newRefreshToken = jwtUtils.generateRefreshToken(account.getUsername());
+
+        // Cập nhật refresh token mới vào DB
+        account.setRefreshToken(newRefreshToken);
+        userAccountRepository.save(account);
+
+        // Lấy thông tin hiển thị
+        String fullName = account.getUsername();
+        if (account.getEmployee() != null) {
+            fullName = account.getEmployee().getFullName();
+        } else if (account.getCustomer() != null) {
+            fullName = account.getCustomer().getCustomerName();
+        }
 
         return LoginResponse.builder()
                 .success(true)
+                .id(account.getId())
                 .username(account.getUsername())
+                .fullName(fullName)
+                .email(account.getEmail())
                 .accessToken(newAccessToken)
-                .role(account.getRole() != null ? account.getRole().getCode() : null)
+                .refreshToken(newRefreshToken)
+                .role(roleCode)
                 .message("Làm mới token thành công")
                 .build();
     }

@@ -16,31 +16,49 @@ import java.util.Map;
 public class CreditContractAPI {
     @Autowired
     CreditContractService creditContractService;
+
     @GetMapping("/findAll")
-    public ResponseEntity<Map<String,Object>> findAll(){
+    public ResponseEntity<Map<String, Object>> findAll() {
         Map<String, Object> response = new HashMap<>();
-        List<CreditContractDTO> creditContractDTOS=creditContractService.findAll();
-        if(creditContractDTOS!=null){
+        List<CreditContractDTO> creditContractDTOS = creditContractService.findAll();
+        if (creditContractDTOS != null) {
             response.put("success", true);
-            response.put("creditContract",creditContractDTOS);
+            response.put("creditContract", creditContractDTOS);
             return ResponseEntity.ok(response);
         }
         response.put("success", false);
         response.put("creditContract", null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+
     @PostMapping("/add")
-    public ResponseEntity<Map<String,Object>> addCreditContract(@RequestBody CreditContractDTO creditContractDTO){
+    public ResponseEntity<Map<String, Object>> addCreditContract(@RequestBody CreditContractDTO creditContractDTO) {
         Map<String, Object> response = new HashMap<>();
-        CreditContractDTO creditContractDTO1=creditContractService.createCreditContract(creditContractDTO);
-        if(creditContractDTO1!=null){
+        CreditContractDTO creditContractDTO1 = creditContractService.createCreditContract(creditContractDTO);
+        if (creditContractDTO1 != null) {
             response.put("success", true);
-            response.put("creditContract",creditContractDTO1);
+            response.put("creditContract", creditContractDTO1);
             return ResponseEntity.ok(response);
-        }else{
+        } else {
             response.put("success", false);
             response.put("creditContract", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Map<String, Object>> updateCreditContract(@PathVariable Long id,
+            @RequestBody CreditContractDTO creditContractDTO) {
+        Map<String, Object> response = new HashMap<>();
+        CreditContractDTO updatedDTO = creditContractService.updateCreditContract(id, creditContractDTO);
+        if (updatedDTO != null) {
+            response.put("success", true);
+            response.put("creditContract", updatedDTO);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("success", false);
+            response.put("message", "Hợp đồng không tồn tại");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
 }

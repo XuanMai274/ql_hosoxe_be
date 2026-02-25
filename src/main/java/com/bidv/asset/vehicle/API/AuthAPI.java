@@ -39,14 +39,24 @@ public class AuthAPI {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refresh(HttpServletRequest request) {
+    public ResponseEntity<LoginResponse> refresh(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractRefreshTokenFromCookie(request);
-        LoginResponse response = authService.refreshToken(refreshToken);
+        LoginResponse loginResponse = authService.refreshToken(refreshToken);
 
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
+        if (loginResponse.isSuccess()) {
+            // Set NEW Refresh Token in HttpOnly cookie (Rotation)
+            Cookie refreshTokenCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+            response.addCookie(refreshTokenCookie);
+
+            // Clean up refreshToken from response body before sending
+            loginResponse.setRefreshToken(null);
+
+            return ResponseEntity.ok(loginResponse);
         } else {
-            return ResponseEntity.status(401).body(response);
+            return ResponseEntity.status(401).body(loginResponse);
         }
     }
 

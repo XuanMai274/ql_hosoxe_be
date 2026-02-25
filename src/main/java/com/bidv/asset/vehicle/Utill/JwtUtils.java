@@ -17,7 +17,7 @@ public class JwtUtils {
 
     // SECRET_KEY should be at least 256 bits for HS256
     private final String SECRET_KEY = "YourSecretKeyForJwtAuthenticationBIDVProject2026!!!_LongEnoughToBe256Bits";
-    private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
