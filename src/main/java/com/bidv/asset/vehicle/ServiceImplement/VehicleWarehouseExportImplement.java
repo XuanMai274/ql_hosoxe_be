@@ -2,16 +2,11 @@ package com.bidv.asset.vehicle.ServiceImplement;
 
 import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDTO;
-import com.bidv.asset.vehicle.DTO.VehicleExcelDTO;
 import com.bidv.asset.vehicle.Repository.VehicleRepository;
-import com.bidv.asset.vehicle.Service.VehicleExportService;
-import com.bidv.asset.vehicle.Utill.ExcelExportUtil;
+import com.bidv.asset.vehicle.Service.VehicleWarehouseExportService;
 import com.bidv.asset.vehicle.Utill.VietnameseNumberUtil;
-import com.bidv.asset.vehicle.entity.GuaranteeLetterEntity;
-import com.bidv.asset.vehicle.entity.InvoiceEntity;
-import com.bidv.asset.vehicle.entity.VehicleEntity;
-
 import org.apache.poi.xwpf.usermodel.*;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,44 +15,10 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.*;
-
 @Service
-public class VehicleExportServiceImplement implements VehicleExportService {
-
+public class VehicleWarehouseExportImplement implements VehicleWarehouseExportService {
     @Autowired
     VehicleRepository vehicleRepository;
-
-    /* ========================================================= */
-    /* ======================= EXCEL ============================ */
-    /* ========================================================= */
-
-    @Override
-    public byte[] exportVehicleExcel(
-            String chassisNumber,
-            String status,
-            String manufacturer,
-            String ref
-    ) {
-
-        List<VehicleEntity> vehicles =
-                vehicleRepository.searchVehiclesForExcel(
-                        chassisNumber,
-                        status,
-                        manufacturer,
-                        ref
-                );
-
-        List<VehicleExcelDTO> excelData = new ArrayList<>();
-        int stt = 1;
-
-        for (VehicleEntity v : vehicles) {
-            VehicleExcelDTO dto = mapToExcelDTO(v);
-            dto.setStt(stt++);
-            excelData.add(dto);
-        }
-
-        return ExcelExportUtil.exportVehicleExcel(excelData);
-    }
 
     /* ========================================================= */
     /* ======================= PNK ============================== */
@@ -87,10 +48,10 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         replaceVehicleTable(doc, filtered);
 
         Map<String,String> map =
-                buildCommonData(filtered, total);
+                buildCommonData(vehicles, total);
 
         replaceAll(doc, map);
-
+        forceTimesNewRoman(doc);
         return writeDoc(doc);
     }
 
@@ -123,7 +84,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
                 buildCommonData(filtered, total);
 
         replaceAll(doc, map);
-
+        forceTimesNewRoman(doc);
         return writeDoc(doc);
     }
 
@@ -156,7 +117,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
                 buildCommonData(filtered, total);
 
         replaceAll(doc, map);
-
+        forceTimesNewRoman(doc);
         return writeDoc(doc);
     }
 
@@ -199,7 +160,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
                 buildCommonData(vehicles, total);
 
         replaceAll(doc, map);
-
+        forceTimesNewRoman(doc);
         return writeDoc(doc);
     }
 
@@ -224,30 +185,126 @@ public class VehicleExportServiceImplement implements VehicleExportService {
                 buildCommonData(vehicles, total);
 
         replaceAll(doc, map);
-
+        forceTimesNewRoman(doc);
         return writeDoc(doc);
     }
-    // ĐĂNG KÝ GIAO DỊCH ĐẢM BẢO
-//    public byte[] generateDangKiGiaoDichDamBao(
-//            List<VehicleDTO> vehicles
-//    ) throws IOException {
-//
-//        String manufacturerCode = validateAndGetManufacturerCode(vehicles);
-//
-//        switch (manufacturerCode.toUpperCase()) {
-//
-//            case "HYUNDAI":
-//                return generateDangKyHyundai(vehicles);
-//
-//            case "VINFAST":
-//                return generateDangKyVinfast(vehicles);
-//
-//            default:
-//                throw new RuntimeException(
-//                        "Chưa cấu hình đăng ký giao dịch đảm bảo cho hãng: "
-//                                + manufacturerCode);
-//        }
-//    }
+    /* ========================================================= */
+    /* ================= ĐĂNG KÝ GIAO DỊCH ĐẢM BẢO ============= */
+    /* ========================================================= */
+    @Override
+    public byte[] generateDangKiGiaoDichDamBao(
+            List<VehicleDTO> vehicles
+    ) throws IOException {
+
+        String manufacturerCode = validateAndGetManufacturerCode(vehicles);
+
+        switch (manufacturerCode.toUpperCase()) {
+
+            case "HYUNDAI":
+                return generateDangKyHyundai(vehicles);
+
+            case "VINFAST":
+                return generateDangKyVinfast(vehicles);
+
+            default:
+                throw new RuntimeException(
+                        "Chưa cấu hình đăng ký giao dịch đảm bảo cho hãng: "
+                                + manufacturerCode);
+        }
+
+    }
+    public byte[] generateDangKyVinfast(
+            List<VehicleDTO> vehicles
+    ) throws IOException {
+
+        validateSingleManufacturer(vehicles, "VINFAST");
+
+        XWPFDocument doc =
+                loadTemplate("/templates/NhapKho/dang-ky-giao-dich-dam-bao-vinfast.docx");
+
+        BigDecimal total = calculateTotal(vehicles);
+
+        replaceVehicleTableDeep(doc, vehicles);
+
+        Map<String,String> map =
+                buildCommonData(vehicles, total);
+
+        replaceAll(doc, map);
+        forceTimesNewRoman(doc);
+        return writeDoc(doc);
+    }
+    public byte[] generateDangKyHyundai(
+            List<VehicleDTO> vehicles
+    ) throws IOException {
+
+        validateSingleManufacturer(vehicles, "HYUNDAI");
+
+        XWPFDocument doc =
+                loadTemplate("/templates/NhapKho/dang-ky-giao-dich-bao-dam-hyundai.docx");
+
+        BigDecimal total = calculateTotal(vehicles);
+
+        replaceVehicleTableDeep(doc, vehicles);
+
+        Map<String,String> map =
+                buildCommonData(vehicles, total);
+
+        replaceAll(doc, map);
+        forceTimesNewRoman(doc);
+        return writeDoc(doc);
+    }
+    /* ========================================================= */
+    /* =================THAY THẾ BẢNG CHO ĐĂNG KÝ GIAO DỊCH ĐẢM BẢO ============= */
+    /* ========================================================= */
+    private void replaceVehicleTableDeep(XWPFDocument doc, List<VehicleDTO> vehicles) {
+        for (XWPFTable table : doc.getTables()) {
+            processTableRecursive(table, vehicles);
+        }
+    }
+    private void processTableRecursive(XWPFTable table, List<VehicleDTO> vehicles) {
+
+        // ===== xử lý chính bảng hiện tại =====
+        for (int i = 0; i < table.getRows().size(); i++) {
+
+            XWPFTableRow row = table.getRow(i);
+            if (row.getCell(0) == null) continue;
+
+            String firstCell = row.getCell(0).getText();
+
+            if (firstCell != null && firstCell.toLowerCase().contains("{{stt}}")) {
+
+                int templateIndex = i;
+
+                for (int j = 0; j < vehicles.size(); j++) {
+
+                    VehicleDTO v = vehicles.get(j);
+
+                    XWPFTableRow newRow =
+                            table.insertNewTableRow(templateIndex + j);
+
+                    copyRow(row, newRow);
+
+                    Map<String, String> data =
+                            buildVehicleData(v, j + 1);
+
+                    replaceRowPlaceholders(newRow, data);
+                }
+
+                table.removeRow(templateIndex + vehicles.size());
+                break;
+            }
+        }
+
+        for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+
+                for (XWPFTable nested : cell.getTables()) {
+                    processTableRecursive(nested, vehicles);
+                }
+            }
+        }
+    }
+
     /* ========================================================= */
     /* ================= TABLE REPLACEMENT ====================== */
     /* ========================================================= */
@@ -257,7 +314,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
 
         for (XWPFTable table : doc.getTables()) {
 
-            boolean found = false; // ✅ đặt ở đây
+            boolean found = false;
 
             for (int i = 0; i < table.getRows().size(); i++) {
 
@@ -287,10 +344,10 @@ public class VehicleExportServiceImplement implements VehicleExportService {
 
                     table.removeRow(templateIndex + vehicles.size());
 
-                    found = true;   // ✅ đánh dấu đã xử lý bảng
+                    found = true;
                 }
 
-                if (found) break; // ✅ thoát vòng row
+                if (found) break;
             }
         }
     }
@@ -378,21 +435,29 @@ public class VehicleExportServiceImplement implements VehicleExportService {
             System.out.println("CreditContract: "
                     + first.getGuaranteeLetterDTO().getCreditContractDTO());
         }
-        MortgageContractDTO matchedMortgage =
-                findMortgageByVehicle(first);
-        System.out.println("HDBD"+matchedMortgage.getContractNumber());
-        System.out.println("HDBD"+matchedMortgage.getContractDate());
+        MortgageContractDTO matchedMortgage = null;
+
+        if (first.getGuaranteeLetterDTO() != null) {
+            matchedMortgage =
+                    first.getGuaranteeLetterDTO().getMortgageContractDTO();
+        }
+
         if (matchedMortgage != null) {
-
-            System.out.println("HDBD " + matchedMortgage.getContractNumber());
-            System.out.println("HDBD DATE " + matchedMortgage.getContractDate());
-
             map.put("{{HDBD}}",
                     safe(matchedMortgage.getContractNumber()));
 
             map.put("{{HDBD_DATE}}",
                     formatDate(matchedMortgage.getContractDate()));
+            map.put("{{DKGDDB}}",safe(matchedMortgage.getSecurityRegistrationNumber()));
+            map.put("{{MCN}}",safe(matchedMortgage.getPersonalIdNumber()));
         }
+//        MortgageContractDTO matchedMortgage =
+//                findMortgageByVehicle(first);
+//        System.out.println("HDBD"+matchedMortgage.getContractNumber());
+//        System.out.println("HDBD"+matchedMortgage.getContractDate());
+//        System.out.println("HDBD " + matchedMortgage.getContractNumber());
+//        System.out.println("HDBD DATE " + matchedMortgage.getContractDate());
+
 
         /* ================= CREDIT CONTRACT ================= */
 
@@ -426,16 +491,22 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         /* ================= NGÀY ================= */
 
         LocalDate now = LocalDate.now();
-
         map.put("{{CURRENT_DATE}}", formatDate(now));
-        map.put("{{CURRENT_DATE_TITLE}}", formatDateTitle(now));
+        map.put("{{CURRENT_DATE_TITLE}}", toVietnameseDate(now));
+        /* ================= Thông tin của đown đăng kí giao dịch đảm bảo ================= */
 
         return map;
     }
     /* ========================================================= */
     /* ================= HELPER ================================ */
     /* ========================================================= */
-
+    // ngày thàng năm
+    private String toVietnameseDate(LocalDate date) {
+        if (date == null) return "";
+        return "ngày " + date.getDayOfMonth()
+                + " tháng " + date.getMonthValue()
+                + " năm " + date.getYear();
+    }
     private BigDecimal calculateTotal(List<VehicleDTO> vehicles) {
 
         BigDecimal total = BigDecimal.ZERO;
@@ -469,13 +540,23 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         for (XWPFTableCell cell : source.getTableCells()) {
 
             XWPFTableCell newCell = target.addNewTableCell();
-
             newCell.getCTTc().setTcPr(cell.getCTTc().getTcPr());
 
-            newCell.setText(cell.getText());
+            // ❗ copy toàn bộ paragraph & run
+            for (XWPFParagraph p : cell.getParagraphs()) {
+                XWPFParagraph newP = newCell.addParagraph();
+                newP.getCTP().setPPr(p.getCTP().getPPr());
+
+                for (XWPFRun r : p.getRuns()) {
+                    XWPFRun newRun = newP.createRun();
+                    newRun.getCTR().setRPr(r.getCTR().getRPr());
+                    newRun.setText(r.text());
+                }
+            }
+
+            newCell.removeParagraph(0); // xóa paragraph rỗng mặc định
         }
     }
-
     private void replaceRowPlaceholders(XWPFTableRow row,
                                         Map<String,String> data) {
 
@@ -489,27 +570,43 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     private void replaceInParagraph(XWPFParagraph paragraph,
                                     Map<String,String> data) {
 
-        String text = paragraph.getText();
-        if (text == null) return;
+        List<XWPFRun> runs = paragraph.getRuns();
+        if (runs == null || runs.isEmpty()) return;
 
-        String replaced = text;
+        // 👉 LƯU style run đầu trước khi xóa
+        CTRPr oldRPr = null;
+        if (runs.get(0).getCTR().isSetRPr()) {
+            oldRPr = (CTRPr) runs.get(0).getCTR().getRPr().copy();
+        }
 
+        StringBuilder fullText = new StringBuilder();
+        for (XWPFRun run : runs) {
+            String text = run.getText(0);
+            if (text != null) fullText.append(text);
+        }
+
+        String replaced = fullText.toString();
         for (Map.Entry<String,String> e : data.entrySet()) {
             replaced = replaced.replace(e.getKey(), e.getValue());
         }
 
-        if (!replaced.equals(text)) {
+        if (replaced.equals(fullText.toString())) return;
 
-            int runCount = paragraph.getRuns().size();
-
-            for (int i = runCount - 1; i >= 0; i--) {
-                paragraph.removeRun(i);
-            }
-
-            paragraph.createRun().setText(replaced);
+        // ❗ xóa run cũ
+        for (int i = runs.size() - 1; i >= 0; i--) {
+            paragraph.removeRun(i);
         }
-    }
 
+        // ❗ tạo run mới
+        XWPFRun newRun = paragraph.createRun();
+
+        // 👉 restore style an toàn
+        if (oldRPr != null) {
+            newRun.getCTR().setRPr(oldRPr);
+        }
+
+        newRun.setText(replaced);
+    }
 
     private XWPFDocument loadTemplate(String path) throws IOException {
 
@@ -562,75 +659,6 @@ public class VehicleExportServiceImplement implements VehicleExportService {
                 + " năm " + date.getYear();
     }
 
-    /* ========================================================= */
-    /* ================= MAPPING ================================ */
-    /* ========================================================= */
-
-    private VehicleExcelDTO mapToExcelDTO(VehicleEntity v) {
-
-        VehicleExcelDTO dto = new VehicleExcelDTO();
-
-        dto.setVehicleName(v.getVehicleName());
-        dto.setAssetName(v.getAssetName());
-        dto.setStatus(v.getStatus());
-        dto.setFundingSource(v.getFundingSource());
-        dto.setChassisNumber(v.getChassisNumber());
-        dto.setEngineNumber(v.getEngineNumber());
-        dto.setModelType(v.getModelType());
-        dto.setColor(v.getColor());
-        dto.setSeats(v.getSeats());
-        dto.setPrice(v.getPrice());
-        dto.setImportDocs(v.getImportDocs());
-        dto.setImportDate(v.getImportDate());
-        dto.setExportDate(v.getExportDate());
-        dto.setDocsDeliveryDate(v.getDocsDeliveryDate());
-        dto.setImportDossier(v.getImportDossier());
-        dto.setOriginalCopy(v.getOriginalCopy());
-        dto.setRegistrationOrderNumber(v.getRegistrationOrderNumber());
-        dto.setDescription(v.getDescription());
-
-        if (v.getInvoice() != null) {
-            InvoiceEntity i = v.getInvoice();
-
-            dto.setInvoiceNumber(i.getInvoiceNumber());
-            dto.setInvoiceDate(i.getInvoiceDate());
-            dto.setSellerName(i.getSellerName());
-            dto.setSellerTaxCode(i.getSellerTaxCode());
-            dto.setBuyerName(i.getBuyerName());
-            dto.setBuyerTaxCode(i.getBuyerTaxCode());
-            dto.setInvoiceTotalAmount(i.getTotalAmount());
-            dto.setVatAmount(i.getVatAmount());
-        }
-
-        if (v.getGuaranteeLetter() != null) {
-
-            GuaranteeLetterEntity g = v.getGuaranteeLetter();
-
-            dto.setGuaranteeContractNumber(g.getGuaranteeContractNumber());
-            dto.setGuaranteeContractDate(g.getGuaranteeContractDate());
-            dto.setGuaranteeNoticeNumber(g.getGuaranteeNoticeNumber());
-            dto.setGuaranteeNoticeDate(g.getGuaranteeNoticeDate());
-            dto.setReferenceCode(g.getReferenceCode());
-
-            dto.setExpectedGuaranteeAmount(g.getExpectedGuaranteeAmount());
-            dto.setTotalGuaranteeAmount(g.getTotalGuaranteeAmount());
-            dto.setUsedAmount(g.getUsedAmount());
-            dto.setRemainingAmount(g.getRemainingAmount());
-
-            dto.setExpectedVehicleCount(g.getExpectedVehicleCount());
-            dto.setImportedVehicleCount(g.getImportedVehicleCount());
-            dto.setExportedVehicleCount(g.getExportedVehicleCount());
-
-            dto.setSaleContract(g.getSaleContract());
-            dto.setSaleContractAmount(g.getSaleContractAmount());
-
-            dto.setGuaranteeCreatedAt(g.getCreatedAt());
-        }
-
-        dto.setVehicleCreatedAt(v.getCreatedAt());
-
-        return dto;
-    }
     private List<VehicleDTO> filterByManufacturer(
             List<VehicleDTO> vehicles,
             String manufacturerName
@@ -709,30 +737,44 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     }
     private MortgageContractDTO findMortgageByVehicle(VehicleDTO vehicle) {
 
-        if (vehicle.getManufacturerDTO() == null
+        if (vehicle == null
+                || vehicle.getManufacturerDTO() == null
                 || vehicle.getManufacturerDTO().getCode() == null
                 || vehicle.getGuaranteeLetterDTO() == null
-                || vehicle.getGuaranteeLetterDTO().getCreditContractDTO() == null
-                || vehicle.getGuaranteeLetterDTO()
-                .getCreditContractDTO()
-                .getMortgageContractIds() == null) {
+                || vehicle.getGuaranteeLetterDTO().getMortgageContractDTO() == null) {
             return null;
         }
 
-        String manufacturerCode =
-                vehicle.getManufacturerDTO().getCode();
-        System.out.println("Mortgage list: " +
-                vehicle.getGuaranteeLetterDTO()
-                        .getCreditContractDTO()
-                        .getMortgageContractIds());
-        return vehicle.getGuaranteeLetterDTO()
-                .getCreditContractDTO()
-                .getMortgageContractIds()
-                .stream()
-                .filter(m -> m.getManufacturerDTO() != null
-                        && manufacturerCode.equalsIgnoreCase(
-                        m.getManufacturerDTO().getCode()))
-                .findFirst()
-                .orElse(null);
+        String manufacturerCode = vehicle.getManufacturerDTO().getCode();
+
+        MortgageContractDTO mortgage =
+                vehicle.getGuaranteeLetterDTO().getMortgageContractDTO();
+
+        if (mortgage.getManufacturerDTO() != null
+                && manufacturerCode.equalsIgnoreCase(
+                mortgage.getManufacturerDTO().getCode())) {
+            return mortgage;
+        }
+
+        return null;
+    }
+    private void forceTimesNewRoman(XWPFDocument doc) {
+        for (XWPFParagraph p : doc.getParagraphs()) {
+            for (XWPFRun r : p.getRuns()) {
+                r.setFontFamily("Times New Roman");
+            }
+        }
+
+        for (XWPFTable table : doc.getTables()) {
+            for (XWPFTableRow row : table.getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    for (XWPFParagraph p : cell.getParagraphs()) {
+                        for (XWPFRun r : p.getRuns()) {
+                            r.setFontFamily("Times New Roman");
+                        }
+                    }
+                }
+            }
+        }
     }
 }

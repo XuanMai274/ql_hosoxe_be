@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.Mapper;
 
+import com.bidv.asset.vehicle.DTO.ManufacturerDTO;
 import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.entity.*;
 
@@ -25,7 +26,8 @@ public class MortgageContractMapper {
         dto.setStatus(entity.getStatus());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
-
+        dto.setSecurityRegistrationNumber(entity.getSecurityRegistrationNumber());
+        dto.setPersonalIdNumber(entity.getPersonalIdNumber());
         // ===== CUSTOMER =====
         if (entity.getCustomer() != null) {
             dto.setCustomerId(entity.getCustomer().getId());
@@ -33,7 +35,10 @@ public class MortgageContractMapper {
 
         // ===== MANUFACTURER =====
         if (entity.getManufacturer() != null) {
-            dto.setManufacturerId(entity.getManufacturer().getId());
+            ManufacturerDTO manufacturerDTO=new ManufacturerDTO();
+            manufacturerDTO.setId(entity.getManufacturer().getId());
+            manufacturerDTO.setTemplateCode(entity.getTemplateCode());
+            dto.setManufacturerDTO(manufacturerDTO);
         }
 
         // ===== CREDIT CONTRACT IDS =====
@@ -82,7 +87,8 @@ public class MortgageContractMapper {
         entity.setRemainingCollateralValue(dto.getRemainingCollateralValue());
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setUpdatedAt(dto.getUpdatedAt());
-
+        entity.setSecurityRegistrationNumber(dto.getSecurityRegistrationNumber());
+        entity.setPersonalIdNumber(dto.getPersonalIdNumber());
         entity.setCustomer(customer);
         entity.setManufacturer(manufacturer);
         entity.setCreditContracts(creditContracts);
@@ -112,7 +118,8 @@ public class MortgageContractMapper {
         entity.setTotalCollateralValue(dto.getTotalCollateralValue());
         entity.setRemainingCollateralValue(dto.getRemainingCollateralValue());
         entity.setUpdatedAt(dto.getUpdatedAt());
-
+        entity.setSecurityRegistrationNumber(dto.getSecurityRegistrationNumber());
+        entity.setPersonalIdNumber(dto.getPersonalIdNumber());
         entity.setCustomer(customer);
         entity.setManufacturer(manufacturer);
 

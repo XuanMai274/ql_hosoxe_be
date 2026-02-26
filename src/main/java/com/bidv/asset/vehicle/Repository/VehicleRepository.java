@@ -21,12 +21,13 @@ import java.util.Optional;
 public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     // tìm danh sách nhiều xe cùng 1 lúc
     @Query("""
-            SELECT v FROM VehicleEntity v
-            LEFT JOIN FETCH v.guaranteeLetter g
-            LEFT JOIN FETCH g.creditContract
-            LEFT JOIN FETCH g.manufacturer
-            WHERE v.id IN :ids
-            """)
+        SELECT DISTINCT v FROM VehicleEntity v
+        LEFT JOIN FETCH v.guaranteeLetter g
+        LEFT JOIN FETCH g.creditContract cc
+        LEFT JOIN FETCH cc.mortgageContracts mc
+        LEFT JOIN FETCH g.manufacturer
+        WHERE v.id IN :ids
+    """)
     List<VehicleEntity> findAllWithGuaranteeByIds(List<Long> ids);
 
     Optional<VehicleEntity> findDetailById(Long id);

@@ -34,23 +34,31 @@ public class CreditContractEntity {
     @Column(name = "creditLimit", precision = 18, scale = 2)
     private BigDecimal creditLimit;
 
-    // ===== Đã sử dụng =====
+    // ===== Đã sử dụng thực tế =====
     @Column(name = "used_limit", precision = 18, scale = 2)
     private BigDecimal usedLimit = BigDecimal.ZERO;
 
-    // ===== Còn sử dụng =====
+    // ===== Còn sử dụng thực tế =====
     @Column(name = "remaining_limit", precision = 18, scale = 2)
     private BigDecimal remainingLimit = BigDecimal.ZERO;
 
-    // ===== Dư bảo lãnh =====
+    // ===== Dư bảo lãnh thực tế =====
     @Column(name = "guarantee_balance", precision = 18, scale = 2)
     private BigDecimal guaranteeBalance = BigDecimal.ZERO;
-
+    // ===== Dư bảo lãnh phát hành =====
+    @Column(name="issued_guarantee_balance", precision = 18, scale = 2)
+    private BigDecimal issuedGuaranteeBalance;
+    // ===== Còn sử dụng phát hành =====
+    @Column(name = "issued_remaining_limit", precision = 18, scale = 2)
+    private BigDecimal issuedRemainingLimit = BigDecimal.ZERO;
+    // ===== Đã sử dụng phát hành =====
+    @Column(name = "issued_used_limit", precision = 18, scale = 2)
+    private BigDecimal issuedUsedLimit = BigDecimal.ZERO;
     // ===== Dư nợ vay xe =====
     @Column(name = "vehicle_loan_balance", precision = 18, scale = 2)
     private BigDecimal vehicleLoanBalance = BigDecimal.ZERO;
 
-    // ===== Dư vay BĐS (max 8 tỷ) =====
+    // ===== Dư vay BĐS (max 9 tỷ) =====
     @Column(name = "real_estate_loan_balance", precision = 18, scale = 2)
     private BigDecimal realEstateLoanBalance = BigDecimal.ZERO;
     @Column(name = "status")

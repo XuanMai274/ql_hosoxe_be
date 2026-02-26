@@ -50,6 +50,10 @@ public class GuaranteeLetterMapper {
         if (entity.getMortgageContract() != null) {
             MortgageContractDTO mc = new MortgageContractDTO();
             mc.setId(entity.getMortgageContract().getId());
+            mc.setContractNumber(entity.getMortgageContract().getContractNumber());
+            mc.setContractDate(entity.getMortgageContract().getContractDate());
+            mc.setSecurityRegistrationNumber(entity.getMortgageContract().getSecurityRegistrationNumber());
+            mc.setPersonalIdNumber(entity.getMortgageContract().getPersonalIdNumber());
             dto.setMortgageContractDTO(mc);
         }
 
@@ -203,5 +207,22 @@ public class GuaranteeLetterMapper {
 
         entity.setStatus(dto.getStatus());
         entity.setUpdatedAt(dto.getUpdatedAt());
+    }
+    // mapper một số trường cần thiết
+    public GuaranteeLetterDTO toLiteDto(GuaranteeLetterEntity entity) {
+        if (entity == null) return null;
+
+        GuaranteeLetterDTO dto = new GuaranteeLetterDTO();
+        dto.setId(entity.getId());
+        dto.setGuaranteeContractNumber(entity.getGuaranteeContractNumber());
+
+        if (entity.getCreditContract() != null) {
+            CreditContractDTO cc = new CreditContractDTO();
+            cc.setContractNumber(entity.getCreditContract().getContractNumber());
+            cc.setContractDate(entity.getCreditContract().getContractDate());
+            dto.setCreditContractDTO(cc);
+        }
+
+        return dto;
     }
 }

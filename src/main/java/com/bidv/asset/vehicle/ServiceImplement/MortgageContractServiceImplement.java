@@ -40,8 +40,8 @@ public class MortgageContractServiceImplement implements MortgageContractService
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
         ManufacturerEntity manufacturer = null;
-        if (dto.getManufacturerId() != null) {
-            manufacturer = manufacturerRepo.findById(dto.getManufacturerId())
+        if (dto.getManufacturerDTO() != null) {
+            manufacturer = manufacturerRepo.findById(dto.getManufacturerDTO().getId())
                     .orElseThrow(() -> new RuntimeException("Manufacturer not found"));
         }
 
@@ -71,8 +71,8 @@ public class MortgageContractServiceImplement implements MortgageContractService
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
         ManufacturerEntity manufacturer = null;
-        if (dto.getManufacturerId() != null) {
-            manufacturer = manufacturerRepo.findById(dto.getManufacturerId())
+        if (dto.getManufacturerDTO() != null) {
+            manufacturer = manufacturerRepo.findById(dto.getManufacturerDTO().getId())
                     .orElseThrow(() -> new RuntimeException("Manufacturer not found"));
         }
 
