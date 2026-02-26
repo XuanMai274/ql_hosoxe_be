@@ -10,6 +10,8 @@ import com.bidv.asset.vehicle.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -114,6 +116,56 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
         GuaranteeApplicationEntity saved = repository.save(entity);
 
         return mapper.toDTO(saved);
+    }
+
+    @Override
+    public Page<GuaranteeApplicationDTO> findAll(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
+    }
+
+    @Override
+    public GuaranteeApplicationDTO getById(Long id) {
+        GuaranteeApplicationEntity entity = repository.findById(id.longValue());
+        if (entity == null) {
+            throw new RuntimeException("Guarantee Application not found");
+        }
+        return mapper.toDTO(entity);
+    }
+
+    @Override
+    @Transactional
+    public GuaranteeApplicationDTO approve(Long id) {
+        GuaranteeApplicationEntity entity = repository.findById(id.longValue());
+        if (entity == null) {
+            throw new RuntimeException("Guarantee Application not found");
+        }
+
+        // Chỉ duyệt đơn đang chờ
+        if (!"PENDING_APPROVAL".equalsIgnoreCase(entity.getStatus())) {
+            throw new RuntimeException("Only applications with PENDING_APPROVAL status can be approved");
+        }
+
+        entity.setStatus("APPROVED");
+        entity.setApprovedAt(LocalDateTime.now());
+
+        return mapper.toDTO(repository.save(entity));
+    }
+
+    @Override
+    @Transactional
+    public GuaranteeApplicationDTO reject(Long id) {
+        GuaranteeApplicationEntity entity = repository.findById(id.longValue());
+        if (entity == null) {
+            throw new RuntimeException("Guarantee Application not found");
+        }
+
+        if (!"PENDING_APPROVAL".equalsIgnoreCase(entity.getStatus())) {
+            throw new RuntimeException("Only applications with PENDING_APPROVAL status can be rejected");
+        }
+
+        entity.setStatus("REJECTED");
+
+        return mapper.toDTO(repository.save(entity));
     }
     // =====================================================
     // AUTO CALCULATE TOTAL
