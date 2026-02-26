@@ -35,7 +35,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/officer/**").hasRole("OFFICER")
-                        .anyRequest().authenticated())
+                        .requestMatchers("/customer/**").hasAnyAuthority("ROLE_customer")
+                        .anyRequest().authenticated()
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         // Xử lý khi đã đăng nhập nhưng sai Role (403)

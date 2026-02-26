@@ -68,6 +68,9 @@ public class GuaranteeLetterEntity {
     private String saleContract; // tên/lọai hop đồng mua bán
     @Column(name = "sale_contract_amount", precision = 18, scale = 2)
     private BigDecimal saleContractAmount; // giá tiền hop dong mua ban
+    // ===== THỜI HẠN BẢO LÃNH =====
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
     // Trạng thái
     @Column(name = "status")
     private String status;

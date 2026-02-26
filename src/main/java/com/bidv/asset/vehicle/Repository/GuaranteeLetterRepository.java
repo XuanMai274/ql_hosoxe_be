@@ -85,5 +85,15 @@ public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetter
     @Query("select g from GuaranteeLetterEntity g where g.id = :id")
     Optional<GuaranteeLetterEntity> findByIdForUpdate(@Param("id") Long id);
 
-
+    /**
+     * Lấy tất cả thư bảo lãnh đã quá hạn (expiryDate < today) và vẫn còn ACTIVE.
+     * Scheduler sẽ dùng list này để batch-update sang EXPIRED.
+     */
+    @Query("""
+        SELECT g FROM GuaranteeLetterEntity g
+        WHERE g.status = 'ACTIVE'
+          AND g.expiryDate IS NOT NULL
+          AND g.expiryDate < :today
+    """)
+    List<GuaranteeLetterEntity> findExpiredActiveGuarantees(@Param("today") LocalDate today);
 }
