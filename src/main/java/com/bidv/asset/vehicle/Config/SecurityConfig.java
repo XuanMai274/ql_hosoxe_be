@@ -33,16 +33,18 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/officer/**").hasRole("OFFICER")
-                        .requestMatchers("/customer/**").hasRole("CUSTOMER")
+                        .requestMatchers("/api/auth/**", "/error").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/officer/**").hasAuthority("ROLE_OFFICER")
+                        .requestMatchers("/customer/**").hasAuthority("ROLE_CUSTOMER")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         // Xử lý khi đã đăng nhập nhưng sai Role (403)
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            System.err.println(">>> Security 403 Error (Access Denied): " + accessDeniedException.getMessage() + " | Request URI: " + request.getRequestURI());
                             response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write(
@@ -50,6 +52,7 @@ public class SecurityConfig {
                         })
                         // Xử lý khi chưa đăng nhập hoặc Token hết hạn (401)
                         .authenticationEntryPoint((request, response, authException) -> {
+                            System.err.println(">>> Security 401 Error (Auth Required): " + authException.getMessage() + " | Request URI: " + request.getRequestURI());
                             response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write(

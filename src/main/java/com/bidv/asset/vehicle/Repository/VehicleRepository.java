@@ -39,6 +39,13 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     boolean existsByChassisNumberAndIdNot(String chassisNumber, Long id);
 
     // tìm xe theo trạng thái
+    @EntityGraph(attributePaths = {
+            "guaranteeLetter",
+            "guaranteeLetter.manufacturer",
+            "guaranteeLetter.creditContract",
+            "invoice",
+            "manufacturerEntity"
+    })
     List<VehicleEntity> findByStatus(String status);
 
     boolean existsByChassisNumber(String chassisNumber);

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -29,6 +30,13 @@ public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetter
       AND (:fromDate IS NULL OR gl.guaranteeContractDate >= :fromDate)
       AND (:toDate IS NULL OR gl.guaranteeContractDate <= :toDate)
 """)
+    @EntityGraph(attributePaths = {
+            "manufacturer",
+            "creditContract",
+            "mortgageContract",
+            "authorizedRepresentative",
+            "customer"
+    })
     Page<GuaranteeLetterEntity> searchGuaranteeLetters(
             @Param("manufacturerCode") String manufacturerCode,
             @Param("fromDate") LocalDate fromDate,
@@ -56,6 +64,13 @@ public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetter
         OR (:hasLetterNumber = false AND gl.guaranteeNoticeNumber IS NULL)
     )
 """)
+    @EntityGraph(attributePaths = {
+            "manufacturer",
+            "creditContract",
+            "mortgageContract",
+            "authorizedRepresentative",
+            "customer"
+    })
     Page<GuaranteeLetterEntity> search(
             @Param("keyword") String keyword,
             @Param("manufacturerCode") String manufacturerCode,

@@ -114,7 +114,7 @@ public class VehicleServiceImplement implements VehicleService {
 
         VehicleEntity saved = vehicleRepository.save(vehicle);
 
-        return mapToDTO(saved);
+        return vehicleMapper.toDto(saved);
     }
     @Override
     public List<VehicleDTO> getVehiclesByStatus(String status) {
@@ -182,39 +182,4 @@ public class VehicleServiceImplement implements VehicleService {
                 .toList();
     }
 
-    /* ===== Mapper ===== */
-    private VehicleDTO mapToDTO(VehicleEntity entity) {
-        VehicleDTO dto = new VehicleDTO();
-
-        dto.setId(entity.getId());
-        dto.setStt(entity.getStt());
-        dto.setVehicleName(entity.getVehicleName());
-        dto.setStatus(entity.getStatus());
-        dto.setFundingSource(entity.getFundingSource());
-        dto.setImportDate(entity.getImportDate());
-        dto.setExportDate(entity.getExportDate());
-        dto.setAssetName(entity.getAssetName());
-        dto.setChassisNumber(entity.getChassisNumber());
-        dto.setEngineNumber(entity.getEngineNumber());
-        dto.setModelType(entity.getModelType());
-        dto.setColor(entity.getColor());
-        dto.setSeats(entity.getSeats());
-        dto.setPrice(entity.getPrice());
-        dto.setOriginalCopy(entity.getOriginalCopy());
-        dto.setImportDocs(entity.getImportDocs());
-        dto.setRegistrationOrderNumber(entity.getRegistrationOrderNumber());
-        dto.setDocsDeliveryDate(entity.getDocsDeliveryDate());
-        dto.setDescription(entity.getDescription());
-        dto.setCreatedAt(entity.getCreatedAt());
-        dto.setImportDossier(entity.getImportDossier());
-        GuaranteeLetterDTO guaranteeLetterDTO=new GuaranteeLetterDTO();
-        ManufacturerDTO manufacturerDTO=new ManufacturerDTO();
-        manufacturerDTO.setName(entity.getGuaranteeLetter().getManufacturer().getName());
-        CreditContractDTO creditContractDTO=new CreditContractDTO();
-        creditContractDTO.setContractNumber(entity.getGuaranteeLetter().getCreditContract().getContractNumber());
-        creditContractDTO.setContractDate(entity.getGuaranteeLetter().getCreditContract().getContractDate());
-//        guaranteeLetterDTO.setManufacturerDTO(manufacturerDTO);
-//        guaranteeLetterDTO.setCreditContractDTO(creditContractDTO);
-        return dto;
-    }
 }

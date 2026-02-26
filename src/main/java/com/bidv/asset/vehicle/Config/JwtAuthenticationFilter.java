@@ -31,37 +31,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String username;
 
         if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
+            System.out.println("--- [Filter] No Auth Header or not Bearer: " + authHeader);
             filterChain.doFilter(request, response);
             return;
         }
 
         jwt = authHeader.substring(7).trim();
+        System.out.println("Auth header: " + authHeader);
+        System.out.println("JWT: " + jwt);
         try {
             username = jwtUtils.extractUsername(jwt);
+            System.out.println("Username extracted: " + username);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (!jwtUtils.isTokenExpired(jwt)) {
                     String role = jwtUtils.extractRole(jwt);
                     List<org.springframework.security.core.GrantedAuthority> authorities = new ArrayList<>();
                     if (role != null) {
-                        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                        String roleUpper = role.toUpperCase();
+                        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + roleUpper));
+                        System.out.println(">>> JWT Auth OK - user: " + username + " | authority: ROLE_" + roleUpper);
                     }
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             username, null, authorities);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    System.out.println(">>> Authenticated user: " + username + " with role: " + role);
                 } else {
                     System.out.println(">>> JWT Token is EXPIRED");
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             System.err.println(">>> JWT Token expired: " + e.getMessage());
+            e.printStackTrace();
         } catch (io.jsonwebtoken.security.SignatureException e) {
             System.err.println(">>> JWT Signature invalid: " + e.getMessage());
+            e.printStackTrace();
         } catch (Exception e) {
             System.err.println(">>> JWT Auth Error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            e.printStackTrace();
         }
 
         filterChain.doFilter(request, response);

@@ -170,6 +170,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 entity.setAuthorizedRepresentative(authorizedRep);
 
                 entity.setGuaranteeContractDate(LocalDate.now());
+                entity.setExpiryDate(calculateExpiryDate(manufacturer, guaranteeApplicationEntity.getVehicles()));
                 entity.setCreatedAt(LocalDateTime.now());
                 entity.setUpdatedAt(LocalDateTime.now());
                 entity.setStatus("ACTIVE");
@@ -499,6 +500,53 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                         guaranteeLetterDTOS.add(guaranteeLetterMapper.toDto(guaranteeLetterEntity));
                 }
                 return guaranteeLetterDTOS;
+        }
+
+        private LocalDate calculateExpiryDate(ManufacturerEntity manufacturer, List<GuaranteeApplicationVehicleEntity> vehicles) {
+                if (manufacturer == null) return null;
+
+                String brand = manufacturer.getCode().toUpperCase();
+                LocalDate contractDate = LocalDate.now();
+
+                if ("VINFAST".equals(brand)) {
+                        return contractDate.plusDays(29);
+                }
+
+                if ("HYUNDAI".equals(brand)) {
+                        if (vehicles == null || vehicles.isEmpty()) {
+                                return contractDate.plusDays(30); // Mặc định 30 ngày nếu không có xe
+                        }
+
+                        int maxDays = 0;
+                        for (GuaranteeApplicationVehicleEntity v : vehicles) {
+                                String name = v.getVehicleName() != null ? v.getVehicleName().toUpperCase() : "";
+                                int days = 30; // Mặc định
+
+                                // Nhóm 15 ngày
+                                if (name.contains("TUCSON") || name.contains("CRETA") || 
+                                    name.contains("IONIQ") || name.contains("LONIQ") || 
+                                    name.contains("STARIA")) {
+                                        days = 15;
+                                } 
+                                // Nhóm 60 ngày (ưu tiên check nhóm dài hơn hoặc check chính xác)
+                                else if (name.contains("ACCENT") || name.contains("ELANTRA") || 
+                                         name.contains("STARGAZER") || name.contains("SANTA FE")) {
+                                        days = 60;
+                                }
+                                // Nhóm 30 ngày (còn lại hoặc khớp tên)
+                                else if (name.contains("GRAND I10") || name.contains("VENUE") || 
+                                         name.contains("CUSTIN") || name.contains("PALISADE")) {
+                                        days = 30;
+                                }
+
+                                if (days > maxDays) {
+                                        maxDays = days;
+                                }
+                        }
+                        return contractDate.plusDays(maxDays > 0 ? maxDays : 30);
+                }
+
+                return null;
         }
 
 }

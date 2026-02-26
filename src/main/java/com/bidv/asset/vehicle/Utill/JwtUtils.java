@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -15,9 +16,15 @@ import java.util.function.Function;
 @Component
 public class JwtUtils {
 
-    // SECRET_KEY should be at least 256 bits for HS256
-    private final String SECRET_KEY = "YourSecretKeyForJwtAuthenticationBIDVProject2026!!!_LongEnoughToBe256Bits";
-    private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    @Value("${jwt.secret.key}")
+    private String SECRET_KEY;
+
+    private Key key;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
