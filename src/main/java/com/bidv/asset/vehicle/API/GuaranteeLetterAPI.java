@@ -18,10 +18,28 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/officer/guarantee-letters")
+@RequestMapping({"/officer/guarantee-letters", "/customer/guarantee-letters"})
 public class GuaranteeLetterAPI {
     @Autowired
     GuaranteeLetterService guaranteeLetterService;
+
+    // Default GET mapping for base path (handles /customer/guarantee-letters or /officer/guarantee-letters)
+    @GetMapping
+    public ResponseEntity<Page<GuaranteeLetterDTO>> list(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String manufacturerCode,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fromDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate toDate,
+            @RequestParam(required = false) Boolean hasLetterNumber,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return search(keyword, manufacturerCode, fromDate, toDate, hasLetterNumber, page, size);
+    }
     @PostMapping("/add")
     public ResponseEntity<GuaranteeLetterDTO> addGuarantee(
             @RequestBody GuaranteeLetterDTO dto) {

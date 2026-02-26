@@ -58,7 +58,6 @@ public class GuaranteeLetterDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     // thời gian hết hạn của bảo lãnh
-    private LocalDate expiryDate;
     // ===== CHILD =====
     private List<Long> vehicleIds;
     private GuaranteeLetterFileDTO fileId;

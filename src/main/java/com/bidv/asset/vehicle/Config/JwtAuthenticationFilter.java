@@ -44,8 +44,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String role = jwtUtils.extractRole(jwt);
                     List<org.springframework.security.core.GrantedAuthority> authorities = new ArrayList<>();
                     if (role != null) {
-                        authorities.add(
-                                new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role));
+                        // Standardize role to uppercase for SecurityConfig consistency
+                        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
                     }
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -55,11 +55,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            System.err.println("JWT Token đã hết hạn: " + e.getMessage());
+            System.err.println("JWT Token expired: " + e.getMessage());
         } catch (io.jsonwebtoken.security.SignatureException e) {
-            System.err.println("Chữ ký JWT không hợp lệ: " + e.getMessage());
+            System.err.println("JWT Signature invalid: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Lỗi xác thực JWT: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            System.err.println("JWT Auth Error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
