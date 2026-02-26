@@ -14,8 +14,8 @@ import java.util.List;
 @Table(name = "loan",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_credit_contract_child_seq",
-                        columnNames = {"credit_contract_id", "child_sequence"}
+                        name = "uk_vehicle_unique",
+                        columnNames = {"vehicle_id"}
                 )
         },
         indexes = {

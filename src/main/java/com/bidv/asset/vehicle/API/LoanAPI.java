@@ -21,16 +21,16 @@ public class LoanAPI {
     @Autowired
     LoanService loanService;
     /* ================= CREATE SINGLE ================= */
-    @PostMapping
-    public ResponseEntity<LoanDTO> createLoan(
-            @RequestBody LoanDTO dto
-    ) {
-        LoanDTO result = loanService.createLoan(dto);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(result);
-    }
+//    @PostMapping
+//    public ResponseEntity<LoanDTO> createLoan(
+//            @RequestBody LoanDTO dto
+//    ) {
+//        LoanDTO result = loanService.createLoan(dto);
+//
+//        return ResponseEntity
+//                .status(HttpStatus.CREATED)
+//                .body(result);
+//    }
 //    @GetMapping
 //    public ResponseEntity<Page<LoanDTO>> getAllLoans(
 //            @RequestParam(defaultValue = "0") int page,

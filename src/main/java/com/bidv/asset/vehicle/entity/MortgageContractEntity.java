@@ -61,6 +61,13 @@ public class MortgageContractEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manufacturer_id")
     private ManufacturerEntity manufacturer;
+    // liên kết với nhập kho
+    @OneToMany(
+            mappedBy = "mortgageContract",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private List<WarehouseImportEntity> warehouseImports;
     // đề xuất cấp bảo lãnh
     @OneToMany(mappedBy = "mortgageContract", fetch = FetchType.LAZY)
     private List<GuaranteeApplicationEntity> guaranteeApplications;

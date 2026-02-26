@@ -7,7 +7,11 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface LoanService {
-    LoanDTO createLoan(LoanDTO dto);
+    public LoanDTO createLoan(
+            LoanDTO dto,
+            Integer childSequence,
+            String loanContractNumber
+    );
     LoanDTO getDetail(Long id);
     public List<LoanDTO> createBatchLoans(List<LoanDTO> dtos);
     LoanDTO updateLoan(Long id, LoanDTO dto);
