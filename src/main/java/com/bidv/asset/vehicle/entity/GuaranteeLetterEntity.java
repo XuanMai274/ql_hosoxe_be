@@ -74,7 +74,6 @@ public class GuaranteeLetterEntity {
     // Trạng thái
     @Column(name = "status")
     private String status;
-    // thời gian hết hạn của bảo lãnh
     // số tiền đã giải ngân
     @Column(name="disbursement")
     private BigDecimal disbursement;

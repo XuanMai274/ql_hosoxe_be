@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.Repository;
 
+import com.bidv.asset.vehicle.DTO.WarehouseImportRequestDTO;
 import com.bidv.asset.vehicle.entity.MortgageContractSequenceEntity;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,6 @@ public interface MortgageContractSequenceRepository
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from MortgageContractSequenceEntity s where s.mortgageContractId = :id")
     Optional<MortgageContractSequenceEntity> findByIdForUpdate(@Param("id") Long id);
+    @Lock(LockModeType.OPTIMISTIC)
+    Optional<MortgageContractSequenceEntity> findByMortgageContractId(Long mortgageContractId);
 }

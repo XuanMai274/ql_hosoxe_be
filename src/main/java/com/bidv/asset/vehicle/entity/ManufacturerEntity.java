@@ -44,6 +44,11 @@ public class ManufacturerEntity {
     private List<GuaranteeApplicationEntity> guaranteeApplications;
     @OneToMany(mappedBy = "manufacturer", fetch = FetchType.LAZY)
     private List<GuaranteeLetterEntity> guaranteeLetterEntities;
+    @OneToMany(
+            mappedBy = "manufacturer",
+            fetch = FetchType.LAZY
+    )
+    private List<WarehouseImportEntity> warehouseImports;
     // HDBD
     @OneToMany(mappedBy = "manufacturer",fetch = FetchType.LAZY)
     private  List<MortgageContractEntity> mortgageContractEntities;

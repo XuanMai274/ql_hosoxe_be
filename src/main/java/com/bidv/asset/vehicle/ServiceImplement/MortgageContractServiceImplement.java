@@ -29,6 +29,7 @@ public class MortgageContractServiceImplement implements MortgageContractService
     ManufacturerRepository manufacturerRepo;
     @Autowired
     CreditContractRepository creditRepo;
+    @Autowired MortgageContractMapper mortgageContractMapper;
     @Autowired
     MortgageSequenceService mortgageSequenceService;
     // ===== CREATE =====
@@ -54,7 +55,7 @@ public class MortgageContractServiceImplement implements MortgageContractService
             creditContracts = creditRepo.findAllById(dto.getCreditContractIds());
         }
 
-        MortgageContractEntity entity = MortgageContractMapper.toEntity(
+        MortgageContractEntity entity = mortgageContractMapper.toEntity(
                 dto, customer, manufacturer, creditContracts
         );
 
@@ -66,7 +67,7 @@ public class MortgageContractServiceImplement implements MortgageContractService
         // tạo sequence trong cùng transaction
         mortgageSequenceService.createSequence(saved.getId());
 
-        return MortgageContractMapper.toDTO(saved);
+        return mortgageContractMapper.toDTO(saved);
     }
 
     // ===== UPDATE =====
@@ -101,7 +102,7 @@ public class MortgageContractServiceImplement implements MortgageContractService
 
         entity.setUpdatedAt(LocalDateTime.now());
 
-        return MortgageContractMapper.toDTO(mortgageRepo.save(entity));
+        return mortgageContractMapper.toDTO(mortgageRepo.save(entity));
     }
 
     // ===== DELETE =====
@@ -120,7 +121,7 @@ public class MortgageContractServiceImplement implements MortgageContractService
     public MortgageContractDTO getById(Long id) {
 
         return mortgageRepo.findById(id)
-                .map(MortgageContractMapper::toDTO)
+                .map(mortgageContractMapper::toDTO)
                 .orElseThrow(() -> new RuntimeException("Mortgage contract not found"));
     }
 
@@ -130,7 +131,7 @@ public class MortgageContractServiceImplement implements MortgageContractService
 
         return mortgageRepo.findAll()
                 .stream()
-                .map(MortgageContractMapper::toDTO)
+                .map(mortgageContractMapper::toDTO)
                 .collect(Collectors.toList());
     }
 }

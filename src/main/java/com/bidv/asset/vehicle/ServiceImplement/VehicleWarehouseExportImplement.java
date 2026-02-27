@@ -25,7 +25,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
     /* ========================================================= */
 
     @Override
-    public byte[] generatePNK(List<VehicleDTO> vehicles) throws IOException {
+    public byte[] generatePNK(List<VehicleDTO> vehicles,String importNumber) throws IOException {
 
         if (vehicles == null || vehicles.isEmpty()) {
             throw new RuntimeException("Danh sách xe trống");
@@ -48,7 +48,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         replaceVehicleTable(doc, filtered);
 
         Map<String,String> map =
-                buildCommonData(vehicles, total);
+                buildCommonData(vehicles, total,importNumber);
 
         replaceAll(doc, map);
         forceTimesNewRoman(doc);
@@ -60,7 +60,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
     /* ========================================================= */
 
     public byte[] generateBaoCaoDinhGia(
-            List<VehicleDTO> vehicles
+            List<VehicleDTO> vehicles,String importNumber
     ) throws IOException {
 
         if (vehicles == null || vehicles.isEmpty()) {
@@ -81,7 +81,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         replaceVehicleTable(doc, filtered);
 
         Map<String,String> map =
-                buildCommonData(filtered, total);
+                buildCommonData(filtered, total,importNumber);
 
         replaceAll(doc, map);
         forceTimesNewRoman(doc);
@@ -93,7 +93,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
     /* ========================================================= */
 
     public byte[] generateBienBanDinhGia(
-            List<VehicleDTO> vehicles
+            List<VehicleDTO> vehicles,String importNumber
     ) throws IOException {
 
         if (vehicles == null || vehicles.isEmpty()) {
@@ -114,7 +114,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         replaceVehicleTable(doc, filtered);
 
         Map<String,String> map =
-                buildCommonData(filtered, total);
+                buildCommonData(filtered, total,importNumber);
 
         replaceAll(doc, map);
         forceTimesNewRoman(doc);
@@ -125,7 +125,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
     /* ================= PHỤ LỤC HĐ HYUNDAI ===================== */
     /* ========================================================= */
     public byte[] generatePhuLucHopDongTheChap(
-            List<VehicleDTO> vehicles
+            List<VehicleDTO> vehicles,String importNumber
     ) throws IOException {
 
         String manufacturerCode = validateAndGetManufacturerCode(vehicles);
@@ -133,10 +133,10 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         switch (manufacturerCode.toUpperCase()) {
 
             case "HYUNDAI":
-                return generatePhuLucHyundai(vehicles);
+                return generatePhuLucHyundai(vehicles,importNumber);
 
             case "VINFAST":
-                return generatePhuLucVinfast(vehicles);
+                return generatePhuLucVinfast(vehicles,importNumber);
 
             default:
                 throw new RuntimeException(
@@ -144,7 +144,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         }
     }
     public byte[] generatePhuLucHyundai(
-            List<VehicleDTO> vehicles
+            List<VehicleDTO> vehicles,String importNumber
     ) throws IOException {
 
         validateSingleManufacturer(vehicles, "HYUNDAI");
@@ -157,7 +157,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         replaceVehicleTable(doc, vehicles);
 
         Map<String,String> map =
-                buildCommonData(vehicles, total);
+                buildCommonData(vehicles, total,importNumber);
 
         replaceAll(doc, map);
         forceTimesNewRoman(doc);
@@ -169,7 +169,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
     /* ========================================================= */
 
     public byte[] generatePhuLucVinfast(
-            List<VehicleDTO> vehicles
+            List<VehicleDTO> vehicles,String importNumber
     ) throws IOException {
 
         validateSingleManufacturer(vehicles, "VINFAST");
@@ -182,7 +182,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         replaceVehicleTable(doc, vehicles);
 
         Map<String,String> map =
-                buildCommonData(vehicles, total);
+                buildCommonData(vehicles, total,importNumber);
 
         replaceAll(doc, map);
         forceTimesNewRoman(doc);
@@ -193,7 +193,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
     /* ========================================================= */
     @Override
     public byte[] generateDangKiGiaoDichDamBao(
-            List<VehicleDTO> vehicles
+            List<VehicleDTO> vehicles,String importNumber
     ) throws IOException {
 
         String manufacturerCode = validateAndGetManufacturerCode(vehicles);
@@ -201,10 +201,10 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         switch (manufacturerCode.toUpperCase()) {
 
             case "HYUNDAI":
-                return generateDangKyHyundai(vehicles);
+                return generateDangKyHyundai(vehicles,importNumber);
 
             case "VINFAST":
-                return generateDangKyVinfast(vehicles);
+                return generateDangKyVinfast(vehicles,importNumber);
 
             default:
                 throw new RuntimeException(
@@ -214,7 +214,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
 
     }
     public byte[] generateDangKyVinfast(
-            List<VehicleDTO> vehicles
+            List<VehicleDTO> vehicles,String importNumber
     ) throws IOException {
 
         validateSingleManufacturer(vehicles, "VINFAST");
@@ -227,14 +227,14 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         replaceVehicleTableDeep(doc, vehicles);
 
         Map<String,String> map =
-                buildCommonData(vehicles, total);
+                buildCommonData(vehicles, total,importNumber);
 
         replaceAll(doc, map);
         forceTimesNewRoman(doc);
         return writeDoc(doc);
     }
     public byte[] generateDangKyHyundai(
-            List<VehicleDTO> vehicles
+            List<VehicleDTO> vehicles,String importNumber
     ) throws IOException {
 
         validateSingleManufacturer(vehicles, "HYUNDAI");
@@ -247,7 +247,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         replaceVehicleTableDeep(doc, vehicles);
 
         Map<String,String> map =
-                buildCommonData(vehicles, total);
+                buildCommonData(vehicles, total,importNumber);
 
         replaceAll(doc, map);
         forceTimesNewRoman(doc);
@@ -414,7 +414,8 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
     // hàm build thông tin chung
     private Map<String, String> buildCommonData(
             List<VehicleDTO> vehicles,
-            BigDecimal total
+            BigDecimal total,
+            String importNumber
     ) {
 
         Map<String, String> map = new HashMap<>();
@@ -451,6 +452,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
             map.put("{{DKGDDB}}",safe(matchedMortgage.getSecurityRegistrationNumber()));
             map.put("{{MCN}}",safe(matchedMortgage.getPersonalIdNumber()));
         }
+        map.put("{{HDBDCT}}",safe(importNumber));
 //        MortgageContractDTO matchedMortgage =
 //                findMortgageByVehicle(first);
 //        System.out.println("HDBD"+matchedMortgage.getContractNumber());

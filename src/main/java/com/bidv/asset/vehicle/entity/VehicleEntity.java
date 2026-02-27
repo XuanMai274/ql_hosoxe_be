@@ -69,4 +69,9 @@ public class VehicleEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="manufacturer_id")
     private ManufacturerEntity manufacturerEntity;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "warehouse_import_id")
+    private WarehouseImportEntity warehouseImport;
+    @ManyToMany(mappedBy = "vehicles", fetch = FetchType.LAZY)
+    private List<WarehouseImportEntity> warehouseImports;
 }

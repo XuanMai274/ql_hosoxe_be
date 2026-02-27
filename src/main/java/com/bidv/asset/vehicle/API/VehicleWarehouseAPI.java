@@ -26,7 +26,7 @@ public class VehicleWarehouseAPI {
                 vehicleService.findByIds(request.getVehicleIds());
 
         byte[] file =
-                vehicleWarehouseExportService.generatePNK(vehicles);
+                vehicleWarehouseExportService.generatePNK(vehicles,request.getImportNumber());
 
         return ResponseEntity.ok()
                 .header("Content-Disposition",
@@ -41,7 +41,7 @@ public class VehicleWarehouseAPI {
                 vehicleService.findByIds(request.getVehicleIds());
 
         byte[] file =
-                vehicleWarehouseExportService.generateBaoCaoDinhGia(vehicles);
+                vehicleWarehouseExportService.generateBaoCaoDinhGia(vehicles,request.getImportNumber());
 
         return ResponseEntity.ok()
                 .header("Content-Disposition",
@@ -57,7 +57,7 @@ public class VehicleWarehouseAPI {
                 vehicleService.findByIds(request.getVehicleIds());
 
         byte[] file =
-                vehicleWarehouseExportService.generateBienBanDinhGia(vehicles);
+                vehicleWarehouseExportService.generateBienBanDinhGia(vehicles,request.getImportNumber());
 
         return ResponseEntity.ok()
                 .header("Content-Disposition",
@@ -67,29 +67,29 @@ public class VehicleWarehouseAPI {
 
     @PostMapping("/phu-luc-hop-dong-the-chap")
     public ResponseEntity<byte[]> exportPhuLuc(
-            @RequestBody List<Long> vehicleIds
+            @RequestBody ExportPNKRequest request
     ) throws IOException {
 
         List<VehicleDTO> vehicles =
-                vehicleService.findByIds(vehicleIds);
+                vehicleService.findByIds(request.getVehicleIds());
 
         byte[] file =
                 vehicleWarehouseExportService
-                        .generatePhuLucHopDongTheChap(vehicles);
+                        .generatePhuLucHopDongTheChap(vehicles,request.getImportNumber());
 
         return buildResponse(file, "PhuLuc.docx");
     }
     @PostMapping("/dang-ky-giao-dich-dam-bao")
     public ResponseEntity<byte[]> exportDamBao(
-            @RequestBody List<Long> vehicleIds
+            @RequestBody ExportPNKRequest request
     ) throws IOException {
 
         List<VehicleDTO> vehicles =
-                vehicleService.findByIds(vehicleIds);
+                vehicleService.findByIds(request.getVehicleIds());
 
         byte[] file =
                 vehicleWarehouseExportService
-                        .generateDangKiGiaoDichDamBao(vehicles);
+                        .generateDangKiGiaoDichDamBao(vehicles, request.getImportNumber());
 
         return buildResponse(file, "GiaoDichDamBao.docx");
     }

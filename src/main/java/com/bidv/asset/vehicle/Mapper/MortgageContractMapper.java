@@ -3,16 +3,18 @@ package com.bidv.asset.vehicle.Mapper;
 import com.bidv.asset.vehicle.DTO.ManufacturerDTO;
 import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.entity.*;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
 public class MortgageContractMapper {
 
     // =====================================================
     // ENTITY → DTO
     // =====================================================
-    public static MortgageContractDTO toDTO(MortgageContractEntity entity) {
+    public  MortgageContractDTO toDTO(MortgageContractEntity entity) {
 
         if (entity == null) return null;
 
@@ -68,7 +70,7 @@ public class MortgageContractMapper {
     // =====================================================
     // DTO → ENTITY (CREATE)
     // =====================================================
-    public static MortgageContractEntity toEntity(
+    public  MortgageContractEntity toEntity(
             MortgageContractDTO dto,
             CustomerEntity customer,
             ManufacturerEntity manufacturer,
@@ -101,7 +103,7 @@ public class MortgageContractMapper {
     // =====================================================
     // UPDATE ENTITY FROM DTO
     // =====================================================
-    public static void updateEntity(
+    public  void updateEntity(
             MortgageContractEntity entity,
             MortgageContractDTO dto,
             CustomerEntity customer,

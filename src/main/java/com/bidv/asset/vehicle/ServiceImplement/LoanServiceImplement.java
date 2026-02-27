@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -37,17 +38,53 @@ public class LoanServiceImplement implements LoanService {
     @Transactional
     public List<LoanDTO> createBatchLoans(List<LoanDTO> dtos) {
 
+        if (dtos == null || dtos.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 🔹 Lấy credit contract từ loan đầu tiên
+        VehicleEntity firstVehicle = vehicleRepository
+                .findByIdForUpdate(dtos.get(0).getVehicleId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+
+        GuaranteeLetterEntity guarantee = firstVehicle.getGuaranteeLetter();
+
+        CreditContractEntity credit =
+                creditContractRepository.findByIdForUpdate(
+                        guarantee.getCreditContract().getId()
+                ).orElseThrow(() -> new RuntimeException("Không tìm thấy HĐTD"));
+
+        // 🔹 Tăng sequence 1 lần duy nhất
+        Integer maxSeq = loanRepository.findMaxChildSequence(credit.getId());
+        int nextSeq = maxSeq + 1;
+
+        // 🔹 Build contract number 1 lần
+        String masterNumber = credit.getContractNumber();
+        String rootCode = masterNumber.split("/")[0];
+        String rest = masterNumber.substring(masterNumber.indexOf("/"));
+        String seqFormatted = String.format("%02d", nextSeq);
+
+        String loanContractNumber =
+                rootCode + "." + seqFormatted
+                        + rest.replace("HDTD", "HDTDCT");
+
         List<LoanDTO> results = new ArrayList<>();
 
         for (LoanDTO dto : dtos) {
-            results.add(createLoan(dto));
+            results.add(
+                    createLoan(dto, nextSeq, loanContractNumber)
+            );
         }
 
         return results;
     }
     @Transactional
     @Override
-    public LoanDTO createLoan(LoanDTO dto) {
+    public LoanDTO createLoan(
+            LoanDTO dto,
+            Integer childSequence,
+            String loanContractNumber
+    ) {
 
         /* ================= LOAD DATA ================= */
 
@@ -66,25 +103,25 @@ public class LoanServiceImplement implements LoanService {
                         guaranteeLetterEntity.getCreditContract().getId()
                 ).orElseThrow(() -> new RuntimeException("Không tìm thấy HĐTD"));
 
-        // 2️⃣ Lấy số lớn nhất hiện tại
-        Integer maxSeq = loanRepository
-                .findMaxChildSequence(credit.getId());
-
-        int nextSeq = maxSeq + 1;
-
-        // 3️⃣ Format 01, 02, 03
-        String seqFormatted = String.format("%02d", nextSeq);
-
-        // 4️⃣ Build số hợp đồng
-        String masterNumber = credit.getContractNumber();
-        // ví dụ: 01/2025/10987477/HDTD
-
-        String rootCode = masterNumber.split("/")[0]; // 01
-        String rest = masterNumber.substring(masterNumber.indexOf("/"));
-
-        String loanContractNumber =
-                rootCode + "." + seqFormatted
-                        + rest.replace("HDTD", "HDTDCT");
+//        // 2️⃣ Lấy số lớn nhất hiện tại
+//        Integer maxSeq = loanRepository
+//                .findMaxChildSequence(credit.getId());
+//
+//        int nextSeq = maxSeq + 1;
+//
+//        // 3️⃣ Format 01, 02, 03
+//        String seqFormatted = String.format("%02d", nextSeq);
+//
+//        // 4️⃣ Build số hợp đồng
+//        String masterNumber = credit.getContractNumber();
+//        // ví dụ: 01/2025/10987477/HDTD
+//
+//        String rootCode = masterNumber.split("/")[0]; // 01
+//        String rest = masterNumber.substring(masterNumber.indexOf("/"));
+//
+//        String loanContractNumber =
+//                rootCode + "." + seqFormatted
+//                        + rest.replace("HDTD", "HDTDCT");
 
 //        CreditContractEntity credit = guaranteeLetterEntity.getCreditContract();
 
@@ -179,7 +216,7 @@ public class LoanServiceImplement implements LoanService {
         /* ================= CREATE LOAN ================= */
 
         LoanEntity entity = loanMapper.toEntity(dto);
-        entity.setChildSequence(nextSeq);
+        entity.setChildSequence(childSequence);
         entity.setLoanContractNumber(loanContractNumber);
         entity.setLoanAmount(loanAmount);
         entity.setCustomer(
