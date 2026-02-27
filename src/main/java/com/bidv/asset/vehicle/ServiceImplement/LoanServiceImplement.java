@@ -33,7 +33,7 @@ public class LoanServiceImplement implements LoanService {
     @Autowired GuaranteeLetterRepository guaranteeRepository;
     @Autowired CreditContractRepository creditContractRepository;
     @Autowired LoanMapper loanMapper;
-
+    @Autowired DisbursementRepository disbursementRepository;
     @Override
     @Transactional
     public List<LoanDTO> createBatchLoans(List<LoanDTO> dtos) {
@@ -42,37 +42,37 @@ public class LoanServiceImplement implements LoanService {
             return Collections.emptyList();
         }
 
-        // 🔹 Lấy credit contract từ loan đầu tiên
-        VehicleEntity firstVehicle = vehicleRepository
-                .findByIdForUpdate(dtos.get(0).getVehicleId())
-                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
-
-        GuaranteeLetterEntity guarantee = firstVehicle.getGuaranteeLetter();
-
-        CreditContractEntity credit =
-                creditContractRepository.findByIdForUpdate(
-                        guarantee.getCreditContract().getId()
-                ).orElseThrow(() -> new RuntimeException("Không tìm thấy HĐTD"));
-
-        // 🔹 Tăng sequence 1 lần duy nhất
-        Integer maxSeq = loanRepository.findMaxChildSequence(credit.getId());
-        int nextSeq = maxSeq + 1;
-
-        // 🔹 Build contract number 1 lần
-        String masterNumber = credit.getContractNumber();
-        String rootCode = masterNumber.split("/")[0];
-        String rest = masterNumber.substring(masterNumber.indexOf("/"));
-        String seqFormatted = String.format("%02d", nextSeq);
-
-        String loanContractNumber =
-                rootCode + "." + seqFormatted
-                        + rest.replace("HDTD", "HDTDCT");
+//        // 🔹 Lấy credit contract từ loan đầu tiên
+//        VehicleEntity firstVehicle = vehicleRepository
+//                .findByIdForUpdate(dtos.get(0).getVehicleId())
+//                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+//
+//        GuaranteeLetterEntity guarantee = firstVehicle.getGuaranteeLetter();
+//
+//        CreditContractEntity credit =
+//                creditContractRepository.findByIdForUpdate(
+//                        guarantee.getCreditContract().getId()
+//                ).orElseThrow(() -> new RuntimeException("Không tìm thấy HĐTD"));
+//
+//        // 🔹 Tăng sequence 1 lần duy nhất
+//        Integer maxSeq = loanRepository.findMaxChildSequence(credit.getId());
+//        int nextSeq = maxSeq + 1;
+//
+//        // 🔹 Build contract number 1 lần
+//        String masterNumber = credit.getContractNumber();
+//        String rootCode = masterNumber.split("/")[0];
+//        String rest = masterNumber.substring(masterNumber.indexOf("/"));
+//        String seqFormatted = String.format("%02d", nextSeq);
+//
+//        String loanContractNumber =
+//                rootCode + "." + seqFormatted
+//                        + rest.replace("HDTD", "HDTDCT");
 
         List<LoanDTO> results = new ArrayList<>();
 
         for (LoanDTO dto : dtos) {
             results.add(
-                    createLoan(dto, nextSeq, loanContractNumber)
+                    createLoan(dto)
             );
         }
 
@@ -81,18 +81,16 @@ public class LoanServiceImplement implements LoanService {
     @Transactional
     @Override
     public LoanDTO createLoan(
-            LoanDTO dto,
-            Integer childSequence,
-            String loanContractNumber
+            LoanDTO dto
     ) {
 
         /* ================= LOAD DATA ================= */
 
-        VehicleEntity vehicle = vehicleRepository.findByIdForUpdate(dto.getVehicleId())
+        VehicleEntity vehicle = vehicleRepository.findByIdForUpdate(dto.getVehicleDTO().getId())
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
         GuaranteeLetterEntity guaranteeLetterEntity = vehicle.getGuaranteeLetter();
-
+        DisbursementEntity disbursementEntity=disbursementRepository.findById(dto.getDisbursementDTO().getId())  .orElseThrow(() -> new RuntimeException("disbursementEntity not found"));
         if (guaranteeLetterEntity == null) {
             throw new RuntimeException("Vehicle not linked to guarantee letter");
         }
@@ -142,7 +140,7 @@ public class LoanServiceImplement implements LoanService {
 
         /* ================= VALIDATE ================= */
 
-        if (credit.getGuaranteeBalance().compareTo(loanAmount) < 0) {
+        if (credit.getIssuedGuaranteeBalance().compareTo(loanAmount) < 0) {
             throw new RuntimeException("Not enough credit guarantee balance");
         }
         /* =========================================================
@@ -188,7 +186,7 @@ public class LoanServiceImplement implements LoanService {
        ========================================================= */
 
         // giảm dư bảo lãnh phát hành
-        credit.setGuaranteeBalance(
+        credit.setIssuedGuaranteeBalance(
                 nvl(credit.getIssuedGuaranteeBalance()).subtract(loanAmount)
         );
         // giảm dư bảo lãnh thực tế
@@ -199,10 +197,15 @@ public class LoanServiceImplement implements LoanService {
         );
         // tính lại hạn mức đã sử dụng=dư nợ vay xe+dư bảo lãnh+dư nợ vay BDS
         credit.setUsedLimit(
-                nvl(credit.getRealEstateLoanBalance().add(credit.getVehicleLoanBalance()).add(credit.getGuaranteeBalance()))
+                nvl(credit.getRealEstateLoanBalance())
+                        .add(nvl(credit.getVehicleLoanBalance()))
+                        .add(nvl(credit.getIssuedGuaranteeBalance()))
         );
         // Tính số dư bảo lãnh chênh lệch
-        credit.setOutstandingGuaranteeAmount(credit.getIssuedGuaranteeBalance().subtract(credit.getGuaranteeBalance()));
+        credit.setOutstandingGuaranteeAmount(
+                credit.getIssuedGuaranteeBalance()
+                        .subtract(credit.getGuaranteeBalance())
+        );
         // tính lại hạn mức còn lại= tổng hạn mức - hạn mức đã sử dụng
         credit.setRemainingLimit(
                 nvl(credit.getCreditLimit()).subtract(credit.getUsedLimit())
@@ -216,8 +219,7 @@ public class LoanServiceImplement implements LoanService {
         /* ================= CREATE LOAN ================= */
 
         LoanEntity entity = loanMapper.toEntity(dto);
-        entity.setChildSequence(childSequence);
-        entity.setLoanContractNumber(loanContractNumber);
+        entity.setLoanContractNumber(dto.getLoanContractNumber());
         entity.setLoanAmount(loanAmount);
         entity.setCustomer(
                 customerRepository.findById(dto.getCustomerDTO().getId())
@@ -226,7 +228,7 @@ public class LoanServiceImplement implements LoanService {
         entity.setVehicle(vehicle);
         entity.setCreditContract(credit);
         entity.setGuaranteeLetter(guaranteeLetterEntity);
-
+        entity.setDisbursement(disbursementEntity);
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
 
@@ -282,7 +284,7 @@ public class LoanServiceImplement implements LoanService {
 
         GuaranteeLetterEntity newGuarantee = newVehicle.getGuaranteeLetter();
 
-        BigDecimal newAmount = newVehicle.getPrice();
+        BigDecimal newAmount = newVehicle.getGuaranteeAmount();
 
         if (credit.getGuaranteeBalance().compareTo(newAmount) < 0) {
             throw new RuntimeException("Not enough credit guarantee balance");

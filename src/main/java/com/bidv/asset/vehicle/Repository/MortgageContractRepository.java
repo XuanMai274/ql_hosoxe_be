@@ -17,6 +17,7 @@ public interface MortgageContractRepository
     Optional<MortgageContractEntity> findByContractNumber(String contractNumber);
 
     boolean existsByContractNumber(String contractNumber);
+    List<MortgageContractEntity> findByCreditContracts_Id(Long creditContractId);
     Optional<MortgageContractEntity>
     findFirstByCustomerIdAndManufacturerIdAndStatus(
             Long customerId,

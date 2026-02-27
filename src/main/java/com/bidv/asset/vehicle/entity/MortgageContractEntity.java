@@ -71,8 +71,14 @@ public class MortgageContractEntity {
     // đề xuất cấp bảo lãnh
     @OneToMany(mappedBy = "mortgageContract", fetch = FetchType.LAZY)
     private List<GuaranteeApplicationEntity> guaranteeApplications;
+    // số tự tăng
     @OneToOne(mappedBy = "mortgageContract", cascade = CascadeType.ALL)
     private MortgageContractSequenceEntity sequence;
+    // giải ngân
+    @OneToMany(mappedBy = "mortgageContract",
+            orphanRemoval = false,
+            fetch = FetchType.LAZY)
+    private List<DisbursementEntity> disbursements;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

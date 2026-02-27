@@ -44,7 +44,7 @@ public class LoanDTO {
     private CustomerDTO customerDTO;
     private VehicleDTO vehicleDTO;
     private GuaranteeLetterDTO guaranteeLetterDTO;
-
+    private DisbursementDTO disbursementDTO;
     private CreditContractDTO creditContractDTO;
 
     // ===== Files =====

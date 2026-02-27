@@ -80,4 +80,9 @@ public class CreditContractEntity {
     // đề xuất bảo lãnh
     @OneToMany(mappedBy = "creditContract", fetch = FetchType.LAZY)
     private List<GuaranteeApplicationEntity> guaranteeApplications;
+    // giải ngân
+    @OneToMany(mappedBy = "creditContract",
+            orphanRemoval = false,
+            fetch = FetchType.LAZY)
+    private List<DisbursementEntity> disbursements;
 }

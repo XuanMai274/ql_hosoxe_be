@@ -6,10 +6,7 @@ import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterService;
 import com.bidv.asset.vehicle.entity.*;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.Setter;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +22,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
@@ -94,7 +90,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // 3. AUTO LOAD HDTD ACTIVE
                 // =====================================================
                 CreditContractEntity creditContract = creditContractRepository
-                                .findFirstByCustomerIdAndStatus(customerId, "ACTIVE")
+                                .findFirstByStatus("ACTIVE")
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST,
                                                 "Khách hàng chưa có HDTD ACTIVE"));
