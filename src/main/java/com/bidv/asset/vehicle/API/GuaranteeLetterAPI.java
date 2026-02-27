@@ -18,13 +18,13 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping({"/officer/guarantee-letters", "/customer/guarantee-letters"})
+//@RequestMapping({"/officer/guarantee-letters", "/customer/guarantee-letters"})
 public class GuaranteeLetterAPI {
     @Autowired
     GuaranteeLetterService guaranteeLetterService;
 
     // Default GET mapping for base path (handles /customer/guarantee-letters or /officer/guarantee-letters)
-    @GetMapping
+    @GetMapping("/officer/guarantee-letters")
     public ResponseEntity<Page<GuaranteeLetterDTO>> list(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String manufacturerCode,
@@ -40,7 +40,7 @@ public class GuaranteeLetterAPI {
     ) {
         return search(keyword, manufacturerCode, fromDate, toDate, hasLetterNumber, page, size);
     }
-    @PostMapping("/add")
+    @PostMapping("/officer/guarantee-letters/add")
     public ResponseEntity<GuaranteeLetterDTO> addGuarantee(
             @RequestBody GuaranteeLetterDTO dto) {
 
@@ -51,7 +51,7 @@ public class GuaranteeLetterAPI {
                 .status(HttpStatus.CREATED)
                 .body(result);
     }
-    @GetMapping("/findByDate")
+    @GetMapping("/officer/guarantee-letters/findByDate")
     public ResponseEntity<Page<GuaranteeLetterDTO>> getGuaranteeLetters(
             @RequestParam(required = false) String manufacturerCode,
             @RequestParam(required = false)
@@ -78,7 +78,7 @@ public class GuaranteeLetterAPI {
                 )
         );
     }
-    @GetMapping("/search")
+    @GetMapping("/officer/guarantee-letters/search")
     public ResponseEntity<Page<GuaranteeLetterDTO>> search(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String manufacturerCode,
@@ -104,12 +104,12 @@ public class GuaranteeLetterAPI {
                 guaranteeLetterService.search(keyword, manufacturerCode, fromDate, toDate, hasLetterNumber, pageable)
         );
     }
-    @GetMapping("/{id}")
+    @GetMapping("/officer/guarantee-letters/{id}")
     public ResponseEntity<GuaranteeLetterDTO> getById(@PathVariable long id) {
         GuaranteeLetterDTO dto = guaranteeLetterService.findById(id);
         return ResponseEntity.ok(dto);
     }
-    @PutMapping("/{id}")
+    @PutMapping("/officer/guarantee-letters/{id}")
     public ResponseEntity<GuaranteeLetterDTO> update(
             @PathVariable Long id,
             @RequestBody GuaranteeLetterDTO dto
@@ -119,13 +119,13 @@ public class GuaranteeLetterAPI {
         );
     }
     // api lấy lên danh sách thư bảo lãnh
-    @GetMapping("/findAll")
+    @GetMapping("/officer/guarantee-letters/findAll")
     public  ResponseEntity<List<GuaranteeLetterDTO>> findAll(){
         List<GuaranteeLetterDTO> result = guaranteeLetterService.findAll();
 
         return ResponseEntity.ok(result);
     }
-    @GetMapping("/suggest")
+    @GetMapping("/officer/guarantee-letters/suggest")
     public ResponseEntity<List<GuaranteeLetterDTO>> suggest(
             @RequestParam String keyword,
             @RequestParam String manufacturerCode
