@@ -44,7 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String role = jwtUtils.extractRole(jwt);
                     List<org.springframework.security.core.GrantedAuthority> authorities = new ArrayList<>();
                     if (role != null) {
-                        // Standardize role to uppercase for SecurityConfig consistency
                         authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
                     }
 
@@ -52,14 +51,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             username, null, authorities);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println(">>> Authenticated user: " + username + " with role: " + role);
+                } else {
+                    System.out.println(">>> JWT Token is EXPIRED");
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            System.err.println("JWT Token expired: " + e.getMessage());
+            System.err.println(">>> JWT Token expired: " + e.getMessage());
         } catch (io.jsonwebtoken.security.SignatureException e) {
-            System.err.println("JWT Signature invalid: " + e.getMessage());
+            System.err.println(">>> JWT Signature invalid: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("JWT Auth Error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            System.err.println(">>> JWT Auth Error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
