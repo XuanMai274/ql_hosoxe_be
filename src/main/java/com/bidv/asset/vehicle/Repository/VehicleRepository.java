@@ -48,6 +48,7 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     })
     List<VehicleEntity> findByStatus(String status);
 
+
     boolean existsByChassisNumber(String chassisNumber);
 
     @Query("""
@@ -180,4 +181,29 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     Optional<VehicleEntity> findByIdForUpdate(@Param("id") Long id);
     @Query("SELECT SUM(v.price) FROM VehicleEntity v WHERE v.status = :status")
     BigDecimal sumPriceByStatus(@Param("status") String status);
+
+    // --- NEW METHODS FOR WAREHOUSE EXPORT ---
+
+    // Tìm danh sách xe theo ID của đơn yêu cầu xuất kho (Officer xem)
+    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity"})
+    List<VehicleEntity> findByWarehouseExportId(Long warehouseExportId);
+
+    // Tìm danh sách xe sẵn sàng để yêu cầu xuất (Trạng thái phù hợp và chưa thuộc đơn nào)
+    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity", "guaranteeLetter.manufacturer"})
+    @Query("""
+                SELECT v FROM VehicleEntity v
+                LEFT JOIN v.guaranteeLetter gl
+                LEFT JOIN v.manufacturerEntity m
+                WHERE v.status = :status
+                AND v.warehouseExport IS NULL
+                AND (:chassisNumber IS NULL OR LOWER(v.chassisNumber) LIKE LOWER(CONCAT('%', :chassisNumber, '%')))
+                AND (:manufacturerCode IS NULL OR m.code = :manufacturerCode)
+                AND (:ref IS NULL OR LOWER(gl.referenceCode) LIKE LOWER(CONCAT('%', :ref, '%')))
+            """)
+    Page<VehicleEntity> findAvailableForExport(
+            @Param("status") String status,
+            @Param("chassisNumber") String chassisNumber,
+            @Param("manufacturerCode") String manufacturerCode,
+            @Param("ref") String ref,
+            Pageable pageable);
 }

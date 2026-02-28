@@ -17,6 +17,7 @@ import java.util.List;
         @Index(name = "idx_vehicle_invoice", columnList = "invoice_id"),
         @Index(name = "idx_vehicle_status", columnList = "status"),
         @Index(name = "idx_vehicle_warehouse_import", columnList = "warehouse_import_id"),
+        @Index(name = "idx_vehicle_warehouse_export", columnList = "warehouse_export_id"),
             //composite index
             @Index(name = "idx_vehicle_gl_status", columnList = "guarantee_letter_id, status")
     }
@@ -73,5 +74,9 @@ public class VehicleEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_import_id")
     private WarehouseImportEntity warehouseImport;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "warehouse_export_id")
+    private WarehouseExportEntity warehouseExport;
 
 }

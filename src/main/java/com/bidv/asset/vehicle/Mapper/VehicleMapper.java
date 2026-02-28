@@ -82,6 +82,9 @@ public class VehicleMapper {
         if (entity.getWarehouseImport() != null) {
             dto.setWarehouseImportId(entity.getWarehouseImport().getId());
         }
+        if (entity.getWarehouseExport() != null) {
+            dto.setWarehouseExportId(entity.getWarehouseExport().getId());
+        }
         /* ===== DOCUMENTS ===== */
         if (entity.getDocuments() != null) {
             dto.setDocuments(
