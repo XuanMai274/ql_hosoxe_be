@@ -41,7 +41,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         if ("VINFAST_V1".equals(template)) {
             return generateDeXuatVinfast(exportDeXuatRequest.getGuaranteeLetter(),exportDeXuatRequest.getExportData());
         }
-        if ("HYNDAI_V1".equals(template)) {
+        if ("HYUNDAI_V1".equals(template)) {
             return generateDeXuatHyundai(exportDeXuatRequest.getGuaranteeLetter(),exportDeXuatRequest.getExportData());
         }
         throw new IllegalArgumentException("Template không được hỗ trợ: " + template);

@@ -100,7 +100,13 @@ public class WarehouseImportServiceImplement implements WarehouseImportService {
         WarehouseImportEntity savedEntity =
                 warehouseImportRepository.save(entity);
 
-        // ===== 8. MAP → DTO =====
+        // ===== 8. CẬP NHẬT ID NHẬP KHO VÀO BẢNG XE =====
+        for (VehicleEntity vehicle : vehicles) {
+            vehicle.setWarehouseImport(savedEntity);
+        }
+        vehicleRepository.saveAll(vehicles);
+
+        // ===== 9. MAP → DTO =====
         return warehouseImportMapper.toDTO(savedEntity);
     }
 

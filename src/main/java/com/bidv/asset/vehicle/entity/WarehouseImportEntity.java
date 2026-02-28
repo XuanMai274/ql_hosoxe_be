@@ -37,13 +37,7 @@ public class WarehouseImportEntity {
     @JoinColumn(name = "mortgage_contract_id", nullable = false)
     private MortgageContractEntity mortgageContract;
 
-    // Danh sách xe nhập
-    @ManyToMany
-    @JoinTable(
-            name = "warehouse_import_vehicle",
-            joinColumns = @JoinColumn(name = "warehouse_import_id"),
-            inverseJoinColumns = @JoinColumn(name = "vehicle_id")
-    )
+    @OneToMany(mappedBy = "warehouseImport", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<VehicleEntity> vehicles;
 
     private LocalDateTime createdAt;

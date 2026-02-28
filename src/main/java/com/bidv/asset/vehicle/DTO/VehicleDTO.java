@@ -49,6 +49,7 @@ public class VehicleDTO {
     private GuaranteeLetterDTO guaranteeLetterDTO;
     // OneToMany -> Loans
     private List<Long> loanIds;
+    private Long warehouseImportId;
     private String deadlineLabel;
     private ManufacturerDTO manufacturerDTO;
     /* ================== OCR / VALIDATION FIELDS (MỚI) ================== */
