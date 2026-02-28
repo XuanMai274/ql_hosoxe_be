@@ -5,6 +5,7 @@ import com.bidv.asset.vehicle.DTO.LoanDTO;
 import com.bidv.asset.vehicle.entity.DisbursementEntity;
 import com.bidv.asset.vehicle.entity.LoanEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class DisbursementMapper {
 
     @Autowired
+    @Lazy
     LoanMapper loanMapper;
 
     @Autowired
@@ -85,6 +87,7 @@ public class DisbursementMapper {
         entity.setId(dto.getId());
         entity.setLoanContractNumber(dto.getLoanContractNumber());
         entity.setUsedLimit(dto.getUsedLimit());
+        entity.setCreditLimit(dto.getCreditLimit());
         entity.setRemainingLimit(dto.getRemainingLimit());
         entity.setIssuedGuaranteeBalance(dto.getIssuedGuaranteeBalance());
         entity.setVehicleLoanBalance(dto.getVehicleLoanBalance());
