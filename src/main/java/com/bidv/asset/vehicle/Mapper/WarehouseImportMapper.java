@@ -1,9 +1,9 @@
 package com.bidv.asset.vehicle.Mapper;
 
+import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.DTO.WarehouseImportDTO;
 import com.bidv.asset.vehicle.entity.VehicleEntity;
 import com.bidv.asset.vehicle.entity.WarehouseImportEntity;
-import jakarta.persistence.Column;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,16 +12,22 @@ import java.util.stream.Collectors;
 
 @Component
 public class WarehouseImportMapper {
-    @Autowired ManufacturerMapper manufacturerMapper;
-    @Autowired MortgageContractMapper mortgageContractMapper;
-    /*
-     ===============================
-            ENTITY -> DTO
-     ===============================
-     */
-    public  WarehouseImportDTO toDTO(WarehouseImportEntity entity) {
+    @Autowired
+    ManufacturerMapper manufacturerMapper;
+    @Autowired
+    MortgageContractMapper mortgageContractMapper;
+    @Autowired
+    VehicleMapper vehicleMapper;
 
-        if (entity == null) return null;
+    /*
+     * ===============================
+     * ENTITY -> DTO
+     * ===============================
+     */
+    public WarehouseImportDTO toDTO(WarehouseImportEntity entity) {
+
+        if (entity == null)
+            return null;
 
         WarehouseImportDTO dto = new WarehouseImportDTO();
 
@@ -32,39 +38,43 @@ public class WarehouseImportMapper {
         // Manufacturer
         if (entity.getManufacturer() != null) {
             dto.setManufacturerDTO(
-                    manufacturerMapper.toDto(entity.getManufacturer())
-            );
+                    manufacturerMapper.toDto(entity.getManufacturer()));
         }
 
         // Mortgage Contract
         if (entity.getMortgageContract() != null) {
             dto.setMortgageContractDTO(
-                    mortgageContractMapper.toDTO(entity.getMortgageContract())
-            );
+                    mortgageContractMapper.toDTO(entity.getMortgageContract()));
         }
 
-        // Vehicle IDs
+        // Vehicle IDs + Vehicle details
         if (entity.getVehicles() != null) {
             List<Long> vehicleIds = entity.getVehicles()
                     .stream()
                     .map(VehicleEntity::getId)
                     .collect(Collectors.toList());
-
             dto.setVehicleIds(vehicleIds);
+
+            // Map full vehicle details
+            List<VehicleDTO> vehicleDTOs = entity.getVehicles()
+                    .stream()
+                    .map(vehicleMapper::toDto)
+                    .collect(Collectors.toList());
+            dto.setVehicles(vehicleDTOs);
         }
 
         return dto;
     }
 
-
     /*
-     ===============================
-            DTO -> ENTITY
-     ===============================
+     * ===============================
+     * DTO -> ENTITY
+     * ===============================
      */
-    public  WarehouseImportEntity toEntity(WarehouseImportDTO dto) {
+    public WarehouseImportEntity toEntity(WarehouseImportDTO dto) {
 
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         WarehouseImportEntity entity = new WarehouseImportEntity();
 

@@ -13,20 +13,22 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface LoanRepository extends JpaRepository<LoanEntity, Long> {
     Page<LoanEntity> findAllByLoanStatus(LoanStatus status, Pageable pageable);
+
     @Query("""
-    SELECT l FROM LoanEntity l
-    JOIN l.vehicle v
-    WHERE (:loanContractNumber IS NULL OR l.loanContractNumber LIKE :loanContractNumber)
-    AND (:chassisNumber IS NULL OR v.chassisNumber LIKE :chassisNumber)
-    AND (:status IS NULL  OR l.loanStatus = :status)
-    AND (:docId IS NULL OR l.docId LIKE :docId)
-    AND (:dueDateFrom IS NULL OR l.dueDate BETWEEN :dueDateFrom AND :dueDateTo)
-""")
+                SELECT l FROM LoanEntity l
+                JOIN l.vehicle v
+                WHERE (:loanContractNumber IS NULL OR l.loanContractNumber LIKE :loanContractNumber)
+                AND (:chassisNumber IS NULL OR v.chassisNumber LIKE :chassisNumber)
+                AND (:status IS NULL  OR l.loanStatus = :status)
+                AND (:docId IS NULL OR l.docId LIKE :docId)
+                AND (:dueDateFrom IS NULL OR l.dueDate BETWEEN :dueDateFrom AND :dueDateTo)
+            """)
     Page<LoanEntity> searchLoans(
             @Param("loanContractNumber") String loanContractNumber,
             @Param("chassisNumber") String chassisNumber,
@@ -34,15 +36,21 @@ public interface LoanRepository extends JpaRepository<LoanEntity, Long> {
             @Param("docId") String docId,
             @Param("dueDateFrom") LocalDate dueDateFrom,
             @Param("dueDateTo") LocalDate dueDateTo,
-            Pageable pageable
-    );
+            Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM CreditContractEntity c WHERE c.id = :id")
     Optional<CreditContractEntity> findByIdForUpdate(@Param("id") Long id);
+
     @Query("""
-        SELECT COALESCE(MAX(l.childSequence), 0)
-        FROM LoanEntity l
-        WHERE l.creditContract.id = :creditContractId
-    """)
+                SELECT COALESCE(MAX(l.childSequence), 0)
+                FROM LoanEntity l
+                WHERE l.creditContract.id = :creditContractId
+            """)
     Integer findMaxChildSequence(@Param("creditContractId") Long creditContractId);
+
+    /**
+     * Lấy danh sách khoản vay theo customerId, sắp xếp theo ngày tạo giảm dần
+     */
+    List<LoanEntity> findByCustomerIdOrderByCreatedAtDesc(@Param("customerId") Long customerId);
 }

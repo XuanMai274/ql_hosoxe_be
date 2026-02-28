@@ -19,6 +19,8 @@ public class WarehouseImportDTO {
     private MortgageContractDTO mortgageContractDTO;
     // Danh sách vehicle id
     private List<Long> vehicleIds;
+    // Danh sách vehicle đầy đủ (dùng cho view chi tiết)
+    private List<VehicleDTO> vehicles;
 
     private LocalDateTime createdAt;
 }
