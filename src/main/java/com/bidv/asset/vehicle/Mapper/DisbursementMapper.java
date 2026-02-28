@@ -22,7 +22,7 @@ public class DisbursementMapper {
     @Autowired
     MortgageContractMapper mortgageContractMapper;
 
-    public DisbursementDTO toDTO(DisbursementEntity entity) {
+    public DisbursementDTO toDto(DisbursementEntity entity) {
         if (entity == null)
             return null;
 
