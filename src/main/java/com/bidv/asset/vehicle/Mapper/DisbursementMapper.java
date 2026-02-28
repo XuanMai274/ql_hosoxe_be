@@ -27,6 +27,43 @@ public class DisbursementMapper {
     @Autowired
     MortgageContractMapper mortgageContractMapper;
 
+    public DisbursementDTO toDtoSimple(DisbursementEntity entity) {
+        if (entity == null)
+            return null;
+
+        DisbursementDTO dto = new DisbursementDTO();
+        dto.setId(entity.getId());
+        dto.setLoanContractNumber(entity.getLoanContractNumber());
+        dto.setCreditLimit(entity.getCreditLimit());
+        dto.setUsedLimit(entity.getUsedLimit());
+        dto.setRemainingLimit(entity.getRemainingLimit());
+        dto.setIssuedGuaranteeBalance(entity.getIssuedGuaranteeBalance());
+        dto.setVehicleLoanBalance(entity.getVehicleLoanBalance());
+        dto.setRealEstateLoanBalance(entity.getRealEstateLoanBalance());
+        dto.setTotalCollateralValue(entity.getTotalCollateralValue());
+        dto.setRealEstateValue(entity.getRealEstateValue());
+        dto.setCollateralValueAfterFactor(entity.getCollateralValueAfterFactor());
+        dto.setRealEstateValueAfterFactor(entity.getRealEstateValueAfterFactor());
+        dto.setDisbursementDate(entity.getDisbursementDate());
+        dto.setLoanTerm(entity.getLoanTerm());
+        dto.setStartDate(entity.getStartDate());
+        dto.setDueDate(entity.getDueDate());
+        dto.setCreatedAt(entity.getCreatedAt());
+        dto.setUpdatedAt(entity.getUpdatedAt());
+        dto.setDisbursementAmount(entity.getDisbursementAmount());
+
+        if (entity.getCreditContract() != null) {
+            dto.setCreditContractId(entity.getCreditContract().getId());
+            dto.setCreditContractNumber(entity.getCreditContract().getContractNumber());
+        }
+
+        if (entity.getLoans() != null) {
+            dto.setVehicleCount(entity.getLoans().size());
+        }
+
+        return dto;
+    }
+
     public DisbursementDTO toDto(DisbursementEntity entity) {
         if (entity == null)
             return null;
@@ -55,7 +92,14 @@ public class DisbursementMapper {
         // Relationships
         if (entity.getCreditContract() != null) {
             dto.setCreditContractId(entity.getCreditContract().getId());
+            dto.setCreditContractNumber(entity.getCreditContract().getContractNumber());
             dto.setCreditContractDTO(creditContractMapper.toDto(entity.getCreditContract()));
+        }
+
+        if (entity.getLoans() != null) {
+            dto.setVehicleCount(entity.getLoans().size());
+        } else {
+            dto.setVehicleCount(0);
         }
 
         if (entity.getMortgageContract() != null) {

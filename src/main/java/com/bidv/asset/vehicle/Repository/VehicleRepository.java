@@ -21,13 +21,13 @@ import java.util.Optional;
 public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     // tìm danh sách nhiều xe cùng 1 lúc
     @Query("""
-        SELECT DISTINCT v FROM VehicleEntity v
-        LEFT JOIN FETCH v.guaranteeLetter g
-        LEFT JOIN FETCH g.creditContract cc
-        LEFT JOIN FETCH cc.mortgageContracts mc
-        LEFT JOIN FETCH g.manufacturer
-        WHERE v.id IN :ids
-    """)
+                SELECT DISTINCT v FROM VehicleEntity v
+                LEFT JOIN FETCH v.guaranteeLetter g
+                LEFT JOIN FETCH g.creditContract cc
+                LEFT JOIN FETCH cc.mortgageContracts mc
+                LEFT JOIN FETCH g.manufacturer
+                WHERE v.id IN :ids
+            """)
     List<VehicleEntity> findAllWithGuaranteeByIds(List<Long> ids);
 
     Optional<VehicleEntity> findDetailById(Long id);
@@ -179,6 +179,7 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select v from VehicleEntity v where v.id = :id")
     Optional<VehicleEntity> findByIdForUpdate(@Param("id") Long id);
+
     @Query("SELECT SUM(v.price) FROM VehicleEntity v WHERE v.status = :status")
     BigDecimal sumPriceByStatus(@Param("status") String status);
 

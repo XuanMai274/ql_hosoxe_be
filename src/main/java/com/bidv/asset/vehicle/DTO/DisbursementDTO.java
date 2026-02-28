@@ -38,7 +38,9 @@ public class DisbursementDTO {
     private BigDecimal disbursementAmount;
     // ===== Quan hệ =====
     private Long creditContractId;
+    private String creditContractNumber;
     private CreditContractDTO creditContractDTO;
+    private Integer vehicleCount;
 
     private Long mortgageContractId;
     private MortgageContractDTO mortgageContractDTO;
