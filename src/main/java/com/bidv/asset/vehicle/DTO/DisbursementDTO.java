@@ -44,4 +44,5 @@ public class DisbursementDTO {
     private MortgageContractDTO mortgageContractDTO;
 
     private List<Long> loanIds;
+    private List<LoanDTO> loans;
 }

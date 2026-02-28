@@ -21,14 +21,12 @@ public interface WarehouseImportRepository extends JpaRepository<WarehouseImport
 
     /**
      * Lấy danh sách phiếu nhập kho theo customerId
-     * (thông qua vehicles → guaranteeLetter → customer)
+     * (thông qua mortgageContract → customer)
      */
     @Query("""
                 SELECT DISTINCT wi FROM WarehouseImportEntity wi
-                JOIN wi.vehicles v
-                JOIN v.guaranteeLetter gl
-                JOIN gl.customer c
-                WHERE c.id = :customerId
+                LEFT JOIN FETCH wi.vehicles v
+                WHERE wi.mortgageContract.customer.id = :customerId
                 ORDER BY wi.createdAt DESC
             """)
     List<WarehouseImportEntity> findByCustomerId(@Param("customerId") Long customerId);

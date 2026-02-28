@@ -1,11 +1,11 @@
 package com.bidv.asset.vehicle.API;
 
-import com.bidv.asset.vehicle.DTO.LoanDTO;
-import com.bidv.asset.vehicle.Mapper.LoanMapper;
-import com.bidv.asset.vehicle.Repository.LoanRepository;
+import com.bidv.asset.vehicle.DTO.DisbursementDTO;
+import com.bidv.asset.vehicle.Mapper.DisbursementMapper;
+import com.bidv.asset.vehicle.Repository.DisbursementRepository;
 import com.bidv.asset.vehicle.Repository.UserAccountRepository;
 import com.bidv.asset.vehicle.entity.CustomerEntity;
-import com.bidv.asset.vehicle.entity.LoanEntity;
+import com.bidv.asset.vehicle.entity.DisbursementEntity;
 import com.bidv.asset.vehicle.entity.UserAccountEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,19 +17,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * API dành cho Customer để xem danh sách khoản vay (giải ngân) của mình
+ * API dành cho Customer để xem danh sách các đợt giải ngân (cha) và khoản vay
+ * (con)
  */
 @RestController
-@RequestMapping("/customer/loans")
+@RequestMapping("/customer/disbursements")
 @RequiredArgsConstructor
 public class CustomerLoanAPI {
 
-    private final LoanRepository loanRepository;
+    private final DisbursementRepository disbursementRepository;
     private final UserAccountRepository userAccountRepository;
-    private final LoanMapper loanMapper;
+    private final DisbursementMapper disbursementMapper;
 
     /**
-     * Lấy Customer từ JWT token (username → UserAccount → customer)
+     * Lấy Customer từ JWT token
      */
     private CustomerEntity getCustomerFromToken() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -46,31 +47,31 @@ public class CustomerLoanAPI {
     }
 
     /**
-     * Lấy danh sách khoản vay (giải ngân) của khách hàng đang đăng nhập
-     * GET /customer/loans
+     * Lấy danh sách đợt giải ngân của khách hàng
+     * GET /customer/disbursements
      */
     @GetMapping
-    public ResponseEntity<List<LoanDTO>> getMyLoans() {
+    public ResponseEntity<List<DisbursementDTO>> getMyDisbursements() {
         CustomerEntity customer = getCustomerFromToken();
 
-        List<LoanEntity> entities = loanRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId());
+        List<DisbursementEntity> entities = disbursementRepository.findByCustomerId(customer.getId());
 
-        List<LoanDTO> result = entities.stream()
-                .map(loanMapper::toDto)
+        List<DisbursementDTO> result = entities.stream()
+                .map(disbursementMapper::toDTO)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
     }
 
     /**
-     * Lấy chi tiết khoản vay theo ID
-     * GET /customer/loans/{id}
+     * Lấy chi tiết đợt giải ngân (bao gồm danh sách khoản vay con)
+     * GET /customer/disbursements/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<LoanDTO> getDetail(@PathVariable Long id) {
-        LoanEntity entity = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản vay với id: " + id));
+    public ResponseEntity<DisbursementDTO> getDetail(@PathVariable Long id) {
+        DisbursementEntity entity = disbursementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đợt giải ngân với id: " + id));
 
-        return ResponseEntity.ok(loanMapper.toDto(entity));
+        return ResponseEntity.ok(disbursementMapper.toDTO(entity));
     }
 }
