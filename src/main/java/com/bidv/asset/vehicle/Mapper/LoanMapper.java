@@ -62,7 +62,7 @@ public class LoanMapper {
             dto.setGuaranteeLetterId(entity.getGuaranteeLetter().getId());
         }
         if(entity.getDisbursement()!=null){
-            dto.setDisbursementDTO(disbursementMapper.toDto(entity.getDisbursement()));
+            dto.setDisbursementDTO(disbursementMapper.toDTO(entity.getDisbursement()));
         }
         dto.setCustomerDTO(
                 customerMapper.toDTO(entity.getCustomer())

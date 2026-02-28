@@ -36,7 +36,7 @@ public class DisbursementServiceImplement implements DisbursementService {
     @Transactional
     public DisbursementDTO createDisbursement(DisbursementDTO dto) {
 
-        DisbursementEntity entity = disbursementMapper.toEntity(dto);
+        DisbursementEntity entity = disbursementMapper.(dto);
         MortgageContractEntity mortgageContract =
                 mortgageContractRepository.findById(dto.getMortgageContractId())
                         .orElseThrow(() ->
