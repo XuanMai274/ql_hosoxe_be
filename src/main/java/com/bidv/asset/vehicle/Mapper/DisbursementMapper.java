@@ -7,6 +7,9 @@ import com.bidv.asset.vehicle.entity.LoanEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -72,5 +75,32 @@ public class DisbursementMapper {
         }
 
         return dto;
+    }
+
+    public DisbursementEntity toEntity(DisbursementDTO dto) {
+        if (dto == null)
+            return null;
+
+        DisbursementEntity entity = new DisbursementEntity();
+        entity.setId(dto.getId());
+        entity.setLoanContractNumber(dto.getLoanContractNumber());
+        entity.setUsedLimit(dto.getUsedLimit());
+        entity.setRemainingLimit(dto.getRemainingLimit());
+        entity.setIssuedGuaranteeBalance(dto.getIssuedGuaranteeBalance());
+        entity.setVehicleLoanBalance(dto.getVehicleLoanBalance());
+        entity.setRealEstateLoanBalance(dto.getRealEstateLoanBalance());
+        entity.setTotalCollateralValue(dto.getTotalCollateralValue());
+        entity.setRealEstateValue(dto.getRealEstateValue());
+        entity.setCollateralValueAfterFactor(dto.getCollateralValueAfterFactor());
+        entity.setRealEstateValueAfterFactor(dto.getRealEstateValueAfterFactor());
+        entity.setDisbursementDate(dto.getDisbursementDate());
+        entity.setLoanTerm(dto.getLoanTerm());
+        entity.setStartDate(dto.getStartDate());
+        entity.setDueDate(dto.getDueDate());
+        entity.setCreatedAt(dto.getCreatedAt());
+        entity.setUpdatedAt(dto.getUpdatedAt());
+        entity.setDisbursementAmount(dto.getDisbursementAmount());
+
+        return entity;
     }
 }
