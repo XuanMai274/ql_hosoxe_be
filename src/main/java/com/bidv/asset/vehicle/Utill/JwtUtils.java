@@ -42,7 +42,7 @@ public class JwtUtils {
     public String generateAccessToken(String username, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
-        return createToken(claims, username, 24 * 60 * 60 * 1000); // 24 hours
+        return createToken(claims, username, 15 * 60 * 1000); // 15 minutes
     }
 
     public String extractRole(String token) {
