@@ -57,7 +57,7 @@ public class CustomerLoanAPI {
         List<DisbursementEntity> entities = disbursementRepository.findByCustomerId(customer.getId());
 
         List<DisbursementDTO> result = entities.stream()
-                .map(disbursementMapper::toDTO)
+                .map(disbursementMapper::toDto)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
@@ -72,6 +72,6 @@ public class CustomerLoanAPI {
         DisbursementEntity entity = disbursementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đợt giải ngân với id: " + id));
 
-        return ResponseEntity.ok(disbursementMapper.toDTO(entity));
+        return ResponseEntity.ok(disbursementMapper.toDto(entity));
     }
 }
