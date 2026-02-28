@@ -17,7 +17,7 @@ public class LoanMapper {
     CustomerMapper customerMapper;
     @Autowired VehicleMapper vehicleMapper;
     @Autowired GuaranteeLetterMapper guaranteeLetterMapper;
-
+    @Autowired DisbursementMapper disbursementMapper;
 
     /* ================= ENTITY → DTO ================= */
     public LoanDTO toDto(LoanEntity entity) {
@@ -60,6 +60,9 @@ public class LoanMapper {
 
         if (entity.getGuaranteeLetter() != null) {
             dto.setGuaranteeLetterId(entity.getGuaranteeLetter().getId());
+        }
+        if(entity.getDisbursement()!=null){
+            dto.setDisbursementDTO(disbursementMapper.toDto(entity.getDisbursement()));
         }
         dto.setCustomerDTO(
                 customerMapper.toDTO(entity.getCustomer())
@@ -139,7 +142,11 @@ public class LoanMapper {
             g.setId(dto.getGuaranteeLetterDTO().getId());
             entity.setGuaranteeLetter(g);
         }
-
+        if(dto.getDisbursementDTO()!=null){
+            DisbursementEntity d= new DisbursementEntity();
+            d.setId(dto.getDisbursementDTO().getId());
+            entity.setDisbursement(d);
+        }
         if (dto.getCreditContractDTO() != null) {
             CreditContractEntity credit = new CreditContractEntity();
             credit.setId(dto.getCreditContractDTO().getId());

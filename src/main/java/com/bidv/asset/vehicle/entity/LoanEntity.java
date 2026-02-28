@@ -97,5 +97,8 @@ public class LoanEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "loan_type", nullable = false)
     private LoanType loanType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "disbursement_id", nullable = false)
+    private DisbursementEntity disbursement;
 
 }

@@ -21,7 +21,7 @@ public class WarehouseImportAPI {
     WarehouseImportService warehouseImportService;
 
     @PostMapping("/import")
-    public ResponseEntity<?> importWarehouse(
+    public ResponseEntity<WarehouseImportDTO> importWarehouse(
             @RequestBody WarehouseImportRequestDTO request) {
 
         try {
@@ -34,7 +34,7 @@ public class WarehouseImportAPI {
         } catch (Exception e) {
 
             return ResponseEntity.badRequest()
-                    .body(Map.of(
+                    .body((WarehouseImportDTO) Map.of(
                             "success", false,
                             "message", e.getMessage()
                     ));

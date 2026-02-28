@@ -8,9 +8,7 @@ import java.util.List;
 
 public interface LoanService {
     public LoanDTO createLoan(
-            LoanDTO dto,
-            Integer childSequence,
-            String loanContractNumber
+            LoanDTO dto
     );
     LoanDTO getDetail(Long id);
     public List<LoanDTO> createBatchLoans(List<LoanDTO> dtos);

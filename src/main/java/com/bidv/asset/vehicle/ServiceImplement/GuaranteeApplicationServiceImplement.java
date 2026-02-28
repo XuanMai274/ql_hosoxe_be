@@ -1,7 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
 import com.bidv.asset.vehicle.DTO.GuaranteeApplicationDTO;
-import com.bidv.asset.vehicle.Mapper.CustomerMapper;
 import com.bidv.asset.vehicle.Mapper.GuaranteeApplicationMapper;
 import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.GuaranteeApplicationService;
@@ -45,7 +44,7 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
         // ===== 2. FIND ACTIVE CONTRACTS =====
         CreditContractEntity credit =
                 creditContractRepository
-                        .findFirstByCustomerIdAndStatus(customer.getId(),"ACTIVE")
+                        .findFirstByStatus("ACTIVE")
                         .orElseThrow(() -> new RuntimeException("No active credit contract"));
 
         MortgageContractEntity mortgage =

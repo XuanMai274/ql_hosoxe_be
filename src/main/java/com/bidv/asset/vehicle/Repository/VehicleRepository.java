@@ -178,4 +178,6 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select v from VehicleEntity v where v.id = :id")
     Optional<VehicleEntity> findByIdForUpdate(@Param("id") Long id);
+    @Query("SELECT SUM(v.price) FROM VehicleEntity v WHERE v.status = :status")
+    BigDecimal sumPriceByStatus(@Param("status") String status);
 }
