@@ -10,7 +10,9 @@ import java.util.stream.Collectors;
 
 @Component
 public class GuaranteeLetterMapper {
-    @Autowired GuaranteeApplicationMapper guaranteeApplicationMapper;
+    @Autowired
+    GuaranteeApplicationMapper guaranteeApplicationMapper;
+
     // =====================================================
     // ENTITY → DTO
     // =====================================================
@@ -78,13 +80,12 @@ public class GuaranteeLetterMapper {
             dto.setBranchAuthorizedRepresentativeDTO(repDTO);
         }
 
-
         if (entity.getCustomer() != null) {
             CustomerDTO cus = new CustomerDTO();
             cus.setId(entity.getCustomer().getId());
             dto.setCustomerDTO(cus);
         }
-        if(entity.getGuaranteeApplication()!=null){
+        if (entity.getGuaranteeApplication() != null) {
             dto.setGuaranteeApplicationDTO(guaranteeApplicationMapper.toDTO(entity.getGuaranteeApplication()));
 
         }
@@ -123,8 +124,7 @@ public class GuaranteeLetterMapper {
                     entity.getVehicles()
                             .stream()
                             .map(VehicleEntity::getId)
-                            .collect(Collectors.toList())
-            );
+                            .collect(Collectors.toList()));
         } else {
             dto.setVehicleIds(Collections.emptyList());
         }
@@ -179,6 +179,12 @@ public class GuaranteeLetterMapper {
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setUpdatedAt(dto.getUpdatedAt());
 
+        if (dto.getGuaranteeApplicationDTO() != null && dto.getGuaranteeApplicationDTO().getId() != null) {
+            GuaranteeApplicationEntity ga = new GuaranteeApplicationEntity();
+            ga.setId(dto.getGuaranteeApplicationDTO().getId());
+            entity.setGuaranteeApplication(ga);
+        }
+
         return entity;
     }
 
@@ -214,9 +220,11 @@ public class GuaranteeLetterMapper {
         entity.setStatus(dto.getStatus());
         entity.setUpdatedAt(dto.getUpdatedAt());
     }
+
     // mapper một số trường cần thiết
     public GuaranteeLetterDTO toLiteDto(GuaranteeLetterEntity entity) {
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         GuaranteeLetterDTO dto = new GuaranteeLetterDTO();
         dto.setId(entity.getId());

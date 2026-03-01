@@ -50,6 +50,11 @@ public interface LoanRepository extends JpaRepository<LoanEntity, Long> {
     Integer findMaxChildSequence(@Param("creditContractId") Long creditContractId);
 
     /**
+     * Lấy danh sách khoản vay theo customerId (phân trang)
+     */
+    Page<LoanEntity> findByCustomerId(Long customerId, Pageable pageable);
+
+    /**
      * Lấy danh sách khoản vay theo customerId, sắp xếp theo ngày tạo giảm dần
      */
     List<LoanEntity> findByCustomerIdOrderByCreatedAtDesc(@Param("customerId") Long customerId);

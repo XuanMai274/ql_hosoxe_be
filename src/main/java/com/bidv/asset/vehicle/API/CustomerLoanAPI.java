@@ -1,9 +1,11 @@
 package com.bidv.asset.vehicle.API;
 
 import com.bidv.asset.vehicle.DTO.DisbursementDTO;
+import com.bidv.asset.vehicle.DTO.LoanDTO;
 import com.bidv.asset.vehicle.Mapper.DisbursementMapper;
 import com.bidv.asset.vehicle.Repository.DisbursementRepository;
 import com.bidv.asset.vehicle.Repository.UserAccountRepository;
+import com.bidv.asset.vehicle.Service.LoanService;
 import com.bidv.asset.vehicle.entity.CustomerEntity;
 import com.bidv.asset.vehicle.entity.DisbursementEntity;
 import com.bidv.asset.vehicle.entity.UserAccountEntity;
@@ -24,13 +26,14 @@ import java.util.stream.Collectors;
  * (con)
  */
 @RestController
-@RequestMapping("/customer/disbursements")
+@RequestMapping("/customer")
 @RequiredArgsConstructor
 public class CustomerLoanAPI {
 
     private final DisbursementRepository disbursementRepository;
     private final UserAccountRepository userAccountRepository;
     private final DisbursementMapper disbursementMapper;
+    private final LoanService loanService;
 
     /**
      * Lấy Customer từ JWT token
@@ -53,7 +56,7 @@ public class CustomerLoanAPI {
      * Lấy danh sách đợt giải ngân của khách hàng (phân trang)
      * GET /customer/disbursements
      */
-    @GetMapping
+    @GetMapping("/disbursements")
     public ResponseEntity<Page<DisbursementDTO>> getMyDisbursements(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -71,11 +74,40 @@ public class CustomerLoanAPI {
      * Lấy chi tiết đợt giải ngân (bao gồm danh sách khoản vay con)
      * GET /customer/disbursements/{id}
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<DisbursementDTO> getDetail(@PathVariable Long id) {
+    @GetMapping("/disbursements/{id}")
+    public ResponseEntity<DisbursementDTO> getDetailDisbursement(@PathVariable Long id) {
         DisbursementEntity entity = disbursementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đợt giải ngân với id: " + id));
 
         return ResponseEntity.ok(disbursementMapper.toDto(entity));
+    }
+
+    /**
+     * Lấy danh sách khoản vay của khách hàng
+     * GET /customer/loans
+     */
+    @GetMapping("/loans")
+    public ResponseEntity<Page<LoanDTO>> getMyLoans(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        CustomerEntity customer = getCustomerFromToken();
+        return ResponseEntity.ok(loanService.getLoansByCustomerId(customer.getId(), page, size));
+    }
+
+    /**
+     * Lấy chi tiết khoản vay của khách hàng
+     * GET /customer/loans/{id}
+     */
+    @GetMapping("/loans/{id}")
+    public ResponseEntity<LoanDTO> getLoanDetail(@PathVariable Long id) {
+        CustomerEntity customer = getCustomerFromToken();
+        LoanDTO loan = loanService.getDetail(id);
+
+        // Security check: Customer can only view their own loans
+        if (loan.getCustomerDTO() == null || !loan.getCustomerDTO().getId().equals(customer.getId())) {
+            throw new RuntimeException("Bạn không có quyền xem khoản vay này");
+        }
+
+        return ResponseEntity.ok(loan);
     }
 }

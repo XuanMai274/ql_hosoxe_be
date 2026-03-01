@@ -39,7 +39,9 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
         MortgageContractRepository mortgageContractRepository;
         @Autowired
         CustomerRepository customerRepository;
-        @Autowired GuaranteeApplicationRepository guaranteeApplicationRepository;
+        @Autowired
+        GuaranteeApplicationRepository guaranteeApplicationRepository;
+
         @Transactional
         @Override
         public GuaranteeLetterDTO createGuaranteeLetter(GuaranteeLetterDTO dto) {
@@ -48,52 +50,62 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // 1. VALIDATE REQUEST
                 // =====================================================
                 if (dto == null) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request null");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Dữ liệu yêu cầu không được để trống (null)");
                 }
 
                 if (dto.getCustomerDTO() == null || dto.getCustomerDTO().getId() == null) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "customer không được null");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Thông tin khách hàng (customer) không được trống");
                 }
 
                 if (dto.getManufacturerDTO() == null || dto.getManufacturerDTO().getId() == null) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "manufacturer không được null");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Thông tin hãng xe (manufacturer) không được trống");
                 }
 
                 if (dto.getBranchAuthorizedRepresentativeDTO() == null ||
                                 dto.getBranchAuthorizedRepresentativeDTO().getId() == null) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                                        "authorizedRepresentative không được null");
+                                        "Thông tin người đại diện không được trống");
                 }
-                if(dto.getGuaranteeApplicationDTO()==null||dto.getGuaranteeApplicationDTO().getId()==null){
+
+                if (dto.getGuaranteeApplicationDTO() == null || dto.getGuaranteeApplicationDTO().getId() == null) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                                "Đơn đề nghị không được trống");
+                                        "Đơn đề nghị cấp bảo lãnh không được trống");
                 }
 
                 if (dto.getExpectedGuaranteeAmount() == null
                                 || dto.getExpectedGuaranteeAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Số tiền bảo lãnh không hợp lệ");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Số tiền bảo lãnh dự kiến phải lớn hơn 0");
                 }
 
                 Long customerId = dto.getCustomerDTO().getId();
                 Long manufacturerId = dto.getManufacturerDTO().getId();
                 Long repId = dto.getBranchAuthorizedRepresentativeDTO().getId();
-                Long guaranteeApp=dto.getGuaranteeApplicationDTO().getId();
+                Long guaranteeAppId = dto.getGuaranteeApplicationDTO().getId();
+
                 // =====================================================
                 // 2. LOAD CUSTOMER
                 // =====================================================
                 CustomerEntity customer = customerRepository.findById(customerId)
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND,
-                                                "Không tìm thấy customer"));
+                                                "Không tìm thấy khách hàng với ID: " + customerId));
 
                 // =====================================================
-                // 3. AUTO LOAD HDTD ACTIVE
+                // 3. LOAD HDTD ACTIVE (SỬA LẠI ĐỂ LỌC THEO CUSTOMER)
                 // =====================================================
+                // Tìm hợp đồng tín dụng ACTIVE của chính khách hàng này
                 CreditContractEntity creditContract = creditContractRepository
-                                .findFirstByStatus("ACTIVE")
+                                .findByCustomer_Id(customerId)
+                                .stream()
+                                .filter(c -> "ACTIVE".equals(c.getStatus()))
+                                .findFirst()
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST,
-                                                "Khách hàng chưa có HDTD ACTIVE"));
+                                                "Khách hàng này chưa có Hợp đồng tín dụng trạng thái ACTIVE"));
 
                 // =====================================================
                 // 4. LOAD MANUFACTURER
@@ -102,7 +114,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                                 .findById(manufacturerId)
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND,
-                                                "Không tìm thấy hãng xe"));
+                                                "Không tìm thấy hãng xe với ID: " + manufacturerId));
 
                 // =====================================================
                 // 5. AUTO LOAD HĐBD ACTIVE
@@ -114,7 +126,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                                                 "ACTIVE")
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST,
-                                                "Không có HĐBD ACTIVE phù hợp với hãng xe"));
+                                                "Không có Hợp đồng bảo đảm (HĐBD) trạng thái ACTIVE phù hợp cho khách hàng và hãng xe này. Vui lòng kiểm tra lại HĐBD."));
 
                 // =====================================================
                 // 6. LOAD AUTHORIZED REP
@@ -128,31 +140,28 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // =====================================================
                 // 6. LOAD ĐƠN ĐỀ NGHỊ
                 // =====================================================
-                GuaranteeApplicationEntity guaranteeApplicationEntity=guaranteeApplicationRepository.findById(guaranteeApp).orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Không tìm thấy thư đề nghị"));;
+                GuaranteeApplicationEntity guaranteeApplicationEntity = guaranteeApplicationRepository
+                                .findById(guaranteeAppId)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Không tìm thấy đơn đề nghị cấp bảo lãnh với ID: " + guaranteeAppId));
+
                 // =====================================================
                 // 7. CHECK CREDIT LIMIT
                 // =====================================================
-                 BigDecimal creditLimit = creditContract.getCreditLimit();
+                BigDecimal creditLimit = creditContract.getCreditLimit();
+                BigDecimal currentUsedLimit = creditContract.getUsedLimit() == null ? BigDecimal.ZERO
+                                : creditContract.getUsedLimit();
+                BigDecimal newUsedLimit = currentUsedLimit.add(dto.getExpectedGuaranteeAmount());
 
-                 BigDecimal currentUsedLimit =
-                 creditContract.getUsedLimit() == null
-                 ? BigDecimal.ZERO
-                 : creditContract.getUsedLimit();
+                if (newUsedLimit.compareTo(creditLimit) > 0) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST,
+                                        "Số tiền bảo lãnh vượt quá hạn mức tín dụng khả dụng. (Hạn mức: " + creditLimit
+                                                        + ", Đã dùng: " + currentUsedLimit + ")");
+                }
 
-                 BigDecimal newUsedLimit =
-                 currentUsedLimit.add(dto.getExpectedGuaranteeAmount());
-
-                 if (newUsedLimit.compareTo(creditLimit) > 0) {
-                 throw new ResponseStatusException(
-                 HttpStatus.BAD_REQUEST,
-                 "Vượt hạn mức tín dụng"
-                 );
-                 }
-
-                 BigDecimal newRemainingLimit =
-                 creditLimit.subtract(newUsedLimit);
+                BigDecimal newRemainingLimit = creditLimit.subtract(newUsedLimit);
 
                 // =====================================================
                 // 8. MAP ENTITY
@@ -164,6 +173,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 entity.setMortgageContract(mortgageContract);
                 entity.setManufacturer(manufacturer);
                 entity.setAuthorizedRepresentative(authorizedRep);
+                entity.setGuaranteeApplication(guaranteeApplicationEntity); // GÁN ĐƠN ĐỀ NGHỊ (FIX BUG LÀM MẤT LINK)
 
                 entity.setGuaranteeContractDate(LocalDate.now());
                 entity.setExpiryDate(calculateExpiryDate(manufacturer, guaranteeApplicationEntity.getVehicles()));
@@ -176,13 +186,19 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // =====================================================
                 // 9. UPDATE CREDIT CONTRACT
                 // =====================================================
-                // khi tạo bảo lãnh thì tăng dư bảo lãnh lên
-                 creditContract.setIssuedGuaranteeBalance(creditContract.getIssuedGuaranteeBalance().add(dto.getExpectedGuaranteeAmount()));
-                 creditContract.setUsedLimit(newUsedLimit);
-                 creditContract.setRemainingLimit(newRemainingLimit);
-                 creditContract.setUpdatedAt(LocalDateTime.now());
-                 creditContract.setOutstandingGuaranteeAmount(creditContract.getIssuedGuaranteeBalance().subtract(creditContract.getGuaranteeBalance()));
-                 creditContractRepository.save(creditContract);
+                BigDecimal currentIssuedBalance = creditContract.getIssuedGuaranteeBalance() == null ? BigDecimal.ZERO
+                                : creditContract.getIssuedGuaranteeBalance();
+                creditContract.setIssuedGuaranteeBalance(currentIssuedBalance.add(dto.getExpectedGuaranteeAmount()));
+                creditContract.setUsedLimit(newUsedLimit);
+                creditContract.setRemainingLimit(newRemainingLimit);
+                creditContract.setUpdatedAt(LocalDateTime.now());
+
+                BigDecimal guaranteeBalance = creditContract.getGuaranteeBalance() == null ? BigDecimal.ZERO
+                                : creditContract.getGuaranteeBalance();
+                creditContract.setOutstandingGuaranteeAmount(
+                                creditContract.getIssuedGuaranteeBalance().subtract(guaranteeBalance));
+
+                creditContractRepository.save(creditContract);
 
                 // =====================================================
                 // 10. RETURN DTO
@@ -451,9 +467,10 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
 
                 // ===== Set lại =====
                 contract.setGuaranteeBalance(newGuaranteeBalance);
-//                contract.setUsedLimit(contract.getIssuedGuaranteeBalance().add(contract.getVehicleLoanBalance().add(contract.getRealEstateLoanBalance())));
-//                contract.setRemainingLimit(newRemaining);
-                contract.setOutstandingGuaranteeAmount(contract.getIssuedGuaranteeBalance().subtract(contract.getGuaranteeBalance()));
+                // contract.setUsedLimit(contract.getIssuedGuaranteeBalance().add(contract.getVehicleLoanBalance().add(contract.getRealEstateLoanBalance())));
+                // contract.setRemainingLimit(newRemaining);
+                contract.setOutstandingGuaranteeAmount(
+                                contract.getIssuedGuaranteeBalance().subtract(contract.getGuaranteeBalance()));
                 contract.setUpdatedAt(LocalDateTime.now());
 
                 creditContractRepository.saveAndFlush(contract);
@@ -498,8 +515,10 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 return guaranteeLetterDTOS;
         }
 
-        private LocalDate calculateExpiryDate(ManufacturerEntity manufacturer, List<GuaranteeApplicationVehicleEntity> vehicles) {
-                if (manufacturer == null) return null;
+        private LocalDate calculateExpiryDate(ManufacturerEntity manufacturer,
+                        List<GuaranteeApplicationVehicleEntity> vehicles) {
+                if (manufacturer == null)
+                        return null;
 
                 String brand = manufacturer.getCode().toUpperCase();
                 LocalDate contractDate = LocalDate.now();
@@ -519,19 +538,19 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                                 int days = 30; // Mặc định
 
                                 // Nhóm 15 ngày
-                                if (name.contains("TUCSON") || name.contains("CRETA") || 
-                                    name.contains("IONIQ") || name.contains("LONIQ") || 
-                                    name.contains("STARIA")) {
+                                if (name.contains("TUCSON") || name.contains("CRETA") ||
+                                                name.contains("IONIQ") || name.contains("LONIQ") ||
+                                                name.contains("STARIA")) {
                                         days = 15;
-                                } 
+                                }
                                 // Nhóm 60 ngày (ưu tiên check nhóm dài hơn hoặc check chính xác)
-                                else if (name.contains("ACCENT") || name.contains("ELANTRA") || 
-                                         name.contains("STARGAZER") || name.contains("SANTA FE")) {
+                                else if (name.contains("ACCENT") || name.contains("ELANTRA") ||
+                                                name.contains("STARGAZER") || name.contains("SANTA FE")) {
                                         days = 60;
                                 }
                                 // Nhóm 30 ngày (còn lại hoặc khớp tên)
-                                else if (name.contains("GRAND I10") || name.contains("VENUE") || 
-                                         name.contains("CUSTIN") || name.contains("PALISADE")) {
+                                else if (name.contains("GRAND I10") || name.contains("VENUE") ||
+                                                name.contains("CUSTIN") || name.contains("PALISADE")) {
                                         days = 30;
                                 }
 

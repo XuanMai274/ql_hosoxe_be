@@ -7,21 +7,27 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface LoanService {
-    public LoanDTO createLoan(
-            LoanDTO dto
-    );
-    LoanDTO getDetail(Long id);
-    public List<LoanDTO> createBatchLoans(List<LoanDTO> dtos);
-    LoanDTO updateLoan(Long id, LoanDTO dto);
-    Page<LoanDTO> getAllLoans(int page, int size);
-    Page<LoanDTO> getLoansByStatus(LoanStatus status, int page, int size);
-    Page<LoanDTO> searchLoans(
-            String loanContractNumber,
-            String chassisNumber,
-            LoanStatus status,
-            String docId,
-            Integer dueInDays,
-            int page,
-            int size
-    );
+        public LoanDTO createLoan(
+                        LoanDTO dto);
+
+        LoanDTO getDetail(Long id);
+
+        public List<LoanDTO> createBatchLoans(List<LoanDTO> dtos);
+
+        LoanDTO updateLoan(Long id, LoanDTO dto);
+
+        Page<LoanDTO> getAllLoans(int page, int size);
+
+        Page<LoanDTO> getLoansByStatus(LoanStatus status, int page, int size);
+
+        Page<LoanDTO> searchLoans(
+                        String loanContractNumber,
+                        String chassisNumber,
+                        LoanStatus status,
+                        String docId,
+                        Integer dueInDays,
+                        int page,
+                        int size);
+
+        Page<LoanDTO> getLoansByCustomerId(Long customerId, int page, int size);
 }
