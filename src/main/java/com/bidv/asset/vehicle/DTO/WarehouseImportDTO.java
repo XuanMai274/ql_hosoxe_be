@@ -22,5 +22,7 @@ public class WarehouseImportDTO {
     // Danh sách vehicle đầy đủ (dùng cho view chi tiết)
     private List<VehicleDTO> vehicles;
 
+    private Integer vehicleCount;
+
     private LocalDateTime createdAt;
 }

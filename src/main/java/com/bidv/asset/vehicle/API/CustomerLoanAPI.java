@@ -8,6 +8,9 @@ import com.bidv.asset.vehicle.entity.CustomerEntity;
 import com.bidv.asset.vehicle.entity.DisbursementEntity;
 import com.bidv.asset.vehicle.entity.UserAccountEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,18 +50,19 @@ public class CustomerLoanAPI {
     }
 
     /**
-     * Lấy danh sách đợt giải ngân của khách hàng
+     * Lấy danh sách đợt giải ngân của khách hàng (phân trang)
      * GET /customer/disbursements
      */
     @GetMapping
-    public ResponseEntity<List<DisbursementDTO>> getMyDisbursements() {
+    public ResponseEntity<Page<DisbursementDTO>> getMyDisbursements(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         CustomerEntity customer = getCustomerFromToken();
+        Pageable pageable = PageRequest.of(page, size);
 
-        List<DisbursementEntity> entities = disbursementRepository.findByCustomerId(customer.getId());
+        Page<DisbursementEntity> entities = disbursementRepository.findByCustomerId(customer.getId(), pageable);
 
-        List<DisbursementDTO> result = entities.stream()
-                .map(disbursementMapper::toDto)
-                .collect(Collectors.toList());
+        Page<DisbursementDTO> result = entities.map(disbursementMapper::toDto);
 
         return ResponseEntity.ok(result);
     }

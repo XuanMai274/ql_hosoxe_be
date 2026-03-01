@@ -15,14 +15,18 @@ public class LoanMapper {
     private final LoanFileMapper loanFileMapper;
     @Autowired
     CustomerMapper customerMapper;
-    @Autowired VehicleMapper vehicleMapper;
-    @Autowired GuaranteeLetterMapper guaranteeLetterMapper;
-    @Autowired DisbursementMapper disbursementMapper;
+    @Autowired
+    VehicleMapper vehicleMapper;
+    @Autowired
+    GuaranteeLetterMapper guaranteeLetterMapper;
+    @Autowired
+    DisbursementMapper disbursementMapper;
 
     /* ================= ENTITY → DTO ================= */
     public LoanDTO toDto(LoanEntity entity) {
 
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         LoanDTO dto = new LoanDTO();
 
@@ -61,24 +65,20 @@ public class LoanMapper {
         if (entity.getGuaranteeLetter() != null) {
             dto.setGuaranteeLetterId(entity.getGuaranteeLetter().getId());
         }
-        if(entity.getDisbursement()!=null){
-            dto.setDisbursementDTO(disbursementMapper.toDto(entity.getDisbursement()));
+        if (entity.getDisbursement() != null) {
+            dto.setDisbursementDTO(disbursementMapper.toDtoSimple(entity.getDisbursement()));
         }
         dto.setCustomerDTO(
-                customerMapper.toDTO(entity.getCustomer())
-        );
+                customerMapper.toDTO(entity.getCustomer()));
 
         dto.setVehicleDTO(
-                vehicleMapper.toDto(entity.getVehicle())
-        );
+                vehicleMapper.toDto(entity.getVehicle()));
 
         dto.setGuaranteeLetterDTO(
-                guaranteeLetterMapper.toDto(entity.getGuaranteeLetter())
-        );
+                guaranteeLetterMapper.toDto(entity.getGuaranteeLetter()));
 
         dto.setCreditContractDTO(
-                creditContractMapper.toDto(entity.getCreditContract())
-        );
+                creditContractMapper.toDto(entity.getCreditContract()));
 
         /* ===== FILES ===== */
 
@@ -87,8 +87,7 @@ public class LoanMapper {
                     entity.getFiles()
                             .stream()
                             .map(loanFileMapper::toDto)
-                            .collect(Collectors.toList())
-            );
+                            .collect(Collectors.toList()));
         }
 
         return dto;
@@ -97,7 +96,8 @@ public class LoanMapper {
     /* ================= DTO → ENTITY ================= */
     public LoanEntity toEntity(LoanDTO dto) {
 
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         LoanEntity entity = new LoanEntity();
 
@@ -142,8 +142,8 @@ public class LoanMapper {
             g.setId(dto.getGuaranteeLetterDTO().getId());
             entity.setGuaranteeLetter(g);
         }
-        if(dto.getDisbursementDTO()!=null){
-            DisbursementEntity d= new DisbursementEntity();
+        if (dto.getDisbursementDTO() != null) {
+            DisbursementEntity d = new DisbursementEntity();
             d.setId(dto.getDisbursementDTO().getId());
             entity.setDisbursement(d);
         }
@@ -160,10 +160,12 @@ public class LoanMapper {
 
         return entity;
     }
+
     /* ================= ENTITY → DTO ================= */
     public LoanDTO toDtoList(LoanEntity entity) {
 
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         LoanDTO dto = new LoanDTO();
 
@@ -189,34 +191,34 @@ public class LoanMapper {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
 
-//        /* ===== RELATION ===== */
-//
-//        if (entity.getCustomer() != null) {
-//            dto.setCustomerId(entity.getCustomer().getId());
-//        }
-//
+        // /* ===== RELATION ===== */
+        //
+        // if (entity.getCustomer() != null) {
+        // dto.setCustomerId(entity.getCustomer().getId());
+        // }
+        //
         if (entity.getVehicle() != null) {
             dto.setVehicleDTO(vehicleMapper.toDto(entity.getVehicle()));
         }
-//
-//        if (entity.getGuaranteeLetter() != null) {
-//            dto.setGuaranteeLetterId(entity.getGuaranteeLetter().getId());
-//        }
-//        dto.setCustomerDTO(
-//                customerMapper.toDTO(entity.getCustomer())
-//        );
-//
-//        dto.setVehicleDTO(
-//                vehicleMapper.toDto(entity.getVehicle())
-//        );
-//
-//        dto.setGuaranteeLetterDTO(
-//                guaranteeLetterMapper.toDto(entity.getGuaranteeLetter())
-//        );
-//
-//        dto.setCreditContractDTO(
-//                creditContractMapper.toDto(entity.getCreditContract())
-//        );
+        //
+        // if (entity.getGuaranteeLetter() != null) {
+        // dto.setGuaranteeLetterId(entity.getGuaranteeLetter().getId());
+        // }
+        // dto.setCustomerDTO(
+        // customerMapper.toDTO(entity.getCustomer())
+        // );
+        //
+        // dto.setVehicleDTO(
+        // vehicleMapper.toDto(entity.getVehicle())
+        // );
+        //
+        // dto.setGuaranteeLetterDTO(
+        // guaranteeLetterMapper.toDto(entity.getGuaranteeLetter())
+        // );
+        //
+        // dto.setCreditContractDTO(
+        // creditContractMapper.toDto(entity.getCreditContract())
+        // );
 
         /* ===== FILES ===== */
 
@@ -225,8 +227,7 @@ public class LoanMapper {
                     entity.getFiles()
                             .stream()
                             .map(loanFileMapper::toDto)
-                            .collect(Collectors.toList())
-            );
+                            .collect(Collectors.toList()));
         }
 
         return dto;

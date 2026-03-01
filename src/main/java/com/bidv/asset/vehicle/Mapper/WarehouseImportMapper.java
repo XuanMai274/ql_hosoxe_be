@@ -61,6 +61,9 @@ public class WarehouseImportMapper {
                     .map(vehicleMapper::toDto)
                     .collect(Collectors.toList());
             dto.setVehicles(vehicleDTOs);
+            dto.setVehicleCount(entity.getVehicles().size());
+        } else {
+            dto.setVehicleCount(0);
         }
 
         return dto;

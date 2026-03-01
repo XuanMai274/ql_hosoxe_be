@@ -8,6 +8,9 @@ import com.bidv.asset.vehicle.entity.CustomerEntity;
 import com.bidv.asset.vehicle.entity.UserAccountEntity;
 import com.bidv.asset.vehicle.entity.WarehouseImportEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +30,7 @@ public class CustomerWarehouseAPI {
     private final WarehouseImportRepository warehouseImportRepository;
     private final UserAccountRepository userAccountRepository;
     private final WarehouseImportMapper warehouseImportMapper;
+    private final com.bidv.asset.vehicle.Repository.VehicleRepository vehicleRepository;
 
     /**
      * Lấy Customer từ JWT token (username → UserAccount → customer)
@@ -46,18 +50,19 @@ public class CustomerWarehouseAPI {
     }
 
     /**
-     * Lấy danh sách phiếu nhập kho của khách hàng đang đăng nhập
+     * Lấy danh sách phiếu nhập kho của khách hàng đang đăng nhập (phân trang)
      * GET /customer/warehouse-imports
      */
     @GetMapping
-    public ResponseEntity<List<WarehouseImportDTO>> getMyWarehouseImports() {
+    public ResponseEntity<Page<WarehouseImportDTO>> getMyWarehouseImports(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         CustomerEntity customer = getCustomerFromToken();
+        Pageable pageable = PageRequest.of(page, size);
 
-        List<WarehouseImportEntity> entities = warehouseImportRepository.findByCustomerId(customer.getId());
+        Page<WarehouseImportEntity> entities = warehouseImportRepository.findByCustomerId(customer.getId(), pageable);
 
-        List<WarehouseImportDTO> result = entities.stream()
-                .map(warehouseImportMapper::toDTO)
-                .collect(Collectors.toList());
+        Page<WarehouseImportDTO> result = entities.map(warehouseImportMapper::toDTO);
 
         return ResponseEntity.ok(result);
     }
@@ -70,6 +75,10 @@ public class CustomerWarehouseAPI {
     public ResponseEntity<WarehouseImportDTO> getDetail(@PathVariable Long id) {
         WarehouseImportEntity entity = warehouseImportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu nhập kho với id: " + id));
+
+        // Tường minh lấy danh sách xe từ bảng vehicles theo warehouse_import_id
+        List<com.bidv.asset.vehicle.entity.VehicleEntity> vehicles = vehicleRepository.findByWarehouseImportId(id);
+        entity.setVehicles(vehicles);
 
         return ResponseEntity.ok(warehouseImportMapper.toDTO(entity));
     }
