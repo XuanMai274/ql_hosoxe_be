@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/customer/guarantee-export")
 public class GuaranteeApplicationExportAPI {
     @Autowired GuaranteeApplicationExportService service;
-
     @GetMapping("/de-nghi/{id}")
     public ResponseEntity<byte[]> exportDeNghi(
             @PathVariable Long id) throws Exception {
@@ -22,6 +21,8 @@ public class GuaranteeApplicationExportAPI {
         return ResponseEntity.ok()
                 .header("Content-Disposition",
                         "attachment; filename=de-nghi-cap-bao-lanh.docx")
+                .header("Content-Type",
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 .body(file);
     }
 

@@ -9,13 +9,20 @@ import org.springframework.stereotype.Component;
 import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class VehicleMapper {
 
     @Autowired
-    DocumentMapper documentMapper;
-    @Autowired ManufacturerMapper manufacturerMapper;
-    @Autowired GuaranteeLetterMapper guaranteeLetterMapper;
+    private DocumentMapper documentMapper;
+    @Autowired private ManufacturerMapper manufacturerMapper;
+    @Autowired private GuaranteeLetterMapper guaranteeLetterMapper;
+    @Autowired DisbursementMapper disbursementMapper;
+    // Sử dụng lazy injection hoặc truyền tham số để tránh circular dependency nếu LoanMapper cần VehicleMapper
+    @Autowired
+    private org.springframework.context.ApplicationContext applicationContext;
+
+    private LoanMapper getLoanMapper() {
+        return applicationContext.getBean(LoanMapper.class);
+    }
     /* ===================== ENTITY → DTO ===================== */
     public VehicleDTO toDto(VehicleEntity entity) {
         if (entity == null) return null;
@@ -77,10 +84,33 @@ public class VehicleMapper {
                             .map(LoanEntity::getId)
                             .collect(Collectors.toList())
             );
+            if (!entity.getLoans().isEmpty()) {
+                LoanEntity firstLoan = entity.getLoans().get(0);
+                dto.setLoanContractNumber(firstLoan.getLoanContractNumber());
+                
+                // Map detailed loan info
+                LoanDTO loanDto = new LoanDTO();
+                loanDto.setId(firstLoan.getId());
+                loanDto.setLoanContractNumber(firstLoan.getLoanContractNumber());
+                loanDto.setAccountNumber(firstLoan.getAccountNumber());
+                loanDto.setLoanAmount(firstLoan.getLoanAmount());
+                loanDto.setLoanDate(firstLoan.getLoanDate());
+                loanDto.setDueDate(firstLoan.getDueDate());
+                loanDto.setLoanTerm(firstLoan.getLoanTerm());
+                loanDto.setLoanStatus(firstLoan.getLoanStatus());
+                loanDto.setLoanType(firstLoan.getLoanType());
+                DisbursementDTO disbursementDTO= new DisbursementDTO();
+                loanDto.setDisbursementDTO(disbursementMapper.toDtoSimple(firstLoan.getDisbursement()));
+
+                dto.setLoan(loanDto);
+            }
         }
 
         if (entity.getWarehouseImport() != null) {
             dto.setWarehouseImportId(entity.getWarehouseImport().getId());
+        }
+        if (entity.getWarehouseExport() != null) {
+            dto.setWarehouseExportId(entity.getWarehouseExport().getId());
         }
         /* ===== DOCUMENTS ===== */
         if (entity.getDocuments() != null) {
@@ -185,5 +215,17 @@ public class VehicleMapper {
         }
 
         return entity;
+    }
+
+    public VehicleDTO toDtoSimple(VehicleEntity entity) {
+        if (entity == null) return null;
+        VehicleDTO dto = new VehicleDTO();
+        dto.setId(entity.getId());
+        dto.setVehicleName(entity.getVehicleName());
+        dto.setChassisNumber(entity.getChassisNumber());
+        dto.setEngineNumber(entity.getEngineNumber());
+        dto.setStatus(entity.getStatus());
+        dto.setPrice(entity.getPrice());
+        return dto;
     }
 }

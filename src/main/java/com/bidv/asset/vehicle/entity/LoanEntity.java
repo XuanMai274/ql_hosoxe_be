@@ -1,7 +1,5 @@
 package com.bidv.asset.vehicle.entity;
 
-import com.bidv.asset.vehicle.enums.LoanStatus;
-import com.bidv.asset.vehicle.enums.LoanType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -62,15 +60,11 @@ public class LoanEntity {
         private String collateralAndPurpose; // TSBĐ và mục đích cho vay
         @Column(name = "withdrawn_chassis_number")
         private String withdrawnChassisNumber; // SK XE RÚT
-        @Enumerated(EnumType.STRING)
-        @Column(name = "loan_status", nullable = false)
-        private LoanStatus loanStatus;
+        @Column(name = "loan_status", nullable = false, length = 50)
+        private String loanStatus;
         // ===== Audit =====
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
-        // tự tăng số ca hợp đồng con
-        @Column(name = "child_sequence")
-        private Integer childSequence;
         // ===== File đính kèm =====
         @OneToMany(mappedBy = "loan", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
         private List<LoanFileEntity> files;
@@ -89,9 +83,8 @@ public class LoanEntity {
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "credit_contract_id", nullable = false)
         private CreditContractEntity creditContract;
-        @Enumerated(EnumType.STRING)
         @Column(name = "loan_type", nullable = false)
-        private LoanType loanType;
+        private String loanType;
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "disbursement_id", nullable = false)
         private DisbursementEntity disbursement;

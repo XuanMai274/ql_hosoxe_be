@@ -18,12 +18,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/officer/vehicles")
+
 @RequiredArgsConstructor
 public class VehicleAPI {
     @Autowired
     VehicleService vehicleService;
-    @GetMapping
+    @GetMapping("/officer/vehicles")
     public Page<VehicleListDTO> getVehicles(
             @RequestParam(required = false) String chassisNumber,
             @RequestParam(required = false) String status,
@@ -59,11 +59,13 @@ public class VehicleAPI {
         }
         return input.trim();
     }
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<VehicleDTO>> getByStatus(
-            @PathVariable String status
-    ) {
-        return ResponseEntity.ok(vehicleService.getVehiclesByStatus(status));
+    @GetMapping("/officer/vehicles/status/{status}")
+    public List<VehicleDTO> getByStatus(@PathVariable String status) {
+        return vehicleService.getVehiclesByStatus(status);
+    }
+    @GetMapping("/customer/vehicles/status/{status}")
+    public List<VehicleDTO> getByStatusCustomer(@PathVariable String status) {
+        return vehicleService.getVehiclesByStatus(status);
     }
 //    @GetMapping
 //    public Page<VehicleListDTO> getVehicles(
@@ -91,11 +93,11 @@ public class VehicleAPI {
 //                pageable
 //        );
 //    }
-    @GetMapping("/{id}")
+    @GetMapping("/officer/vehicles/{id}")
     public VehicleDTO getVehicleDetail(@PathVariable Long id) {
         return vehicleService.getVehicleDetail(id);
     }
-    @PutMapping("/{id}")
+    @PutMapping("/officer/vehicles/{id}")
     public ResponseEntity<VehicleDTO> updateVehicle(
             @PathVariable Long id,
             @RequestBody VehicleDTO dto
@@ -112,4 +114,28 @@ public class VehicleAPI {
 //                        "attachment; filename=vehicles.xlsx")
 //                .body(file);
 //    }
+
+    // Danh sách xe khách hàng có thể chọn đề rút hồ sơ (chưa nằm trong đơn khác)
+    @GetMapping("/customer/vehicles/available-for-export/{status}")
+    public Page<VehicleDTO> getAvailableForExport(
+            @PathVariable String status,
+            @RequestParam(required = false) String chassisNumber,
+            @RequestParam(required = false) String manufacturer,
+            @RequestParam(required = false) String loanContractNumber,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        chassisNumber = normalize(chassisNumber);
+        manufacturer = normalize(manufacturer);
+        loanContractNumber = normalize(loanContractNumber);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return vehicleService.getCustomerAvailableVehicles(status, chassisNumber, manufacturer, loanContractNumber, pageable);
+    }
+
+    // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
+    @GetMapping("/officer/vehicles/warehouse-export/{exportId}")
+    public ResponseEntity<List<VehicleDTO>> getByExportRequest(@PathVariable Long exportId) {
+        return ResponseEntity.ok(vehicleService.getVehiclesByExportId(exportId));
+    }
 }

@@ -149,23 +149,26 @@ public class VehicleServiceImplement implements VehicleService {
     }
 
     private String calculateDeadlineLabel(LocalDateTime createdAt) {
-
         if (createdAt == null) return null;
-
         LocalDate deadline = createdAt.toLocalDate().plusDays(3);
         LocalDate today = LocalDate.now();
-
         long diff = ChronoUnit.DAYS.between(today, deadline);
 
-        if (diff > 0) {
-            return "Còn " + diff + " ngày đến hạn nhập kho";
-        }
-
-        if (diff == 0) {
-            return "Cần nhập kho hôm nay";
-        }
-
+        if (diff > 0) return "Còn " + diff + " ngày đến hạn nhập kho";
+        if (diff == 0) return "Cần nhập kho hôm nay";
         return "Đã quá hạn nhập kho " + Math.abs(diff) + " ngày";
+    }
+
+    private String calculateExportDeadlineLabel(LocalDate importDate) {
+        if (importDate == null) return null;
+        // Giả sử hạn rút hồ sơ là 60 ngày kể từ ngày nhập kho
+        LocalDate deadline = importDate.plusDays(60);
+        LocalDate today = LocalDate.now();
+        long diff = ChronoUnit.DAYS.between(today, deadline);
+
+        if (diff > 0) return "Còn " + diff + " ngày đến hạn rút";
+        if (diff == 0) return "Cần rút hồ sơ hôm nay";
+        return "Đã quá hạn rút " + Math.abs(diff) + " ngày";
     }
     @Override
     public List<VehicleDTO> findByIds(List<Long> ids) {
@@ -182,4 +185,33 @@ public class VehicleServiceImplement implements VehicleService {
                 .toList();
     }
 
+    @Override
+    public Page<VehicleDTO> getAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String ref, Pageable pageable) {
+        String chassisSearch = (chassisNumber != null && !chassisNumber.isBlank()) ? "%" + chassisNumber.toLowerCase() + "%" : null;
+        String refSearch = (ref != null && !ref.isBlank()) ? "%" + ref.toLowerCase() + "%" : null;
+
+        Page<VehicleEntity> vehicles = vehicleRepository.findAvailableForExport(status, chassisSearch, manufacturerCode, refSearch, pageable);
+        return vehicles.map(vehicle -> {
+            VehicleDTO dto = vehicleMapper.toDto(vehicle);
+            dto.setDeadlineLabel(calculateExportDeadlineLabel(vehicle.getImportDate()));
+            return dto;
+        });
+    }
+
+    @Override
+    public Page<VehicleDTO> getCustomerAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String loanContractNumber, Pageable pageable) {
+        String chassisSearch = (chassisNumber != null && !chassisNumber.isBlank()) ? "%" + chassisNumber.toLowerCase() + "%" : null;
+        String loanSearch = (loanContractNumber != null && !loanContractNumber.isBlank()) ? "%" + loanContractNumber.toLowerCase() + "%" : null;
+
+        Page<VehicleEntity> vehicles = vehicleRepository.findAvailableForExportForCustomer(status, chassisSearch, manufacturerCode, loanSearch, pageable);
+        return vehicles.map(vehicleMapper::toDto);
+    }
+
+    @Override
+    public List<VehicleDTO> getVehiclesByExportId(Long exportId) {
+        List<VehicleEntity> vehicles = vehicleRepository.findByWarehouseExportId(exportId);
+        return vehicles.stream()
+                .map(vehicleMapper::toDto)
+                .toList();
+    }
 }

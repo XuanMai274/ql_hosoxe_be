@@ -108,6 +108,7 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         map.put("{{disbursementDate}}", formatDate(dto.getDisbursementDate()));
         map.put("{{loan_term}}",safe(String.valueOf(dto.getLoanTerm())));
         map.put("{{dueDate}}",formatDate(dto.getDueDate()));
+        map.put("{{loanDate}}",formatDate(dto.getStartDate()));
         BigDecimal tongTSBD=dto.getTotalCollateralValue().add(dto.getTotalCollateralValue());
         map.put("{{TONG_TSBD}}",formatMoney(tongTSBD));
         BigDecimal tongTSBDFactor=dto.getCollateralValueAfterFactor().add(dto.getRealEstateValueAfterFactor());
@@ -115,6 +116,11 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         BigDecimal gttdAddVay=dto.getUsedLimit().add(dto.getDisbursementAmount());
         map.put("{{GHTDSD_VAY}}",formatMoney(gttdAddVay));
         map.put("{{total_vehicle}}", formatMoney(totalVehicleAmount));
+        map.put("{{totalVehiclesCount}}", String.valueOf(dto.getTotalVehiclesCount() != null ? dto.getTotalVehiclesCount() : 0));
+        map.put("{{withdrawnVehiclesCount}}", String.valueOf(dto.getWithdrawnVehiclesCount() != null ? dto.getWithdrawnVehiclesCount() : 0));
+//        map.put("{{interestRate}}", dto.getInterestRate() != null ? dto.getInterestRate().multiply(new BigDecimal("100")).stripTrailingZeros().toPlainString() + "%" : "");
+        map.put("{{totalAmountPaid}}", formatMoney(dto.getTotalAmountPaid()));
+        map.put("{{status}}", safe(dto.getStatus()));
         map.put("{{manufacturer_name}}",safe(manufacturer.getName()));
         map.put("{{manufacturer_code}}",safe(manufacturer.getCode()));
         BigDecimal rate = Optional.ofNullable(manufacturer.getGuaranteeRate())
@@ -130,12 +136,15 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
 
         BigDecimal rateDiff = new BigDecimal("0.0114"); // 1.14%
         BigDecimal daysInYear = new BigDecimal("365");
-
-        BigDecimal tongCL = disbursementAmount
-                .multiply(rateDiff)
-                .multiply(loanTerm)
-                .divide(daysInYear, 0, RoundingMode.HALF_UP); // làm tròn về đồng
+        BigDecimal tongCL = dto.getInterestAmount();
+        if (tongCL == null && disbursementAmount != null && loanTerm != null) {
+            tongCL = disbursementAmount
+                    .multiply(rateDiff)
+                    .multiply(loanTerm)
+                    .divide(daysInYear, 0, RoundingMode.HALF_UP);
+        }
         map.put("{{TONG_CL}}", formatMoney(tongCL));
+        map.put("{{interestAmount}}", formatMoney(tongCL));
         if (dto.getCreditContractDTO() != null) {
             map.put("{{HDTD}}", safe(dto.getCreditContractDTO().getContractNumber()));
             map.put("{{HDTD_DATE}}", formatDate(dto.getCreditContractDTO().getContractDate()));

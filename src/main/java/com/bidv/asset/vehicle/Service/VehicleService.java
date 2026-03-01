@@ -20,5 +20,7 @@ public interface VehicleService {
     public VehicleDTO updateVehicle(Long id, VehicleDTO dto);
     List<VehicleDTO> getVehiclesByStatus(String status);
     List<VehicleDTO> findByIds(List<Long> ids);
-
+    Page<VehicleDTO> getAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String ref, Pageable pageable);
+    Page<VehicleDTO> getCustomerAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String loanContractNumber, Pageable pageable);
+    List<VehicleDTO> getVehiclesByExportId(Long exportId);
 }

@@ -48,6 +48,7 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     })
     List<VehicleEntity> findByStatus(String status);
 
+
     boolean existsByChassisNumber(String chassisNumber);
 
     @Query("""
@@ -182,5 +183,51 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     @Query("SELECT SUM(v.price) FROM VehicleEntity v WHERE v.status = :status")
     BigDecimal sumPriceByStatus(@Param("status") String status);
 
+    // --- NEW METHODS FOR WAREHOUSE EXPORT ---
+
+    // Tìm danh sách xe theo ID của đơn yêu cầu xuất kho (Officer xem)
+    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity", "loans"})
+    List<VehicleEntity> findByWarehouseExportId(Long warehouseExportId);
+
+    // Tìm danh sách xe theo ID của phiếu nhập kho
+    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity"})
     List<VehicleEntity> findByWarehouseImportId(Long warehouseImportId);
+
+    // Tìm danh sách xe sẵn sàng để yêu cầu xuất (Trạng thái phù hợp và chưa thuộc đơn nào)
+    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity", "guaranteeLetter.manufacturer"})
+    @Query("""
+                SELECT v FROM VehicleEntity v
+                LEFT JOIN v.guaranteeLetter gl
+                LEFT JOIN v.manufacturerEntity m
+                WHERE v.status = :status
+                AND v.warehouseImport IS NULL
+                AND v.warehouseExport IS NULL
+                AND (:chassisNumber IS NULL OR LOWER(v.chassisNumber) LIKE :chassisNumber)
+                AND (:manufacturerCode IS NULL OR m.code = :manufacturerCode)
+                AND (:ref IS NULL OR LOWER(gl.referenceCode) LIKE :ref)
+            """)
+    Page<VehicleEntity> findAvailableForExport(
+            @Param("status") String status,
+            @Param("chassisNumber") String chassisNumber,
+            @Param("manufacturerCode") String manufacturerCode,
+            @Param("ref") String ref,
+            Pageable pageable);
+    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity", "guaranteeLetter.manufacturer", "loans"})
+    @Query("""
+                SELECT v FROM VehicleEntity v
+                LEFT JOIN v.guaranteeLetter gl
+                LEFT JOIN v.manufacturerEntity m
+                LEFT JOIN v.loans l
+                WHERE v.status = :status
+                AND v.warehouseExport IS NULL
+                AND (:chassisNumber IS NULL OR LOWER(v.chassisNumber) LIKE :chassisNumber)
+                AND (:manufacturerCode IS NULL OR m.code = :manufacturerCode)
+                AND (:loanContractNumber IS NULL OR LOWER(l.loanContractNumber) LIKE :loanContractNumber)
+            """)
+    Page<VehicleEntity> findAvailableForExportForCustomer(
+            @Param("status") String status,
+            @Param("chassisNumber") String chassisNumber,
+            @Param("manufacturerCode") String manufacturerCode,
+            @Param("loanContractNumber") String loanContractNumber,
+            Pageable pageable);
 }

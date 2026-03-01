@@ -34,8 +34,8 @@ public class LoanDTO {
     private String collateralAndPurpose;
     private String withdrawnChassisNumber;
 
-    private LoanStatus loanStatus;
-    private LoanType loanType;
+    private String loanStatus;
+    private String loanType;
 
     // ===== Relation =====
     private Long customerId;

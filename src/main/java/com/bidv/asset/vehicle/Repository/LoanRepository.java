@@ -42,12 +42,12 @@ public interface LoanRepository extends JpaRepository<LoanEntity, Long> {
     @Query("SELECT c FROM CreditContractEntity c WHERE c.id = :id")
     Optional<CreditContractEntity> findByIdForUpdate(@Param("id") Long id);
 
-    @Query("""
-                SELECT COALESCE(MAX(l.childSequence), 0)
-                FROM LoanEntity l
-                WHERE l.creditContract.id = :creditContractId
-            """)
-    Integer findMaxChildSequence(@Param("creditContractId") Long creditContractId);
+//    @Query("""
+//                SELECT COALESCE(MAX(l.childSequence), 0)
+//                FROM LoanEntity l
+//                WHERE l.creditContract.id = :creditContractId
+//            """)
+//    Integer findMaxChildSequence(@Param("creditContractId") Long creditContractId);
 
     /**
      * Lấy danh sách khoản vay theo customerId (phân trang)
