@@ -18,5 +18,5 @@ public interface DisbursementService {
             int page,
             int size
     );
-    DisbursementDTO previewDisbursement(long customerId);
+    DisbursementDTO previewDisbursement();
 }

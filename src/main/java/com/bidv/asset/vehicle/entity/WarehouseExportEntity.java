@@ -36,7 +36,11 @@ public class WarehouseExportEntity {
 
     @Column(name = "total_debt_collection", precision = 18, scale = 2)
     private BigDecimal totalDebtCollection;
+    @Column(name = "total_collateral_value", precision = 18, scale = 2)
+    private BigDecimal totalCollateralValue; // Tổng TSHTTTL
 
+    @Column(name = "real_estate_value", precision = 18, scale = 2)
+    private BigDecimal realEstateValue; // BDS
     @Column(name = "vehicle_count")
     private Integer vehicleCount;
 

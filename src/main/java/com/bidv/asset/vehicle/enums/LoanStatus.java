@@ -3,8 +3,8 @@ package com.bidv.asset.vehicle.enums;
 
 public enum LoanStatus {
     ACTIVE,        // Đang vay
-    CLOSED,        // Đã tất toán
+    PAID_OFF ,        // Đã tất toán
     OVERDUE,       // Quá hạn
     WRITE_OFF,     // Xóa nợ
-    RESTRUCTURED   // Cơ cấu lại nợ
+    RESTRUCTURED,  // Cơ cấu lại nợ
 }

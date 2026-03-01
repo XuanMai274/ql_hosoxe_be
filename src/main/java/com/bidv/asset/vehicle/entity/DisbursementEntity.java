@@ -74,6 +74,21 @@ public class DisbursementEntity {
     private LocalDate startDate; // ngày bắt đầu vay
     @Column(name = "due_date")
     private LocalDate dueDate; // ngày hết hạn vay
+
+    @Column(name = "interest_amount", precision = 18, scale = 2)
+    private BigDecimal interestAmount; // Tiền lãi
+
+    @Column(name = "total_amount_paid", precision = 18, scale = 2)
+    private BigDecimal totalAmountPaid; // Tổng số tiền đã trả
+
+    @Column(name = "withdrawn_vehicles_count")
+    private Integer withdrawnVehiclesCount; // Số xe đã rút
+
+    @Column(name = "total_vehicles_count")
+    private Integer totalVehiclesCount; // Tổng số xe vay
+
+    @Column(name = "status")
+    private String status; // ACTIVE/PAID_OFF
     // ===== Quan hệ =====
 
     // N Disbursement - 1 CreditContract

@@ -187,12 +187,24 @@ public class VehicleServiceImplement implements VehicleService {
 
     @Override
     public Page<VehicleDTO> getAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String ref, Pageable pageable) {
-        Page<VehicleEntity> vehicles = vehicleRepository.findAvailableForExport(status, chassisNumber, manufacturerCode, ref, pageable);
+        String chassisSearch = (chassisNumber != null && !chassisNumber.isBlank()) ? "%" + chassisNumber.toLowerCase() + "%" : null;
+        String refSearch = (ref != null && !ref.isBlank()) ? "%" + ref.toLowerCase() + "%" : null;
+
+        Page<VehicleEntity> vehicles = vehicleRepository.findAvailableForExport(status, chassisSearch, manufacturerCode, refSearch, pageable);
         return vehicles.map(vehicle -> {
             VehicleDTO dto = vehicleMapper.toDto(vehicle);
             dto.setDeadlineLabel(calculateExportDeadlineLabel(vehicle.getImportDate()));
             return dto;
         });
+    }
+
+    @Override
+    public Page<VehicleDTO> getCustomerAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String loanContractNumber, Pageable pageable) {
+        String chassisSearch = (chassisNumber != null && !chassisNumber.isBlank()) ? "%" + chassisNumber.toLowerCase() + "%" : null;
+        String loanSearch = (loanContractNumber != null && !loanContractNumber.isBlank()) ? "%" + loanContractNumber.toLowerCase() + "%" : null;
+
+        Page<VehicleEntity> vehicles = vehicleRepository.findAvailableForExportForCustomer(status, chassisSearch, manufacturerCode, loanSearch, pageable);
+        return vehicles.map(vehicleMapper::toDto);
     }
 
     @Override

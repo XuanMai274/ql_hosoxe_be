@@ -121,16 +121,16 @@ public class VehicleAPI {
             @PathVariable String status,
             @RequestParam(required = false) String chassisNumber,
             @RequestParam(required = false) String manufacturer,
-            @RequestParam(required = false) String ref,
+            @RequestParam(required = false) String loanContractNumber,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         chassisNumber = normalize(chassisNumber);
         manufacturer = normalize(manufacturer);
-        ref = normalize(ref);
+        loanContractNumber = normalize(loanContractNumber);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return vehicleService.getAvailableVehicles(status, chassisNumber, manufacturer, ref, pageable);
+        return vehicleService.getCustomerAvailableVehicles(status, chassisNumber, manufacturer, loanContractNumber, pageable);
     }
 
     // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)

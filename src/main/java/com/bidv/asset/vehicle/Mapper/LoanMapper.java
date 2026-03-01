@@ -72,7 +72,7 @@ public class LoanMapper {
                 customerMapper.toDTO(entity.getCustomer()));
 
         dto.setVehicleDTO(
-                vehicleMapper.toDto(entity.getVehicle()));
+                vehicleMapper.toDtoSimple(entity.getVehicle()));
 
         dto.setGuaranteeLetterDTO(
                 guaranteeLetterMapper.toDto(entity.getGuaranteeLetter()));
@@ -198,7 +198,7 @@ public class LoanMapper {
         // }
         //
         if (entity.getVehicle() != null) {
-            dto.setVehicleDTO(vehicleMapper.toDto(entity.getVehicle()));
+            dto.setVehicleDTO(vehicleMapper.toDtoSimple(entity.getVehicle()));
         }
         //
         // if (entity.getGuaranteeLetter() != null) {

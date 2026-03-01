@@ -4,7 +4,7 @@ import com.bidv.asset.vehicle.DTO.WarehouseExportDTO;
 
 public interface WarehouseExportService {
     WarehouseExportDTO requestExport(WarehouseExportDTO dto);
-    WarehouseExportDTO approveExport(Long id);
+    WarehouseExportDTO approveExport(WarehouseExportDTO dto);
     WarehouseExportDTO rejectExport(Long id);
     java.util.List<WarehouseExportDTO> getPendingRequests();
 }

@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.DTO;
 
+import jakarta.persistence.Column;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -22,4 +23,6 @@ public class WarehouseExportDTO {
     private List<VehicleDTO> vehicles;
     private LocalDateTime createdAt;
     private String createdBy;
+    private BigDecimal totalCollateralValue; // Tổng TSHTTTL
+    private BigDecimal realEstateValue; // BDS
 }

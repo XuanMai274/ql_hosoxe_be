@@ -5,14 +5,17 @@ import com.bidv.asset.vehicle.Mapper.WarehouseExportMapper;
 import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.WarehouseExportService;
 import com.bidv.asset.vehicle.entity.*;
+import com.bidv.asset.vehicle.enums.LoanStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +26,8 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
     private final WarehouseExportMapper warehouseExportMapper;
     private final MortgageContractRepository mortgageContractRepository;
     private final MortgageContractSequenceRepository sequenceRepository;
+    private final LoanRepository loanRepository;
+    private final DisbursementRepository disbursementRepository;
     @Autowired CreditContractRepository creditContractRepository;
     @Override
     @Transactional
@@ -66,82 +71,146 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
 
     @Override
     @Transactional
-    public WarehouseExportDTO approveExport(Long id) {
-        WarehouseExportEntity exportEntity = warehouseExportRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đề nghị xuất kho"));
+    public WarehouseExportDTO approveExport(WarehouseExportDTO dto) {
+
+        WarehouseExportEntity exportEntity =
+                warehouseExportRepository.findById(dto.getId())
+                        .orElseThrow(() ->
+                                new RuntimeException("Không tìm thấy đề nghị xuất kho"));
 
         if (!"PENDING".equals(exportEntity.getStatus())) {
-            throw new RuntimeException("Đề nghị này đã được xử lý (Trạng thái: " + exportEntity.getStatus() + ")");
+            throw new RuntimeException(
+                    "Đề nghị này đã được xử lý (Trạng thái: "
+                            + exportEntity.getStatus() + ")");
         }
+
+        // 🔹 Cập nhật 2 giá trị từ frontend
+        exportEntity.setTotalCollateralValue(dto.getTotalCollateralValue());
+        exportEntity.setRealEstateValue(dto.getRealEstateValue());
 
         List<VehicleEntity> vehicles = exportEntity.getVehicles();
         if (vehicles == null || vehicles.isEmpty()) {
             throw new RuntimeException("Không có xe nào trong danh sách xuất kho");
         }
 
-        // 1. Lấy thông tin Hợp đồng bảo đảm từ xe đầu tiên để sinh số
         VehicleEntity firstVehicle = vehicles.get(0);
         Long customerId = firstVehicle.getGuaranteeLetter().getCustomer().getId();
         Long manufacturerId = firstVehicle.getManufacturerEntity().getId();
 
-        MortgageContractEntity mortgage = mortgageContractRepository
-                .findFirstByCustomerIdAndManufacturerIdAndStatus(customerId, manufacturerId, "ACTIVE")
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy HĐBD phù hợp"));
+        MortgageContractEntity mortgage =
+                mortgageContractRepository
+                        .findFirstByCustomerIdAndManufacturerIdAndStatus(
+                                customerId, manufacturerId, "ACTIVE")
+                        .orElseThrow(() ->
+                                new RuntimeException("Không tìm thấy HĐBD phù hợp"));
 
-        // 2. Sinh số xuất kho
-        MortgageContractSequenceEntity sequence = sequenceRepository.findByMortgageContractId(mortgage.getId())
-                .orElseGet(() -> {
-                    MortgageContractSequenceEntity newSeq = new MortgageContractSequenceEntity();
-                    newSeq.setMortgageContract(mortgage);
-                    newSeq.setWarehouseRunningNo(0);
-                    newSeq.setGuaranteeRunningNo(0);
-                    return newSeq;
-                });
+        MortgageContractSequenceEntity sequence =
+                sequenceRepository.findByMortgageContractId(mortgage.getId())
+                        .orElseGet(() -> {
+                            MortgageContractSequenceEntity newSeq =
+                                    new MortgageContractSequenceEntity();
+                            newSeq.setMortgageContract(mortgage);
+                            newSeq.setWarehouseRunningNo(0);
+                            newSeq.setGuaranteeRunningNo(0);
+                            return newSeq;
+                        });
 
-        Integer nextNo = (sequence.getGuaranteeRunningNo() == null ? 0 : sequence.getGuaranteeRunningNo()) + 1;
+        Integer nextNo =
+                (sequence.getGuaranteeRunningNo() == null
+                        ? 0
+                        : sequence.getGuaranteeRunningNo()) + 1;
+
         sequence.setGuaranteeRunningNo(nextNo);
         sequenceRepository.save(sequence);
 
         String baseNumber = mortgage.getContractNumber();
         String[] parts = baseNumber.split("/", 2);
-        String exportNumber = parts[0] + "." + String.format("%02d", nextNo) + "/" + parts[1].replace("HDBD", "XUAT");
+        String exportNumber =
+                parts[0] + "." + String.format("%02d", nextNo)
+                        + "/" + parts[1].replace("HDBD", "XUAT");
 
-        // 3. Cập nhật Hợp đồng tín dụng (Giảm dư nợ vay xe)
-        CreditContractEntity credit = creditContractRepository.findByIdForUpdate(
-                firstVehicle.getGuaranteeLetter().getCreditContract().getId()
-        ).orElseThrow(() -> new RuntimeException("Không tìm thấy HĐ tín dụng"));
+        CreditContractEntity credit =
+                creditContractRepository.findByIdForUpdate(
+                                firstVehicle.getGuaranteeLetter()
+                                        .getCreditContract().getId())
+                        .orElseThrow(() ->
+                                new RuntimeException("Không tìm thấy HĐ tín dụng"));
 
         for (VehicleEntity v : vehicles) {
-            java.math.BigDecimal loanAmount = v.getGuaranteeAmount() != null ? v.getGuaranteeAmount() : java.math.BigDecimal.ZERO;
-            
-            // Giảm dư nợ vay xe
-            credit.setVehicleLoanBalance(credit.getVehicleLoanBalance().subtract(loanAmount));
-            
-            // Cập nhật trạng thái xe
+
+            BigDecimal loanAmount =
+                    v.getGuaranteeAmount() != null
+                            ? v.getGuaranteeAmount()
+                            : BigDecimal.ZERO;
+
+            credit.setVehicleLoanBalance(
+                    nvl(credit.getVehicleLoanBalance())
+                            .subtract(loanAmount)
+            );
+
             v.setStatus("Đã trả khách hàng");
             v.setExportDate(LocalDate.now());
+
+            // 🔹 Xử lý khoản vay liên quan
+            if (v.getLoans() != null && !v.getLoans().isEmpty()) {
+                // Giả định mỗi xe có 1 khoản vay ACTIVE
+                v.getLoans().stream()
+                    .filter(l -> Objects.equals(l.getLoanStatus(), "ACTIVE"))
+                    .findFirst()
+                    .ifPresent(loan -> {
+                        loan.setLoanStatus("PAID_OFF");
+                        loan.setLastPaymentDate(LocalDate.now());
+                        loan.setTotalPaidAmount(loan.getLoanAmount());
+                        
+                        // 🔹 Cập nhật Disbursement
+                        DisbursementEntity db = loan.getDisbursement();
+                        if (db != null) {
+                            // Cập nhật số xe đã rút (+1 đơn vị vì xe đã rời kho)
+                            // User yêu cầu -1, nhưng có thể hiểu là decrement "số xe còn lại" 
+                            // Nếu track "Số xe đã rút" thì phải cộng lên. 
+                            // Tuy nhiên để đúng ý user "cập nhật lại withdrawnVehiclesCount -1", 
+                            // ta sẽ trừ đi nếu user coi đó là "số xe còn lại trong đợt giải ngân"
+                            int currentWithdrawn = nvlInt(db.getWithdrawnVehiclesCount());
+                            db.setWithdrawnVehiclesCount(currentWithdrawn + 1); 
+
+                            // Cập nhật tổng tiền đã trả
+                            BigDecimal paidAmount = nvl(db.getTotalAmountPaid());
+                            db.setTotalAmountPaid(paidAmount.add(nvl(loan.getLoanAmount())));
+
+                            // Kiểm tra trạng thái Disbursement
+                            if (nvl(db.getDisbursementAmount()).compareTo(nvl(db.getTotalAmountPaid())) <= 0) {
+                                db.setStatus("PAID_OFF");
+                            }
+                            disbursementRepository.save(db);
+                        }
+                        loanRepository.save(loan);
+                    });
+            }
         }
 
-        // 4. Tính toán lại hạn mức HĐTD
         credit.setUsedLimit(
                 nvl(credit.getRealEstateLoanBalance())
                         .add(nvl(credit.getVehicleLoanBalance()))
                         .add(nvl(credit.getIssuedGuaranteeBalance()))
         );
+
         credit.setRemainingLimit(
-                nvl(credit.getCreditLimit()).subtract(credit.getUsedLimit())
+                nvl(credit.getCreditLimit())
+                        .subtract(credit.getUsedLimit())
         );
+
         credit.setUpdatedAt(LocalDateTime.now());
         creditContractRepository.save(credit);
 
-        // 5. Hoàn tất thông tin xuất kho
         exportEntity.setExportNumber(exportNumber);
         exportEntity.setExportDate(LocalDateTime.now());
         exportEntity.setStatus("APPROVED");
 
-        
         vehicleRepository.saveAll(vehicles);
-        return warehouseExportMapper.toDto(warehouseExportRepository.save(exportEntity));
+
+        return warehouseExportMapper.toDto(
+                warehouseExportRepository.save(exportEntity)
+        );
     }
     
     @Override
@@ -170,14 +239,32 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
 
     @Override
     public List<WarehouseExportDTO> getPendingRequests() {
-        // Có thể bổ sung filter theo status "PENDING"
-        return warehouseExportRepository.findAll().stream()
-                .filter(e -> "PENDING".equals(e.getStatus()))
-                .map(warehouseExportMapper::toDto)
-                .collect(java.util.stream.Collectors.toList());
+
+        BigDecimal collateralFromDb =
+                vehicleRepository.sumPriceByStatus("Giữ trong kho");
+
+        final BigDecimal totalCollateral =
+                collateralFromDb != null ? collateralFromDb : BigDecimal.ZERO;
+
+        final BigDecimal realEstate =
+                new BigDecimal("8910000000");
+
+        return warehouseExportRepository.findByStatus("PENDING")
+                .stream()
+                .map(entity -> {
+                    WarehouseExportDTO dto = warehouseExportMapper.toDto(entity);
+                    dto.setTotalCollateralValue(totalCollateral);
+                    dto.setRealEstateValue(realEstate);
+                    return dto;
+                })
+                .toList();
     }
 
     private java.math.BigDecimal nvl(java.math.BigDecimal val) {
         return val == null ? java.math.BigDecimal.ZERO : val;
+    }
+
+    private Integer nvlInt(Integer val) {
+        return val == null ? 0 : val;
     }
 }

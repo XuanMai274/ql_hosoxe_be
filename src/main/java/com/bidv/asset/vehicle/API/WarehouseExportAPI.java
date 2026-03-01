@@ -23,10 +23,12 @@ public class WarehouseExportAPI {
         }
     }
 
-    @PostMapping("/officer/warehouse-export/approve/{id}")
-    public ResponseEntity<?> approveExport(@PathVariable Long id) {
+    @PostMapping("/officer/warehouse-export/approve")
+    public ResponseEntity<?> approveExport(
+            @RequestBody WarehouseExportDTO requestDTO) {
         try {
-            WarehouseExportDTO result = warehouseExportService.approveExport(id);
+            WarehouseExportDTO result =
+                    warehouseExportService.approveExport(requestDTO);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

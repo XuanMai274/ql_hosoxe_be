@@ -28,6 +28,8 @@ public class WarehouseExportMapper {
                 .description(entity.getDescription())
                 .createdAt(entity.getCreatedAt())
                 .createdBy(entity.getCreatedBy())
+                .totalCollateralValue(entity.getTotalCollateralValue())
+                .realEstateValue(entity.getRealEstateValue())
                 .build();
 
         if (entity.getVehicles() != null) {
@@ -57,6 +59,8 @@ public class WarehouseExportMapper {
                 .description(dto.getDescription())
                 .createdAt(dto.getCreatedAt())
                 .createdBy(dto.getCreatedBy())
+                .realEstateValue(dto.getRealEstateValue())
+                .totalCollateralValue(dto.getTotalCollateralValue())
                 .build();
     }
 }

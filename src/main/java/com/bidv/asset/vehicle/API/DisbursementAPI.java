@@ -63,9 +63,9 @@ public class DisbursementAPI {
                 loanContractNumber, disbursementDateFrom, disbursementDateTo, creditContractId, page, size));
     }
 
-    @GetMapping("/preview/{customerId}")
-    public ResponseEntity<DisbursementDTO> previewDisbursement(@PathVariable ("customerId")long customerId) {
-        return ResponseEntity.ok(disbursementService.previewDisbursement(customerId));
+    @GetMapping("/preview")
+    public ResponseEntity<DisbursementDTO> previewDisbursement() {
+        return ResponseEntity.ok(disbursementService.previewDisbursement());
     }
     @PostMapping("/export-all")
     public ResponseEntity<byte[]> exportAll(@RequestBody DisbursementExportRequest request) throws IOException {

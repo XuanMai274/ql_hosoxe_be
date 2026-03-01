@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.DTO.BranchAuthorizedRepresentativeDTO;
 import com.bidv.asset.vehicle.DTO.ExportDeXuatRequest;
 import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
 import com.bidv.asset.vehicle.DTO.XuatDeXuatBaoLanh;
@@ -30,7 +31,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         if ("VINFAST_V1".equals(template)) {
             return generateThuBaoLanhVinfast(dto);
         }
-        if ("HYNDAI_V1".equals(template)) {
+        if ("HYUNDAI_V1".equals(template)) {
             return generateThuBaoLanhHyundai(dto);
         }
         throw new IllegalArgumentException("Template không được hỗ trợ: " + template);
@@ -52,7 +53,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         if ("VINFAST_V1".equals(template)) {
             return generateXetDuyetVinfast(exportDeXuatRequest.getGuaranteeLetter(),exportDeXuatRequest.getExportData());
         }
-        if ("HYNDAI_V1".equals(template)) {
+        if ("HYUNDAI_V1".equals(template)) {
             return generateXetDuyetHyundai(exportDeXuatRequest.getGuaranteeLetter(),exportDeXuatRequest.getExportData());
         }
         throw new IllegalArgumentException("Template không được hỗ trợ: " + template);
@@ -63,7 +64,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         if ("VINFAST_V1".equals(template)) {
             return generateYKienVinfast(dto);
         }
-        if ("HYNDAI_V1".equals(template)) {
+        if ("HYUNDAI_V1".equals(template)) {
             return generateYKienHyndai(dto);
         }
         throw new IllegalArgumentException("Template không được hỗ trợ: " + template);
@@ -101,40 +102,49 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
         BigDecimal guaranteeFeeSum =
                 calculateGuaranteeFee(expectedAmount).add(BigDecimal.valueOf(330000));
+        BranchAuthorizedRepresentativeDTO rep =
+                dto.getBranchAuthorizedRepresentativeDTO();
 
+        if (rep != null) {
+
+            data.put("{{REPRESENTATIVE_NAME}}",
+                    safe(rep.getRepresentativeName()));
+
+            data.put("{{REPRESENTATIVE_TITLE}}",
+                    safe(rep.getRepresentativeTitle()));
+
+            data.put("{{AUTH_DOC_NO}}",
+                    safe(rep.getAuthorizationDocNo()));
+
+            data.put("{{AUTH_DOC_DATE}}",
+                    formatDate(rep.getAuthorizationDocDate()));
+
+            data.put("{{AUTH_ISSUER}}",
+                    safe(rep.getAuthorizationIssuer()));
+
+        }
         data.put("{{DOCUMENT_TITLE}}", "ĐỀ XUẤT CẤP BẢO LÃNH");
         data.put("{{REQUEST_DATE}}", formatDate(LocalDate.now()));
         data.put("{{GUARANTEE_DATE_TITLE}}", toVietnameseDate(dto.getGuaranteeContractDate()));
-
-        // ===== GHTD =====
-//        data.put("{{GHTD}}",
-//                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
-
-        // ===== GHTD đã sử dụng =====
-        data.put("{{GHTDaSuDung}}",
-                formatMoney(dto.getTotalGuaranteeAmount()));
-
-        // ===== Chi tiết =====
-        data.put("{{DuNoVay}}",
-                formatMoney(dto.getUsedAmount()));
-
-        data.put("{{SoDuCap}}",
-                formatMoney(xuatDeXuatBaoLanhBaoLanh.getGuaranteeBalance()));
-
-        data.put("{{SoDuVay}}",
-                formatMoney(xuatDeXuatBaoLanhBaoLanh.getShortTermLoanBalance()));
-
-        // ===== GHTD còn lại =====
-        data.put("{{GHTDConSD}}",
-                formatMoney(xuatDeXuatBaoLanhBaoLanh.getRemainingAmount()));
-
+        data.put("{{creditLimit}}", formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+        data.put("{{usedLimit}}", formatMoney(dto.getCreditContractDTO().getUsedLimit()));
+        data.put("{{remainingLimit}}", formatMoney(dto.getCreditContractDTO().getRemainingLimit()));
+        data.put("{{issuedGuaranteeBalance}}", formatMoney(dto.getCreditContractDTO().getIssuedGuaranteeBalance()));
+        data.put("{{vehicleLoanBalance}}", formatMoney(dto.getCreditContractDTO().getVehicleLoanBalance()));
+        data.put("{{realEstateLoanBalance}}", formatMoney(dto.getCreditContractDTO().getRealEstateLoanBalance()));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT}}", formatMoney(expectedAmount));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG}}", formatMoney(guaranteeFeeSum));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
                 VietnameseNumberUtil.toVietnamese(expectedAmount));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI}}",
                 formatMoney(guaranteeFee));
-
+        if (dto.getCreditContractDTO() != null) {
+            data.put("{{HDTD}}", safe(dto.getCreditContractDTO().getContractNumber()));
+            data.put("{{HDTD_DATE}}", formatDate(dto.getCreditContractDTO().getContractDate()));
+            LocalDate hdtdDate = dto.getCreditContractDTO().getContractDate();  // ngày bắt đầu
+            LocalDate hdtdDateExpired = hdtdDate.plusDays(365);  // +365 ngày
+            data.put("{{HDTD_DATE_expired}}", formatDate(hdtdDateExpired));
+        }
         replaceAllPlaceholders(doc, data);
         return writeDoc(doc);
     }
@@ -389,13 +399,37 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
 
         // ===== Map dữ liệu =====
 //        data.put("{{GHTD}}", formatMoney(dto.getCreditContractDTO().getCreditLimit()));
-        data.put("{{GHTDConSD}}", formatMoney(gHTDConSD));
-        data.put("{{GHTDaSuDung}}", formatMoney(gHTDaSuDung));
+//        BranchAuthorizedRepresentativeDTO rep =
+//                dto.getBranchAuthorizedRepresentativeDTO();
+//
+//        if (rep != null) {
+//
+//            data.put("{{REPRESENTATIVE_NAME}}",
+//                    safe(rep.getRepresentativeName()));
+//
+//            data.put("{{REPRESENTATIVE_TITLE}}",
+//                    safe(rep.getRepresentativeTitle()));
+//
+//            data.put("{{AUTH_DOC_NO}}",
+//                    safe(rep.getAuthorizationDocNo()));
+//
+//            data.put("{{AUTH_DOC_DATE}}",
+//                    formatDate(rep.getAuthorizationDocDate()));
+//
+//            data.put("{{AUTH_ISSUER}}",
+//                    safe(rep.getAuthorizationIssuer()));
+//
+//        }
 
         data.put("{{GUARANTEE_NUMBER}}", safe(dto.getGuaranteeContractNumber()));
         data.put("{{GUARANTEE_DATE}}", formatDate(LocalDate.now()));
         data.put("{{GUARANTEE_DATE_TITLE}}", toVietnameseDate(dto.getGuaranteeContractDate()));
-
+        data.put("{{creditLimit}}", formatMoney(dto.getCreditContractDTO().getCreditLimit()));
+        data.put("{{usedLimit}}", formatMoney(dto.getCreditContractDTO().getUsedLimit()));
+        data.put("{{remainingLimit}}", formatMoney(dto.getCreditContractDTO().getRemainingLimit()));
+        data.put("{{issuedGuaranteeBalance}}", formatMoney(dto.getCreditContractDTO().getIssuedGuaranteeBalance()));
+        data.put("{{vehicleLoanBalance}}", formatMoney(dto.getCreditContractDTO().getVehicleLoanBalance()));
+        data.put("{{realEstateLoanBalance}}", formatMoney(dto.getCreditContractDTO().getRealEstateLoanBalance()));
         data.put("{{SALE_CONTRACT}}", safe(dto.getSaleContract()));
         data.put("{{SALE_CONTRACT_AMOUNT}}", formatMoney(dto.getSaleContractAmount()));
         data.put("{{GIAHDMB}}", formatMoney(dto.getSaleContractAmount()));
@@ -419,18 +453,18 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
 
 
         // ===== Đại diện =====
-//        if (dto.getBranchAuthorizedRepresentativeDTO() != null) {
-//            var rep = dto.getBranchAuthorizedRepresentativeDTO();
-//
-//            data.put("{{REPRESENTATIVE_NAME}}", safe(rep.getRepresentativeName()));
-//            data.put("{{REPRESENTATIVE_TITLE}}", safe(rep.getRepresentativeTitle()));
-//            data.put("{{AUTH_DOC_NO}}", safe(rep.getAuthorizationDocNo()));
-//            data.put("{{AUTH_DOC_DATE}}",
-//                    rep.getAuthorizationDocDate() != null
-//                            ? formatDate(rep.getAuthorizationDocDate())
-//                            : "");
-//            data.put("{{AUTH_ISSUER}}", safe(rep.getAuthorizationIssuer()));
-//        }
+        if (dto.getBranchAuthorizedRepresentativeDTO() != null) {
+            var rep = dto.getBranchAuthorizedRepresentativeDTO();
+
+            data.put("{{REPRESENTATIVE_NAME}}", safe(rep.getRepresentativeName()));
+            data.put("{{REPRESENTATIVE_TITLE}}", safe(rep.getRepresentativeTitle()));
+            data.put("{{AUTH_DOC_NO}}", safe(rep.getAuthorizationDocNo()));
+            data.put("{{AUTH_DOC_DATE}}",
+                    rep.getAuthorizationDocDate() != null
+                            ? formatDate(rep.getAuthorizationDocDate())
+                            : "");
+            data.put("{{AUTH_ISSUER}}", safe(rep.getAuthorizationIssuer()));
+        }
 
         data.put("{{EXPECTED_VEHICLE_COUNT}}",
                 dto.getExpectedVehicleCount() != null

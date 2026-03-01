@@ -16,8 +16,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -72,6 +74,35 @@ public class DisbursementServiceImplement implements DisbursementService {
         entity.setCreditContract(credit);
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
+
+        // 🔹 Tính toán thông tin mới
+//        BigDecimal rate = new BigDecimal("0.0114"); // (7% - 5.86%) = 1.14% = 0.0114
+//        entity.setInterestRate(rate);
+//
+//        if (entity.getDisbursementAmount() != null && entity.getLoanTerm() != null) {
+//            BigDecimal interest = entity.getDisbursementAmount()
+//                    .multiply(rate)
+//                    .divide(new BigDecimal("365"), 10, java.math.RoundingMode.HALF_UP)
+//                    .multiply(new BigDecimal(entity.getLoanTerm()));
+//            entity.setInterestAmount(interest.setScale(2, java.math.RoundingMode.HALF_UP));
+//        }
+
+        entity.setStatus("ACTIVE");
+        entity.setTotalAmountPaid(BigDecimal.ZERO);
+        entity.setWithdrawnVehiclesCount(0);
+
+        // Link loans if provided and set totalVehiclesCount
+//        if (dto.getLoanIds() != null && !dto.getLoanIds().isEmpty()) {
+//            java.util.List<com.bidv.asset.vehicle.entity.LoanEntity> loans = loanRepository.findAllById(dto.getLoanIds());
+//            for (com.bidv.asset.vehicle.entity.LoanEntity loan : loans) {
+//                loan.setDisbursement(entity);
+//            }
+//            entity.setLoans(loans);
+//            entity.setTotalVehiclesCount(loans.size());
+//        } else {
+//            entity.setTotalVehiclesCount(0);
+//        }
+
         DisbursementEntity saved = disbursementRepository.save(entity);
 
         return disbursementMapper.toDto(saved);
@@ -110,6 +141,22 @@ public class DisbursementServiceImplement implements DisbursementService {
         }
 
         existingEntity.setUpdatedAt(LocalDateTime.now());
+
+//        // Cập nhật lại lãi suất nếu amount hoặc term thay đổi
+//        if (existingEntity.getDisbursementAmount() != null && existingEntity.getLoanTerm() != null) {
+//            BigDecimal interest = existingEntity.getDisbursementAmount()
+//                    .multiply(rate)
+//                    .divide(new BigDecimal("365"), 10, java.math.RoundingMode.HALF_UP)
+//                    .multiply(new BigDecimal(existingEntity.getLoanTerm()));
+//            existingEntity.setInterestAmount(interest.setScale(2, java.math.RoundingMode.HALF_UP));
+//        }
+
+        if (dto.getStatus() != null) {
+            existingEntity.setStatus(dto.getStatus());
+        }
+        if (dto.getTotalAmountPaid() != null) {
+            existingEntity.setTotalAmountPaid(dto.getTotalAmountPaid());
+        }
         
         DisbursementEntity updatedEntity = disbursementRepository.save(existingEntity);
         return disbursementMapper.toDto(updatedEntity);
@@ -141,7 +188,7 @@ public class DisbursementServiceImplement implements DisbursementService {
     }
 
     @Override
-    public DisbursementDTO previewDisbursement(long customerId) {
+    public DisbursementDTO previewDisbursement() {
         DisbursementDTO dto = new DisbursementDTO();
         // 1. Lấy CreditContract bằng findFirstByCustomerIdAndStatus cho khách hàng mặc định (ví dụ ID: 1) và trạng thái ACTIVE
         creditContractRepository.findFirstByStatus("ACTIVE").ifPresent(creditContract -> {
@@ -167,7 +214,22 @@ public class DisbursementServiceImplement implements DisbursementService {
         // 4. Tính toán hệ số
         dto.setCollateralValueAfterFactor(totalCollateral.multiply(new java.math.BigDecimal("0.85")));
         dto.setRealEstateValueAfterFactor(realEstate.multiply(new java.math.BigDecimal("0.8")));
+
         
+//        // Tính lãi suất dựa trên DisbursementAmount (nếu có, hoặc mặc định từ hạn mức)
+//        // Giả sử lấy DisbursementAmount từ đâu đó hoặc UI gửi lên, ở đây ta có thể tính dựa trên usedLimit hoặc creditLimit để demo
+//        if (dto.getDisbursementAmount() != null && dto.getLoanTerm() != null) {
+//            BigDecimal interest = dto.getDisbursementAmount()
+//                    .multiply(rate)
+//                    .divide(new BigDecimal("365"), 10, java.math.RoundingMode.HALF_UP)
+//                    .multiply(new BigDecimal(dto.getLoanTerm()));
+//            dto.setInterestAmount(interest.setScale(2, java.math.RoundingMode.HALF_UP));
+//        }
+//
+//        // Đếm số xe đang "Giữ trong kho"
+//        List<com.bidv.asset.vehicle.entity.VehicleEntity> storedVehicles = vehicleRepository.findByStatus("Giữ trong kho");
+//        dto.setTotalVehiclesCount(storedVehicles != null ? storedVehicles.size() : 0);
+
         return dto;
     }
 }

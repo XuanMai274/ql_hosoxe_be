@@ -51,6 +51,11 @@ public class DisbursementMapper {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         dto.setDisbursementAmount(entity.getDisbursementAmount());
+        dto.setInterestAmount(entity.getInterestAmount());
+        dto.setTotalAmountPaid(entity.getTotalAmountPaid());
+        dto.setTotalVehiclesCount(entity.getTotalVehiclesCount());
+        dto.setWithdrawnVehiclesCount(entity.getWithdrawnVehiclesCount());
+        dto.setStatus(entity.getStatus());
 
         if (entity.getCreditContract() != null) {
             dto.setCreditContractId(entity.getCreditContract().getId());
@@ -88,6 +93,11 @@ public class DisbursementMapper {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         dto.setDisbursementAmount(entity.getDisbursementAmount());
+        dto.setInterestAmount(entity.getInterestAmount());
+        dto.setTotalAmountPaid(entity.getTotalAmountPaid());
+        dto.setTotalVehiclesCount(entity.getTotalVehiclesCount());
+        dto.setWithdrawnVehiclesCount(entity.getWithdrawnVehiclesCount());
+        dto.setStatus(entity.getStatus());
 
         // Relationships
         if (entity.getCreditContract() != null) {
@@ -147,7 +157,11 @@ public class DisbursementMapper {
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setUpdatedAt(dto.getUpdatedAt());
         entity.setDisbursementAmount(dto.getDisbursementAmount());
-
+        entity.setInterestAmount(dto.getInterestAmount());
+        entity.setTotalAmountPaid(dto.getTotalAmountPaid());
+        entity.setTotalVehiclesCount(dto.getTotalVehiclesCount());
+        entity.setWithdrawnVehiclesCount(dto.getWithdrawnVehiclesCount());
+        entity.setStatus(dto.getStatus());
         return entity;
     }
 }

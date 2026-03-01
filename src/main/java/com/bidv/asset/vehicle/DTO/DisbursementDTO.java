@@ -41,6 +41,11 @@ public class DisbursementDTO {
     private String creditContractNumber;
     private CreditContractDTO creditContractDTO;
     private Integer vehicleCount;
+    private BigDecimal interestAmount; // Tiền lãi
+    private BigDecimal totalAmountPaid; // Tổng số tiền đã trả (đã trả bao nhiêu)
+    private Integer withdrawnVehiclesCount; // Số xe đã rút
+    private Integer totalVehiclesCount; // Tổng số xe vay
+    private String status; // ACTIVE/PAID_OFF
 
     private Long mortgageContractId;
     private MortgageContractDTO mortgageContractDTO;
