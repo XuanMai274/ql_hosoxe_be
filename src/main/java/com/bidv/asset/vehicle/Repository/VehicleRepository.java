@@ -48,7 +48,6 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     })
     List<VehicleEntity> findByStatus(String status);
 
-
     boolean existsByChassisNumber(String chassisNumber);
 
     @Query("""
@@ -66,6 +65,9 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
                 join v.guaranteeLetter gl
                 join v.manufacturerEntity m
                 where (
+                    cast(:customerId as long) is null or gl.customer.id = :customerId
+                )
+                and (
                     coalesce(:chassisNumber, '') = ''
                     or lower(v.chassisNumber) like lower(concat('%', :chassisNumber, '%'))
                 )
@@ -84,6 +86,7 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
                 )
             """)
     Page<VehicleListDTO> searchVehicles(
+            @Param("customerId") Long customerId,
             @Param("chassisNumber") String chassisNumber,
             @Param("status") String status,
             @Param("manufacturerCode") String manufacturerCode,
@@ -186,15 +189,16 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
     // --- NEW METHODS FOR WAREHOUSE EXPORT ---
 
     // Tìm danh sách xe theo ID của đơn yêu cầu xuất kho (Officer xem)
-    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity", "loans"})
+    @EntityGraph(attributePaths = { "guaranteeLetter", "manufacturerEntity", "loans" })
     List<VehicleEntity> findByWarehouseExportId(Long warehouseExportId);
 
     // Tìm danh sách xe theo ID của phiếu nhập kho
-    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity"})
+    @EntityGraph(attributePaths = { "guaranteeLetter", "manufacturerEntity" })
     List<VehicleEntity> findByWarehouseImportId(Long warehouseImportId);
 
-    // Tìm danh sách xe sẵn sàng để yêu cầu xuất (Trạng thái phù hợp và chưa thuộc đơn nào)
-    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity", "guaranteeLetter.manufacturer"})
+    // Tìm danh sách xe sẵn sàng để yêu cầu xuất (Trạng thái phù hợp và chưa thuộc
+    // đơn nào)
+    @EntityGraph(attributePaths = { "guaranteeLetter", "manufacturerEntity", "guaranteeLetter.manufacturer" })
     @Query("""
                 SELECT v FROM VehicleEntity v
                 LEFT JOIN v.guaranteeLetter gl
@@ -212,7 +216,8 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
             @Param("manufacturerCode") String manufacturerCode,
             @Param("ref") String ref,
             Pageable pageable);
-    @EntityGraph(attributePaths = {"guaranteeLetter", "manufacturerEntity", "guaranteeLetter.manufacturer", "loans"})
+
+    @EntityGraph(attributePaths = { "guaranteeLetter", "manufacturerEntity", "guaranteeLetter.manufacturer", "loans" })
     @Query("""
                 SELECT v FROM VehicleEntity v
                 LEFT JOIN v.guaranteeLetter gl

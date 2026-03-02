@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -39,31 +40,28 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
     public GuaranteeApplicationDTO create(GuaranteeApplicationDTO dto) {
 
         // ===== 1. GET CURRENT CUSTOMER =====
-        CustomerEntity customer =customerRepository.getReferenceById(dto.getCustomerDTO().getId());
+        CustomerEntity customer = customerRepository.getReferenceById(dto.getCustomerDTO().getId());
 
         // ===== 2. FIND ACTIVE CONTRACTS =====
-        CreditContractEntity credit =
-                creditContractRepository
-                        .findFirstByStatus("ACTIVE")
-                        .orElseThrow(() -> new RuntimeException("No active credit contract"));
+        CreditContractEntity credit = creditContractRepository
+                .findFirstByStatus("ACTIVE")
+                .orElseThrow(() -> new RuntimeException("No active credit contract"));
 
-        MortgageContractEntity mortgage =
-                mortgageContractRepository
-                        .findFirstByCustomerIdAndManufacturerIdAndStatus(customer.getId(), dto.getManufacturerDTO().getId(), "ACTIVE")
-                        .orElseThrow(() -> new RuntimeException("No active mortgage contract"));
+        MortgageContractEntity mortgage = mortgageContractRepository
+                .findFirstByCustomerIdAndManufacturerIdAndStatus(customer.getId(), dto.getManufacturerDTO().getId(),
+                        "ACTIVE")
+                .orElseThrow(() -> new RuntimeException("No active mortgage contract"));
 
         // ===== 3. LOAD MANUFACTURER =====
-        ManufacturerEntity manufacturer =
-                manufacturerRepository.findById(
-                                dto.getManufacturerDTO().getId())
-                        .orElseThrow(() -> new RuntimeException("Manufacturer not found"));
+        ManufacturerEntity manufacturer = manufacturerRepository.findById(
+                dto.getManufacturerDTO().getId())
+                .orElseThrow(() -> new RuntimeException("Manufacturer not found"));
 
         // ===== 4. GENERATE SUB NUMBER =====
         String subNumber = mortgageNumberService.generateGuaranteeNumber(mortgage);
 
         // ===== 5. MAP ENTITY =====
-        GuaranteeApplicationEntity entity =
-                mapper.toEntity(dto, manufacturer, credit, mortgage, customer);
+        GuaranteeApplicationEntity entity = mapper.toEntity(dto, manufacturer, credit, mortgage, customer);
 
         entity.setCreatedAt(LocalDateTime.now());
         entity.setStatus("PENDING_APPROVAL");
@@ -76,19 +74,17 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
 
         if (entity.getVehicles() != null && !entity.getVehicles().isEmpty()) {
 
-            BigDecimal guaranteeRate =
-                    manufacturer.getGuaranteeRate() == null
-                            ? BigDecimal.ZERO
-                            : manufacturer.getGuaranteeRate();
+            BigDecimal guaranteeRate = manufacturer.getGuaranteeRate() == null
+                    ? BigDecimal.ZERO
+                    : manufacturer.getGuaranteeRate();
 
             for (GuaranteeApplicationVehicleEntity vehicle : entity.getVehicles()) {
 
                 vehicle.setGuaranteeApplication(entity);
 
-                BigDecimal price =
-                        vehicle.getVehiclePrice() == null
-                                ? BigDecimal.ZERO
-                                : vehicle.getVehiclePrice();
+                BigDecimal price = vehicle.getVehiclePrice() == null
+                        ? BigDecimal.ZERO
+                        : vehicle.getVehiclePrice();
 
                 // ===== AUTO CALCULATE GUARANTEE AMOUNT =====
                 BigDecimal guaranteeAmount = price.multiply(guaranteeRate);
@@ -118,11 +114,34 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<GuaranteeApplicationDTO> findAll(Pageable pageable) {
         return repository.findAll(pageable).map(mapper::toDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<GuaranteeApplicationDTO> search(Long customerId, Long manufacturerId, String fromDate, String toDate,
+            Pageable pageable) {
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        try {
+            if (fromDate != null && !fromDate.isEmpty()) {
+                start = java.time.LocalDate.parse(fromDate).atStartOfDay();
+            }
+            if (toDate != null && !toDate.isEmpty()) {
+                end = java.time.LocalDate.parse(toDate).atTime(23, 59, 59);
+            }
+        } catch (Exception e) {
+            // Log error or handle invalid date format
+        }
+
+        return repository.search(customerId, manufacturerId, start, end, pageable).map(mapper::toDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public GuaranteeApplicationDTO getById(Long id) {
         GuaranteeApplicationEntity entity = repository.findById(id.longValue());
         if (entity == null) {
@@ -166,6 +185,7 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
 
         return mapper.toDTO(repository.save(entity));
     }
+
     // =====================================================
     // AUTO CALCULATE TOTAL
     // =====================================================
@@ -181,18 +201,17 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
         entity.setTotalVehicleCount(entity.getVehicles().size());
 
         BigDecimal totalVehicle = entity.getVehicles().stream()
-                .map(v -> v.getVehiclePrice() == null ?
-                        BigDecimal.ZERO : v.getVehiclePrice())
+                .map(v -> v.getVehiclePrice() == null ? BigDecimal.ZERO : v.getVehiclePrice())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalGuarantee = entity.getVehicles().stream()
-                .map(v -> v.getGuaranteeAmount() == null ?
-                        BigDecimal.ZERO : v.getGuaranteeAmount())
+                .map(v -> v.getGuaranteeAmount() == null ? BigDecimal.ZERO : v.getGuaranteeAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         entity.setTotalVehicleAmount(totalVehicle);
         entity.setTotalGuaranteeAmount(totalGuarantee);
     }
+
     private int calculateTermDays(String manufacturerName, String vehicleName) {
 
         if (manufacturerName.equalsIgnoreCase("VINFAST")) {

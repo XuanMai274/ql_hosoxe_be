@@ -10,17 +10,26 @@ import java.util.List;
 
 public interface VehicleService {
     Page<VehicleListDTO> getVehicles(
+            Long customerId,
             String chassisNumber,
             String status,
             String manufacturer,
             String ref,
-            Pageable pageable
-    );
+            Pageable pageable);
+
     VehicleDTO getVehicleDetail(Long id);
+
     public VehicleDTO updateVehicle(Long id, VehicleDTO dto);
+
     List<VehicleDTO> getVehiclesByStatus(String status);
+
     List<VehicleDTO> findByIds(List<Long> ids);
-    Page<VehicleDTO> getAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String ref, Pageable pageable);
-    Page<VehicleDTO> getCustomerAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String loanContractNumber, Pageable pageable);
+
+    Page<VehicleDTO> getAvailableVehicles(String status, String chassisNumber, String manufacturerCode, String ref,
+            Pageable pageable);
+
+    Page<VehicleDTO> getCustomerAvailableVehicles(String status, String chassisNumber, String manufacturerCode,
+            String loanContractNumber, Pageable pageable);
+
     List<VehicleDTO> getVehiclesByExportId(Long exportId);
 }

@@ -7,14 +7,37 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import com.bidv.asset.vehicle.entity.CustomerEntity;
+import com.bidv.asset.vehicle.entity.UserAccountEntity;
+import com.bidv.asset.vehicle.Repository.UserAccountRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping({"/customer/guarantee-applications", "/officer/guarantee-applications"})
+@RequestMapping({ "/customer/guarantee-applications", "/officer/guarantee-applications" })
 @RequiredArgsConstructor
 public class GuaranteeApplicationAPI {
-    @Autowired
-    GuaranteeApplicationService service;
+    private final GuaranteeApplicationService service;
+
+    private final UserAccountRepository userAccountRepository;
+
+    private Long getCustomerIdIfCustomer(HttpServletRequest request) {
+        if (request.getRequestURI().contains("/customer/")) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                String username = auth.getName();
+                if (username != null) {
+                    return userAccountRepository.findByUsername(username)
+                            .map(UserAccountEntity::getCustomer)
+                            .map(CustomerEntity::getId)
+                            .orElse(null);
+                }
+            }
+        }
+        return null; // Officer or not a customer
+    }
 
     // =====================================================
     // ===================== CUSTOMER =======================
@@ -33,10 +56,16 @@ public class GuaranteeApplicationAPI {
     // ===================== OFFICER ========================
     // =====================================================
 
-    // LIST ALL APPLICATIONS (For Officer)
+    // LIST ALL APPLICATIONS (For Officer/Customer with filter)
     @GetMapping
-    public ResponseEntity<Page<GuaranteeApplicationDTO>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(service.findAll(pageable));
+    public ResponseEntity<org.springframework.data.domain.Page<GuaranteeApplicationDTO>> getAll(
+            @RequestParam(required = false) Long manufacturerId,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            org.springframework.data.domain.Pageable pageable,
+            HttpServletRequest request) {
+        Long customerId = getCustomerIdIfCustomer(request);
+        return ResponseEntity.ok(service.search(customerId, manufacturerId, fromDate, toDate, pageable));
     }
 
     // GET BY ID

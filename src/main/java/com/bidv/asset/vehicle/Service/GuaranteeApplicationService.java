@@ -10,8 +10,15 @@ import java.util.List;
 
 public interface GuaranteeApplicationService {
     GuaranteeApplicationDTO create(GuaranteeApplicationDTO dto);
+
     Page<GuaranteeApplicationDTO> findAll(Pageable pageable);
+
     GuaranteeApplicationDTO getById(Long id);
+
     GuaranteeApplicationDTO approve(Long id);
+
     GuaranteeApplicationDTO reject(Long id);
+
+    Page<GuaranteeApplicationDTO> search(Long customerId, Long manufacturerId, String fromDate, String toDate,
+            Pageable pageable);
 }

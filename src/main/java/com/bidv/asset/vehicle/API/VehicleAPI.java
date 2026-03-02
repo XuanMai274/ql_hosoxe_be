@@ -5,6 +5,10 @@ import com.bidv.asset.vehicle.DTO.VehicleDetailDTO;
 import com.bidv.asset.vehicle.DTO.VehicleListDTO;
 import com.bidv.asset.vehicle.Mapper.VehicleMapper;
 import com.bidv.asset.vehicle.Service.VehicleService;
+import com.bidv.asset.vehicle.Repository.UserAccountRepository;
+import com.bidv.asset.vehicle.entity.CustomerEntity;
+import com.bidv.asset.vehicle.entity.UserAccountEntity;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,6 +16,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -21,17 +27,35 @@ import java.util.List;
 
 @RequiredArgsConstructor
 public class VehicleAPI {
-    @Autowired
-    VehicleService vehicleService;
-    @GetMapping("/officer/vehicles")
+    private final VehicleService vehicleService;
+    private final UserAccountRepository userAccountRepository;
+
+    private Long getCustomerIdIfCustomer(HttpServletRequest request) {
+        if (request.getRequestURI().contains("/customer/")) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                String username = auth.getName();
+                if (username != null) {
+                    return userAccountRepository.findByUsername(username)
+                            .map(UserAccountEntity::getCustomer)
+                            .map(CustomerEntity::getId)
+                            .orElse(null);
+                }
+            }
+        }
+        return null; // Officer or not a customer
+    }
+
+    @GetMapping({ "/officer/vehicles", "/customer/vehicles" })
     public Page<VehicleListDTO> getVehicles(
             @RequestParam(required = false) String chassisNumber,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String manufacturer,
             @RequestParam(required = false) String ref,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request) {
+        Long customerId = getCustomerIdIfCustomer(request);
         chassisNumber = normalize(chassisNumber);
         manufacturer = normalize(manufacturer);
         ref = normalize(ref);
@@ -41,16 +65,15 @@ public class VehicleAPI {
         Pageable pageable = PageRequest.of(
                 page,
                 size,
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+                Sort.by(Sort.Direction.DESC, "createdAt"));
 
         return vehicleService.getVehicles(
+                customerId,
                 chassisNumber,
                 status,
                 manufacturer,
                 ref,
-                pageable
-        );
+                pageable);
     }
 
     private String normalize(String input) {
@@ -59,61 +82,64 @@ public class VehicleAPI {
         }
         return input.trim();
     }
+
     @GetMapping("/officer/vehicles/status/{status}")
     public List<VehicleDTO> getByStatus(@PathVariable String status) {
         return vehicleService.getVehiclesByStatus(status);
     }
+
     @GetMapping("/customer/vehicles/status/{status}")
     public List<VehicleDTO> getByStatusCustomer(@PathVariable String status) {
         return vehicleService.getVehiclesByStatus(status);
     }
-//    @GetMapping
-//    public Page<VehicleListDTO> getVehicles(
-//            @RequestParam(required = false) String chassisNumber,
-//            @RequestParam(required = false) String status,
-//            @RequestParam(required = false) BigDecimal minPrice,
-//            @RequestParam(required = false) BigDecimal maxPrice,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size
-//    ) {
-//        chassisNumber = (chassisNumber == null || chassisNumber.isBlank())
-//                ? null
-//                : chassisNumber.trim().toLowerCase();
-//
-//        Pageable pageable = PageRequest.of(
-//                page,
-//                size,
-//                Sort.by(Sort.Direction.DESC, "createdAt")
-//        );
-//        return vehicleService.getVehicles(
-//                chassisNumber,
-//                status,
-//                minPrice,
-//                maxPrice,
-//                pageable
-//        );
-//    }
+
+    // @GetMapping
+    // public Page<VehicleListDTO> getVehicles(
+    // @RequestParam(required = false) String chassisNumber,
+    // @RequestParam(required = false) String status,
+    // @RequestParam(required = false) BigDecimal minPrice,
+    // @RequestParam(required = false) BigDecimal maxPrice,
+    // @RequestParam(defaultValue = "0") int page,
+    // @RequestParam(defaultValue = "10") int size
+    // ) {
+    // chassisNumber = (chassisNumber == null || chassisNumber.isBlank())
+    // ? null
+    // : chassisNumber.trim().toLowerCase();
+    //
+    // Pageable pageable = PageRequest.of(
+    // page,
+    // size,
+    // Sort.by(Sort.Direction.DESC, "createdAt")
+    // );
+    // return vehicleService.getVehicles(
+    // chassisNumber,
+    // status,
+    // minPrice,
+    // maxPrice,
+    // pageable
+    // );
+    // }
     @GetMapping("/officer/vehicles/{id}")
     public VehicleDTO getVehicleDetail(@PathVariable Long id) {
         return vehicleService.getVehicleDetail(id);
     }
+
     @PutMapping("/officer/vehicles/{id}")
     public ResponseEntity<VehicleDTO> updateVehicle(
             @PathVariable Long id,
-            @RequestBody VehicleDTO dto
-    ) {
+            @RequestBody VehicleDTO dto) {
 
         return ResponseEntity.ok(vehicleService.updateVehicle(id, dto));
     }
-//    @GetMapping("/export")
-//    public ResponseEntity<byte[]> exportExcel() {
-//        byte[] file = exportService.exportVehicleExcel();
-//
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION,
-//                        "attachment; filename=vehicles.xlsx")
-//                .body(file);
-//    }
+    // @GetMapping("/export")
+    // public ResponseEntity<byte[]> exportExcel() {
+    // byte[] file = exportService.exportVehicleExcel();
+    //
+    // return ResponseEntity.ok()
+    // .header(HttpHeaders.CONTENT_DISPOSITION,
+    // "attachment; filename=vehicles.xlsx")
+    // .body(file);
+    // }
 
     // Danh sách xe khách hàng có thể chọn đề rút hồ sơ (chưa nằm trong đơn khác)
     @GetMapping("/customer/vehicles/available-for-export/{status}")
@@ -123,14 +149,14 @@ public class VehicleAPI {
             @RequestParam(required = false) String manufacturer,
             @RequestParam(required = false) String loanContractNumber,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size) {
         chassisNumber = normalize(chassisNumber);
         manufacturer = normalize(manufacturer);
         loanContractNumber = normalize(loanContractNumber);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return vehicleService.getCustomerAvailableVehicles(status, chassisNumber, manufacturer, loanContractNumber, pageable);
+        return vehicleService.getCustomerAvailableVehicles(status, chassisNumber, manufacturer, loanContractNumber,
+                pageable);
     }
 
     // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
