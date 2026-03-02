@@ -133,9 +133,5 @@ public class VehicleAPI {
         return vehicleService.getCustomerAvailableVehicles(status, chassisNumber, manufacturer, loanContractNumber, pageable);
     }
 
-    // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
-    @GetMapping("/officer/vehicles/warehouse-export/{exportId}")
-    public ResponseEntity<List<VehicleDTO>> getByExportRequest(@PathVariable Long exportId) {
-        return ResponseEntity.ok(vehicleService.getVehiclesByExportId(exportId));
-    }
+
 }

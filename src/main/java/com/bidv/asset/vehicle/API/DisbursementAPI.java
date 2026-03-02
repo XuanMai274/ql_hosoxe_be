@@ -67,26 +67,5 @@ public class DisbursementAPI {
     public ResponseEntity<DisbursementDTO> previewDisbursement() {
         return ResponseEntity.ok(disbursementService.previewDisbursement());
     }
-    @PostMapping("/export-all")
-    public ResponseEntity<byte[]> exportAll(@RequestBody DisbursementExportRequest request) throws IOException {
-        Map<String, byte[]> files = disbursementExportService.exportAll(
-                request.getDisbursementDTO(), request.getVehicleIds());
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ZipOutputStream zos = new ZipOutputStream(baos)) {
-
-            for (Map.Entry<String, byte[]> entry : files.entrySet()) {
-                ZipEntry ze = new ZipEntry(entry.getKey());
-                zos.putNextEntry(ze);
-                zos.write(entry.getValue());
-                zos.closeEntry();
-            }
-            zos.finish();
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"HoSoGiaiNgan.zip\"")
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(baos.toByteArray());
-        }
-    }
 }

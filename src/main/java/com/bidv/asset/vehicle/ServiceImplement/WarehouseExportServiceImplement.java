@@ -29,42 +29,49 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
     private final LoanRepository loanRepository;
     private final DisbursementRepository disbursementRepository;
     @Autowired CreditContractRepository creditContractRepository;
-    @Override
     @Transactional
     public WarehouseExportDTO requestExport(WarehouseExportDTO dto) {
+
         if (dto.getVehicleIds() == null || dto.getVehicleIds().isEmpty()) {
             throw new RuntimeException("Danh sách xe yêu cầu xuất không được để trống");
         }
 
-        // 1. Lấy danh sách xe và kiểm tra tính hợp lệ
+        // 1. Lấy danh sách xe
         List<VehicleEntity> vehicles = vehicleRepository.findAllById(dto.getVehicleIds());
-        
+
+        if (vehicles.size() != dto.getVehicleIds().size()) {
+            throw new RuntimeException("Một số xe không tồn tại");
+        }
+
+        // 2. Kiểm tra xe đã thuộc export khác chưa
         for (VehicleEntity v : vehicles) {
             if (v.getWarehouseExport() != null) {
-                throw new RuntimeException("Xe số khung " + v.getChassisNumber() + " đã nằm trong một đơn đề nghị xuất kho khác.");
+                throw new RuntimeException(
+                        "Xe số khung " + v.getChassisNumber() + " đã nằm trong đơn khác"
+                );
             }
         }
-        
-        // 2. Tính tổng tiền thu nợ (Tổng giá trị bảo lãnh của các xe)
-        java.math.BigDecimal totalAmount = vehicles.stream()
-                .map(v -> v.getGuaranteeAmount() != null ? v.getGuaranteeAmount() : java.math.BigDecimal.ZERO)
-                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
 
-        // 3. Tạo đề nghị xuất kho (PENDING)
+        // 3. Tính tổng tiền
+        BigDecimal totalAmount = vehicles.stream()
+                .map(v -> v.getGuaranteeAmount() != null
+                        ? v.getGuaranteeAmount()
+                        : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // 4. Tạo export
         WarehouseExportEntity exportEntity = warehouseExportMapper.toEntity(dto);
         exportEntity.setRequestDate(LocalDateTime.now());
         exportEntity.setStatus("PENDING");
         exportEntity.setVehicleCount(vehicles.size());
         exportEntity.setTotalDebtCollection(totalAmount);
         exportEntity.setCreatedAt(LocalDateTime.now());
-        
-        WarehouseExportEntity savedExport = warehouseExportRepository.save(exportEntity);
 
-        // 4. Liên kết tạm thời (Để officer thấy danh sách xe khi duyệt)
-        for (VehicleEntity v : vehicles) {
-            v.setWarehouseExport(savedExport);
-        }
-        vehicleRepository.saveAll(vehicles);
+        // ⭐ Đồng bộ 2 chiều ngay tại đây
+        exportEntity.setVehicles(vehicles);
+
+        WarehouseExportEntity savedExport =
+                warehouseExportRepository.save(exportEntity);
 
         return warehouseExportMapper.toDto(savedExport);
     }
@@ -104,30 +111,30 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                         .orElseThrow(() ->
                                 new RuntimeException("Không tìm thấy HĐBD phù hợp"));
 
-        MortgageContractSequenceEntity sequence =
-                sequenceRepository.findByMortgageContractId(mortgage.getId())
-                        .orElseGet(() -> {
-                            MortgageContractSequenceEntity newSeq =
-                                    new MortgageContractSequenceEntity();
-                            newSeq.setMortgageContract(mortgage);
-                            newSeq.setWarehouseRunningNo(0);
-                            newSeq.setGuaranteeRunningNo(0);
-                            return newSeq;
-                        });
-
-        Integer nextNo =
-                (sequence.getGuaranteeRunningNo() == null
-                        ? 0
-                        : sequence.getGuaranteeRunningNo()) + 1;
-
-        sequence.setGuaranteeRunningNo(nextNo);
-        sequenceRepository.save(sequence);
-
-        String baseNumber = mortgage.getContractNumber();
-        String[] parts = baseNumber.split("/", 2);
-        String exportNumber =
-                parts[0] + "." + String.format("%02d", nextNo)
-                        + "/" + parts[1].replace("HDBD", "XUAT");
+//        MortgageContractSequenceEntity sequence =
+//                sequenceRepository.findByMortgageContractId(mortgage.getId())
+//                        .orElseGet(() -> {
+//                            MortgageContractSequenceEntity newSeq =
+//                                    new MortgageContractSequenceEntity();
+//                            newSeq.setMortgageContract(mortgage);
+//                            newSeq.setWarehouseRunningNo(0);
+//                            newSeq.setGuaranteeRunningNo(0);
+//                            return newSeq;
+//                        });
+//
+//        Integer nextNo =
+//                (sequence.getGuaranteeRunningNo() == null
+//                        ? 0
+//                        : sequence.getGuaranteeRunningNo()) + 1;
+//
+//        sequence.setGuaranteeRunningNo(nextNo);
+//        sequenceRepository.save(sequence);
+//
+//        String baseNumber = mortgage.getContractNumber();
+//        String[] parts = baseNumber.split("/", 2);
+//        String exportNumber =
+//                parts[0] + "." + String.format("%02d", nextNo)
+//                        + "/" + parts[1].replace("HDBD", "XUAT");
 
         CreditContractEntity credit =
                 creditContractRepository.findByIdForUpdate(
@@ -201,7 +208,7 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
 
         credit.setUpdatedAt(LocalDateTime.now());
         creditContractRepository.save(credit);
-
+        String exportNumber = "XK" + LocalDate.now();
         exportEntity.setExportNumber(exportNumber);
         exportEntity.setExportDate(LocalDateTime.now());
         exportEntity.setStatus("APPROVED");

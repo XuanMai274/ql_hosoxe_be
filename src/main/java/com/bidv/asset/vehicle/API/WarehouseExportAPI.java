@@ -1,10 +1,15 @@
 package com.bidv.asset.vehicle.API;
 
+import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.DTO.WarehouseExportDTO;
+import com.bidv.asset.vehicle.Service.VehicleService;
 import com.bidv.asset.vehicle.Service.WarehouseExportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -12,14 +17,18 @@ import org.springframework.web.bind.annotation.*;
 public class WarehouseExportAPI {
 
     private final WarehouseExportService warehouseExportService;
-
+    @Autowired
+    VehicleService vehicleService;
     @PostMapping("/customer/warehouse-export/request")
     public ResponseEntity<?> requestExport(@RequestBody WarehouseExportDTO dto) {
         try {
             WarehouseExportDTO result = warehouseExportService.requestExport(dto);
+            System.out.println(("Dữ liệu trả về sau khi đề nghị xuất kho: "+result));
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
         }
     }
 
@@ -52,5 +61,15 @@ public class WarehouseExportAPI {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+    // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
+    @GetMapping("/officer/vehicles/warehouse-export/{exportId}")
+    public ResponseEntity<List<VehicleDTO>> getByExportRequest(@PathVariable Long exportId) {
+        return ResponseEntity.ok(vehicleService.getVehiclesByExportId(exportId));
+    }
+    // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
+    @GetMapping("/customer/vehicles/warehouse-export/{exportId}")
+    public ResponseEntity<List<VehicleDTO>> getByExportRequestCustomer(@PathVariable Long exportId) {
+        return ResponseEntity.ok(vehicleService.getVehiclesByExportId(exportId));
     }
 }

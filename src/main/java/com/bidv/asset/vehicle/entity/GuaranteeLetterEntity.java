@@ -47,6 +47,8 @@ public class GuaranteeLetterEntity {
     private LocalDate guaranteeNoticeDate;
     @Column(name = "reference_code")
     private String referenceCode;
+    @Column(name = "guarantee_term_days")
+    private Integer guaranteeTermDays;
     // ===== GUARANTEE AMOUNT =====
     @Column(name = "expected_guarantee_amount", precision = 18, scale = 2)
     private BigDecimal expectedGuaranteeAmount; // so tien bao lanh du kien(nhap khi tao bao lanh)

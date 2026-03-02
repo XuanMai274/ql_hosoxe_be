@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ManufacturerRepository extends JpaRepository<ManufacturerEntity,Long> {
@@ -16,4 +17,5 @@ public interface ManufacturerRepository extends JpaRepository<ManufacturerEntity
     List<ManufacturerEntity> findAll();
     @Query("SELECT m FROM ManufacturerEntity m WHERE m.id = :id")
     ManufacturerEntity findByIdManu(@Param("id") Long id);
+    Optional<ManufacturerEntity> findByCode(String code);
 }

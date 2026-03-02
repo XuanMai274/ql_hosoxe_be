@@ -52,4 +52,15 @@ public class WarehouseExportEntity {
 
     private LocalDateTime createdAt;
     private String createdBy;
+    public void addVehicle(VehicleEntity vehicle) {
+        vehicles.add(vehicle);
+        vehicle.setWarehouseExport(this);
+    }
+
+    public void setVehicles(List<VehicleEntity> vehicles) {
+        this.vehicles = vehicles;
+        if (vehicles != null) {
+            vehicles.forEach(v -> v.setWarehouseExport(this));
+        }
+    }
 }

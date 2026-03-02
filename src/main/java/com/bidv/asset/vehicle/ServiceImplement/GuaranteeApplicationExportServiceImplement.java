@@ -2,7 +2,6 @@ package com.bidv.asset.vehicle.ServiceImplement;
 
 import com.bidv.asset.vehicle.DTO.GuaranteeApplicationDTO;
 import com.bidv.asset.vehicle.DTO.GuaranteeApplicationVehicleDTO;
-import com.bidv.asset.vehicle.Repository.GuaranteeApplicationRepository;
 import com.bidv.asset.vehicle.Service.GuaranteeApplicationExportService;
 import com.bidv.asset.vehicle.Utill.VietnameseNumberUtil;
 import lombok.RequiredArgsConstructor;
@@ -20,100 +19,105 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class GuaranteeApplicationExportServiceImplement implements GuaranteeApplicationExportService {
-
-    private final GuaranteeApplicationRepository repository;
-    private final com.bidv.asset.vehicle.Mapper.GuaranteeApplicationMapper mapper;
+public class GuaranteeApplicationExportServiceImplement
+        implements GuaranteeApplicationExportService {
 
     private static final String TEMPLATE_PATH = "/templates/DeNghiCapBaoLanh/";
-
-    /* ========================================================= */
-    /* ================= EXPORT ĐỀ NGHỊ ======================== */
-    /* ========================================================= */
-
+    BigDecimal gate= BigDecimal.valueOf(0);
+    // =====================================================
+    // ================= MAIN EXPORT =======================
+    // =====================================================
     @Override
-    public byte[] exportDeNghiCapBaoLanh(Long applicationId) throws Exception {
+    public Map<String, byte[]> exportAll(GuaranteeApplicationDTO dto)
+            throws IOException {
 
-        GuaranteeApplicationDTO dto = getData(applicationId);
-        String template = resolveTemplatePath(dto);
+        Map<String, byte[]> results = new LinkedHashMap<>();
 
-        try (XWPFDocument doc = loadTemplate(TEMPLATE_PATH + template)) {
+        // luôn có danh sách xe
+        results.put(
+                "danh-sach-xe-de-nghi-cap-bao-lanh.docx",
+                exportVehicleList(dto)
+        );
 
-            Map<String, String> data = buildCommonData(dto);
+        // chọn template theo hãng
+        String manufacturer = Optional.ofNullable(dto.getManufacturerDTO())
+                .map(m -> m.getCode())
+                .orElse("");
 
-            replaceAll(doc, data);
-
-            // 🔥 QUAN TRỌNG: file đề nghị KHÔNG có bảng xe
-            forceTimesNewRoman(doc);
-
-            return writeDoc(doc);
+        if (manufacturer.contains("HYUNDAI")) {
+            results.put(
+                    "de-nghi-cap-bao-lanh-hyundai.docx",
+                    exportCommon(dto, "de-nghi-cap-bao-lanh-hyundai.docx")
+            );
+            gate= BigDecimal.valueOf(85);
+        } else if(manufacturer.contains("VINFAST")) {
+            results.put(
+                    "de-nghi-cap-bao-lanh-vinfast.docx",
+                    exportCommon(dto, "de-nghi-cap-bao-lanh-vinfast.docx")
+            );
+            gate= BigDecimal.valueOf(75);
         }
+
+        return results;
     }
 
-    /* ========================================================= */
-    /* ================= EXPORT DANH SÁCH XE =================== */
-    /* ========================================================= */
+    // =====================================================
+    // =============== EXPORT COMMON =======================
+    // =====================================================
+    private byte[] exportCommon(
+            GuaranteeApplicationDTO dto,
+            String templateName
+    ) throws IOException {
 
-    @Override
-    public byte[] exportDanhSachXeBaoLanh(Long applicationId) throws Exception {
+        XWPFDocument doc = loadTemplate(TEMPLATE_PATH + templateName);
 
-        GuaranteeApplicationDTO dto = getData(applicationId);
+        Map<String, String> data = buildCommonData(dto);
 
-        try (XWPFDocument doc =
-                     loadTemplate(TEMPLATE_PATH + "danh-sach-xe-de-nghi-cap-bao-lanh.docx")) {
+        replaceAll(doc, data);
 
-            Map<String, String> data = buildCommonData(dto);
+        forceTimesNewRoman(doc);
 
-            replaceAll(doc, data);
-
-            // ✅ CHỈ file này mới replace bảng
-            replaceVehicleTable(doc, dto.getVehicles());
-
-            forceTimesNewRoman(doc);
-
-            return writeDoc(doc);
-        }
+        return writeDoc(doc);
     }
 
-    /* ========================================================= */
-    /* ================= TEMPLATE SELECT ======================= */
-    /* ========================================================= */
+    // =====================================================
+    // ============ EXPORT VEHICLE LIST ====================
+    // =====================================================
+    private byte[] exportVehicleList(GuaranteeApplicationDTO dto)
+            throws IOException {
 
-    private String resolveTemplatePath(GuaranteeApplicationDTO dto) {
+        XWPFDocument doc = loadTemplate(
+                TEMPLATE_PATH + "danh-sach-xe-de-nghi-cap-bao-lanh.docx"
+        );
 
-        if (dto.getVehicles() == null) {
-            return "de-nghi-cap-bao-lanh.docx";
-        }
+        Map<String, String> common = buildCommonData(dto);
 
-        for (GuaranteeApplicationVehicleDTO v : dto.getVehicles()) {
-            String type = safe(v.getVehicleType()).toLowerCase();
+        replaceAll(doc, common);
 
-            if (type.contains("vinfast")) {
-                return "de-nghi-cap-bao-lanh-vinfast.docx";
-            }
+        replaceVehicleTable(doc,
+                Optional.ofNullable(dto.getVehicles())
+                        .orElse(Collections.emptyList()));
 
-            if (type.contains("hyundai")) {
-                return "de-nghi-cap-bao-lanh-hyundai.docx";
-            }
-        }
+        forceTimesNewRoman(doc);
 
-        return "de-nghi-cap-bao-lanh.docx";
+        return writeDoc(doc);
     }
 
-    /* ========================================================= */
-    /* ================= BUILD DATA ============================ */
-    /* ========================================================= */
-
+    // =====================================================
+    // ================= BUILD COMMON ======================
+    // =====================================================
     private Map<String, String> buildCommonData(GuaranteeApplicationDTO dto) {
 
         Map<String, String> map = new HashMap<>();
 
-        map.put("{{HDBDCT}}", safe(dto.getSubGuaranteeContractNumber()));
-        map.put("{{CURRENT_DATE}}", formatDate(LocalDate.now()));
-        map.put("{{CURRENT_DATE_TITLE}}", formatDate(LocalDate.now()));
 
+        map.put("{{CURRENT_DATE}}", formatDate(LocalDate.now()));
+        map.put("{{CURRENT_DATE_TITLE}}", toVietnameseDate(LocalDate.now()));
+        map.put("{{expiryDate}}",safe(String.valueOf(dto.getGuaranteeTermDays())));
+        map.put("{{HDBDCT}}", safe(dto.getSubGuaranteeContractNumber()));
         if (dto.getCreditContractDTO() != null) {
-            map.put("{{HDTD}}", safe(dto.getCreditContractDTO().getContractNumber()));
+            map.put("{{HDTD}}",
+                    safe(dto.getCreditContractDTO().getContractNumber()));
             map.put("{{HDTD_DATE}}",
                     formatDate(dto.getCreditContractDTO().getContractDate()));
         }
@@ -121,17 +125,16 @@ public class GuaranteeApplicationExportServiceImplement implements GuaranteeAppl
         if (dto.getMortgageContractDTO() != null) {
             map.put("{{HDBD}}",
                     safe(dto.getMortgageContractDTO().getContractNumber()));
+            map.put("{{HDBD_DATE}}",
+                    formatDate(dto.getMortgageContractDTO().getContractDate()));
         }
 
         map.put("{{TONG_XE}}",
                 String.valueOf(Optional.ofNullable(dto.getTotalVehicleCount()).orElse(0)));
 
-        map.put("{{TONG}}",
-                formatMoney(dto.getTotalGuaranteeAmount()));
-
-        map.put("{{TONG_BL}}",
-                formatMoney(dto.getTotalGuaranteeAmount()));
-
+        map.put("{{TONG}}", formatMoney(dto.getTotalGuaranteeAmount()));
+        map.put("{{TONG_BL}}", formatMoney(dto.getTotalGuaranteeAmount()));
+        map.put("{{TONGHDMB}}",formatMoney(dto.getTotalVehicleAmount()));
         map.put("{{TONG_TEXT}}",
                 VietnameseNumberUtil.toVietnamese(
                         Optional.ofNullable(dto.getTotalGuaranteeAmount())
@@ -143,93 +146,13 @@ public class GuaranteeApplicationExportServiceImplement implements GuaranteeAppl
         return map;
     }
 
-    /* ========================================================= */
-    /* ================= TABLE VEHICLE ========================= */
-    /* ========================================================= */
-
-    private void replaceVehicleTable(XWPFDocument doc, List<GuaranteeApplicationVehicleDTO> vehicles) {
-        if (vehicles == null || vehicles.isEmpty()) return;
-
-        for (XWPFTable table : doc.getTables()) {
-            processTableRecursive(table, vehicles);
-        }
-    }
-
-    private void processTableRecursive(XWPFTable table, List<GuaranteeApplicationVehicleDTO> vehicles) {
-
-        for (int i = 0; i < table.getRows().size(); i++) {
-
-            XWPFTableRow row = table.getRow(i);
-
-            String rowText = getRowText(row);
-
-            if (rowText.contains("{{stt}}")) {
-
-                int templateIndex = i;
-
-                for (int j = 0; j < vehicles.size(); j++) {
-
-                    GuaranteeApplicationVehicleDTO v = vehicles.get(j);
-
-                    XWPFTableRow newRow =
-                            table.insertNewTableRow(templateIndex + j);
-
-                    copyRowSafe(row, newRow);
-
-                    Map<String, String> vData = buildVehicleData(v, j + 1);
-                    replaceRowPlaceholders(newRow, vData);
-                }
-
-                table.removeRow(templateIndex + vehicles.size());
-                break;
-            }
-        }
-
-        // recursive nested tables
-        for (XWPFTableRow row : table.getRows()) {
-            for (XWPFTableCell cell : row.getTableCells()) {
-                for (XWPFTable nested : cell.getTables()) {
-                    processTableRecursive(nested, vehicles);
-                }
-            }
-        }
-    }
-
-    private void copyRowSafe(XWPFTableRow source, XWPFTableRow target) {
-
-        target.getCtRow().setTrPr(source.getCtRow().getTrPr());
-
-        // tạo đủ cell trước
-        for (int i = 0; i < source.getTableCells().size(); i++) {
-            target.createCell();
-        }
-
-        for (int i = 0; i < source.getTableCells().size(); i++) {
-
-            XWPFTableCell sourceCell = source.getCell(i);
-            XWPFTableCell targetCell = target.getCell(i);
-
-            targetCell.getCTTc().setTcPr(sourceCell.getCTTc().getTcPr());
-
-            // clear paragraph mặc định
-            targetCell.removeParagraph(0);
-
-            for (XWPFParagraph p : sourceCell.getParagraphs()) {
-
-                XWPFParagraph newP = targetCell.addParagraph();
-                newP.getCTP().setPPr(p.getCTP().getPPr());
-
-                for (XWPFRun r : p.getRuns()) {
-                    XWPFRun newRun = newP.createRun();
-                    newRun.getCTR().setRPr(r.getCTR().getRPr());
-                    newRun.setText(r.text());
-                }
-            }
-        }
-    }
-
+    // =====================================================
+    // ================= BUILD VEHICLE =====================
+    // =====================================================
     private Map<String, String> buildVehicleData(
-            GuaranteeApplicationVehicleDTO v, int stt) {
+            GuaranteeApplicationVehicleDTO v,
+            int stt
+    ) {
 
         Map<String, String> map = new HashMap<>();
 
@@ -240,21 +163,65 @@ public class GuaranteeApplicationExportServiceImplement implements GuaranteeAppl
         map.put("{{invoice}}", safe(v.getInvoiceNumber()));
         map.put("{{price}}", formatMoney(v.getVehiclePrice()));
         map.put("{{guarantee}}", formatMoney(v.getGuaranteeAmount()));
-
-//        // 🔥 FIX template của bạn có {{gate}}
+        map.put("{{gate}}",safe(String.valueOf(gate)));
 //        map.put("{{gate}}",
-//                v.getGuaranteeRate() == null ? "0"
-//                        : v.getGuaranteeRate().toString());
+//                v.get() == null
+//                        ? "0"
+//                        : v.getGuaranteeRate().toPlainString());
 
         return map;
     }
 
-    /* ========================================================= */
-    /* ================= REPLACE CORE ========================== */
-    /* ========================================================= */
+    // =====================================================
+    // ================= VEHICLE TABLE =====================
+    // =====================================================
+    private void replaceVehicleTable(
+            XWPFDocument doc,
+            List<GuaranteeApplicationVehicleDTO> vehicles
+    ) {
+        for (XWPFTable table : doc.getTables()) {
+            processTableRecursive(table, vehicles);
+        }
+    }
 
+    private void processTableRecursive(
+            XWPFTable table,
+            List<GuaranteeApplicationVehicleDTO> vehicles
+    ) {
+        for (int i = 0; i < table.getRows().size(); i++) {
+            XWPFTableRow row = table.getRow(i);
+            if (row.getCell(0) == null) continue;
+
+            String firstCell = row.getCell(0).getText();
+
+            if (firstCell != null && firstCell.contains("{{stt}}")) {
+
+                int templateIndex = i;
+
+                for (int j = 0; j < vehicles.size(); j++) {
+                    GuaranteeApplicationVehicleDTO v = vehicles.get(j);
+
+                    XWPFTableRow newRow =
+                            table.insertNewTableRow(templateIndex + j);
+
+                    copyRow(row, newRow);
+
+                    Map<String, String> vData =
+                            buildVehicleData(v, j + 1);
+
+                    replaceRowPlaceholders(newRow, vData);
+                }
+
+                table.removeRow(templateIndex + vehicles.size());
+                break;
+            }
+        }
+    }
+
+    // =====================================================
+    // ================= REPLACE CORE ======================
+    // =====================================================
     private void replaceAll(XWPFDocument doc, Map<String, String> data) {
-
         for (XWPFParagraph p : doc.getParagraphs()) {
             replaceInParagraph(p, data);
         }
@@ -264,72 +231,42 @@ public class GuaranteeApplicationExportServiceImplement implements GuaranteeAppl
                 replaceRowPlaceholders(row, data);
             }
         }
-
-        for (XWPFHeader header : doc.getHeaderList()) {
-            for (XWPFParagraph p : header.getParagraphs()) {
-                replaceInParagraph(p, data);
-            }
-        }
-
-        for (XWPFFooter footer : doc.getFooterList()) {
-            for (XWPFParagraph p : footer.getParagraphs()) {
-                replaceInParagraph(p, data);
-            }
-        }
     }
 
-    private void replaceInParagraph(XWPFParagraph paragraph,
-                                    Map<String, String> data) {
+    private void replaceInParagraph(XWPFParagraph paragraph, Map<String, String> data) {
 
-        List<XWPFRun> runs = paragraph.getRuns();
-        if (runs == null || runs.isEmpty()) return;
-
-        StringBuilder fullText = new StringBuilder();
-        for (XWPFRun run : runs) {
+        for (XWPFRun run : paragraph.getRuns()) {
             String text = run.getText(0);
-            if (text != null) fullText.append(text);
-        }
+            if (text == null) continue;
 
-        String replaced = fullText.toString();
-        boolean modified = false;
+            String replaced = text;
 
-        for (Map.Entry<String, String> e : data.entrySet()) {
-            if (replaced.contains(e.getKey())) {
-                replaced = replaced.replace(e.getKey(), e.getValue());
-                modified = true;
+            for (Map.Entry<String, String> e : data.entrySet()) {
+                if (replaced.contains(e.getKey())) {
+                    replaced = replaced.replace(e.getKey(), e.getValue());
+                }
+            }
+
+            if (!text.equals(replaced)) {
+                run.setText(replaced, 0); // giữ nguyên style
             }
         }
-
-        if (!modified) return;
-
-        for (int i = runs.size() - 1; i >= 0; i--) {
-            paragraph.removeRun(i);
-        }
-
-        paragraph.createRun().setText(replaced);
     }
 
-    private void replaceRowPlaceholders(XWPFTableRow row, Map<String, String> data) {
+    private void replaceRowPlaceholders(
+            XWPFTableRow row,
+            Map<String, String> data
+    ) {
         for (XWPFTableCell cell : row.getTableCells()) {
             for (XWPFParagraph p : cell.getParagraphs()) {
                 replaceInParagraph(p, data);
             }
-            for (XWPFTable table : cell.getTables()) {
-                for (XWPFTableRow r : table.getRows()) {
-                    replaceRowPlaceholders(r, data);
-                }
-            }
         }
     }
 
-    /* ========================================================= */
-
-    private GuaranteeApplicationDTO getData(Long id) {
-        return repository.findById(id)
-                .map(mapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ"));
-    }
-
+    // =====================================================
+    // ================= UTIL ==============================
+    // =====================================================
     private XWPFDocument loadTemplate(String path) throws IOException {
         InputStream is = getClass().getResourceAsStream(path);
         if (is == null) throw new IOException("Không tìm thấy template: " + path);
@@ -343,16 +280,8 @@ public class GuaranteeApplicationExportServiceImplement implements GuaranteeAppl
         }
     }
 
-    private void forceTimesNewRoman(XWPFDocument doc) {
-        for (XWPFParagraph p : doc.getParagraphs()) {
-            for (XWPFRun r : p.getRuns()) {
-                r.setFontFamily("Times New Roman");
-            }
-        }
-    }
-
-    private String safe(String s) {
-        return s == null ? "" : s;
+    private String safe(String v) {
+        return v == null ? "" : v;
     }
 
     private String formatMoney(BigDecimal value) {
@@ -367,13 +296,27 @@ public class GuaranteeApplicationExportServiceImplement implements GuaranteeAppl
                 date.getMonthValue(),
                 date.getYear());
     }
-    private String getRowText(XWPFTableRow row) {
-        StringBuilder sb = new StringBuilder();
 
-        for (XWPFTableCell cell : row.getTableCells()) {
-            sb.append(cell.getText());
+    private void forceTimesNewRoman(XWPFDocument doc) {
+        for (XWPFParagraph p : doc.getParagraphs()) {
+            for (XWPFRun r : p.getRuns()) {
+                r.setFontFamily("Times New Roman");
+            }
         }
+    }
 
-        return sb.toString();
+    private void copyRow(XWPFTableRow source, XWPFTableRow target) {
+        target.getCtRow().setTrPr(source.getCtRow().getTrPr());
+        for (XWPFTableCell cell : source.getTableCells()) {
+            XWPFTableCell newCell = target.addNewTableCell();
+            newCell.setText(cell.getText());
+        }
+    }
+    // ngày thàng năm
+    private String toVietnameseDate(LocalDate date) {
+        if (date == null) return "";
+        return "ngày " + date.getDayOfMonth()
+                + " tháng " + date.getMonthValue()
+                + " năm " + date.getYear();
     }
 }

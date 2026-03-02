@@ -26,7 +26,7 @@ public class GuaranteeLetterDTO {
     private ManufacturerDTO manufacturerDTO;
     private BranchAuthorizedRepresentativeDTO branchAuthorizedRepresentativeDTO;
     private CustomerDTO customerDTO;
-
+    private Integer guaranteeTermDays;
     // ===== GUARANTEE CONTRACT =====
     private String guaranteeContractNumber;
     private LocalDate guaranteeContractDate;

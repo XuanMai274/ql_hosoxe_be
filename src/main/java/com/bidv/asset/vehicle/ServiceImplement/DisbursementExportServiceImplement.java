@@ -89,6 +89,32 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         return results;
     }
 
+    @Override
+    public Map<String, byte[]> exportSpecific(
+            DisbursementDTO disbursementDTO,
+            List<Long> vehicleIds
+    ) throws IOException {
+
+        String[] templates = {
+                "hop-dong-tin-dung-cu-the_K.docx",
+                "phieu-tiep-nhan-ho-so_K.docx"
+        };
+
+        Map<String, byte[]> results = new LinkedHashMap<>();
+
+        for (String template : templates) {
+            try {
+                results.put(template,
+                        exportDocx(template, disbursementDTO, vehicleIds));
+            } catch (Exception e) {
+                System.err.println("Lỗi khi export template "
+                        + template + ": " + e.getMessage());
+            }
+        }
+
+        return results;
+    }
+
     private Map<String, String> buildData(DisbursementDTO dto, BigDecimal totalVehicleAmount,ManufacturerDTO manufacturer){
         Map<String, String> map = new HashMap<>();
         

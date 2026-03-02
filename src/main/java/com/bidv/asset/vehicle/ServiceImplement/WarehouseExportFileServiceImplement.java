@@ -425,7 +425,7 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
         map.put("{{engine}}", safe(v.getEngineNumber()));
         map.put("{{model}}", safe(v.getModelType()));
         map.put("{{color}}", safe(v.getColor()));
-        map.put("{{price}}", formatMoney(v.getPrice()));
+        map.put("{{price}}", formatMoney(v.getGuaranteeAmount()));
         map.put("{{guaranteeAmount}}", formatMoney(v.getGuaranteeAmount()));
         map.put("{{priceHDMB}}",formatMoney(v.getPrice()));
         map.put("{{description}}", safe(v.getDescription()));

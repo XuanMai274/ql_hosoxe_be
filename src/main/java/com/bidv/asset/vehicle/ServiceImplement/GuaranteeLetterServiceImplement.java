@@ -173,8 +173,8 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 entity.setMortgageContract(mortgageContract);
                 entity.setManufacturer(manufacturer);
                 entity.setAuthorizedRepresentative(authorizedRep);
-                entity.setGuaranteeApplication(guaranteeApplicationEntity); // GÁN ĐƠN ĐỀ NGHỊ (FIX BUG LÀM MẤT LINK)
-
+                entity.setGuaranteeApplication(guaranteeApplicationEntity);
+                entity.setGuaranteeTermDays(guaranteeApplicationEntity.getGuaranteeTermDays());
                 entity.setGuaranteeContractDate(LocalDate.now());
                 entity.setExpiryDate(calculateExpiryDate(manufacturer, guaranteeApplicationEntity.getVehicles()));
                 entity.setCreatedAt(LocalDateTime.now());

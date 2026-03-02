@@ -6,6 +6,7 @@ import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
 import com.bidv.asset.vehicle.DTO.XuatDeXuatBaoLanh;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterExportService;
 import com.bidv.asset.vehicle.Utill.VietnameseNumberUtil;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,8 @@ import java.util.*;
 public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExportService {
     BigDecimal gHTDConSD= BigDecimal.valueOf(0);
     BigDecimal gHTDaSuDung=BigDecimal.valueOf(0);
-
+    private static final BigDecimal GUARANTEE_RATE = new BigDecimal("0.02");
+    private static final BigDecimal DAYS_IN_YEAR = new BigDecimal("365");
     // =====================================================
     // ================= PUBLIC API ========================
     // =====================================================
@@ -99,9 +101,9 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         Map<String, String> data = buildCommonData(dto);
 
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
-        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
+        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount, dto.getGuaranteeTermDays());
         BigDecimal guaranteeFeeSum =
-                calculateGuaranteeFee(expectedAmount).add(BigDecimal.valueOf(330000));
+                calculateGuaranteeFee(expectedAmount,dto.getGuaranteeTermDays()).add(BigDecimal.valueOf(330000));
         BranchAuthorizedRepresentativeDTO rep =
                 dto.getBranchAuthorizedRepresentativeDTO();
 
@@ -248,7 +250,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         Map<String, String> data = buildCommonData(dto);
 
         BigDecimal expectedAmount = normalizeMoney(dto.getExpectedGuaranteeAmount());
-        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount);
+        BigDecimal guaranteeFee = calculateGuaranteeFee(expectedAmount,dto.getGuaranteeTermDays());
         // ===== GHTD =====
 //        data.put("{{GHTD}}",
 //                formatMoney(dto.getCreditContractDTO().getCreditLimit()));
@@ -297,7 +299,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
                 normalizeMoney(dto.getExpectedGuaranteeAmount());
 
         BigDecimal guaranteeFee =
-                calculateGuaranteeFee(expectedAmount);
+                calculateGuaranteeFee(expectedAmount,dto.getGuaranteeTermDays());
         data.put("{{REQUEST_DATE}}",
                 formatDate(LocalDate.now()));
 
@@ -332,7 +334,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
                 normalizeMoney(dto.getExpectedGuaranteeAmount());
 
         BigDecimal guaranteeFee =
-                calculateGuaranteeFee(expectedAmount);
+                calculateGuaranteeFee(expectedAmount,dto.getGuaranteeTermDays());
         data.put("{{REQUEST_DATE}}",
                 formatDate(LocalDate.now()));
 
@@ -368,7 +370,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         BigDecimal minFee = BigDecimal.valueOf(800000);
 
         // ===== Fee thường =====
-        BigDecimal calculatedFee = calculateGuaranteeFee(expectedAmount);
+        BigDecimal calculatedFee = calculateGuaranteeFee(expectedAmount,dto.getGuaranteeTermDays());
         BigDecimal guaranteeFee =
                 calculatedFee.compareTo(minFee) < 0 ? minFee : calculatedFee;
 
@@ -383,7 +385,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
 
 
         // ===== Fee Hyundai =====
-        BigDecimal calculatedFeeHyundai = calculateGuaranteeFee_hyndai(expectedAmount);
+        BigDecimal calculatedFeeHyundai = calculateGuaranteeFee(expectedAmount,dto.getGuaranteeTermDays());
         BigDecimal guaranteeFeeHyundai =
                 calculatedFeeHyundai.compareTo(minFee) < 0 ? minFee : calculatedFeeHyundai;
 
@@ -420,7 +422,9 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
 //                    safe(rep.getAuthorizationIssuer()));
 //
 //        }
-
+        data.put("{{HDBD}}",safe(dto.getMortgageContractDTO().getContractNumber()));
+        data.put("{{HDBD_DATE}}",formatDate(dto.getMortgageContractDTO().getContractDate()));
+        data.put("{{guaranteeTermDays}}",safe(String.valueOf(dto.getGuaranteeTermDays())));
         data.put("{{GUARANTEE_NUMBER}}", safe(dto.getGuaranteeContractNumber()));
         data.put("{{GUARANTEE_DATE}}", formatDate(LocalDate.now()));
         data.put("{{GUARANTEE_DATE_TITLE}}", toVietnameseDate(dto.getGuaranteeContractDate()));
@@ -433,7 +437,19 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         data.put("{{SALE_CONTRACT}}", safe(dto.getSaleContract()));
         data.put("{{SALE_CONTRACT_AMOUNT}}", formatMoney(dto.getSaleContractAmount()));
         data.put("{{GIAHDMB}}", formatMoney(dto.getSaleContractAmount()));
-
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT}}", formatMoney(expectedAmount));
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI_TONG}}", formatMoney(guaranteeFeeSum));
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}",
+                VietnameseNumberUtil.toVietnamese(expectedAmount));
+        data.put("{{EXPECTED_GUARANTEE_AMOUNT_PHI}}",
+                formatMoney(guaranteeFee));
+        if (dto.getCreditContractDTO() != null) {
+            data.put("{{HDTD}}", safe(dto.getCreditContractDTO().getContractNumber()));
+            data.put("{{HDTD_DATE}}", formatDate(dto.getCreditContractDTO().getContractDate()));
+            LocalDate hdtdDate = dto.getCreditContractDTO().getContractDate();  // ngày bắt đầu
+            LocalDate hdtdDateExpired = hdtdDate.plusDays(365);  // +365 ngày
+            data.put("{{HDTD_DATE_expired}}", formatDate(hdtdDateExpired));
+        }
         data.put("{{EXPECTED_GUARANTEE_AMOUNT}}", formatMoney(expectedAmount));
         data.put("{{EXPECTED_GUARANTEE_AMOUNT_TEXT}}", VietnameseNumberUtil.toVietnamese(expectedAmount));
 
@@ -470,7 +486,8 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
                 dto.getExpectedVehicleCount() != null
                         ? dto.getExpectedVehicleCount().toString()
                         : "");
-
+        data.put("{{CURRENT_DATE}}", formatDate(LocalDate.now()));
+        data.put("{{CURRENT_DATE_TITLE}}", toVietnameseDate(LocalDate.now()));
         return data;
     }
 //    private Map<String, String> buildCommonData(GuaranteeLetterDTO dto) {
@@ -610,16 +627,22 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
         return value == null ? BigDecimal.ZERO : value.setScale(0, RoundingMode.HALF_UP);
     }
 
-    private BigDecimal calculateGuaranteeFee(BigDecimal amount) {
-        return amount.multiply(new BigDecimal("0.02"))
-                .multiply(new BigDecimal("29"))
-                .divide(new BigDecimal("365"), 0, RoundingMode.HALF_UP);
+    private BigDecimal calculateGuaranteeFee(BigDecimal amount, Integer guaranteeTermDays) {
+
+        if (amount == null || guaranteeTermDays == null || guaranteeTermDays <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        return amount
+                .multiply(GUARANTEE_RATE)
+                .multiply(BigDecimal.valueOf(guaranteeTermDays))
+                .divide(DAYS_IN_YEAR, 0, RoundingMode.HALF_UP);
     }
-    private BigDecimal calculateGuaranteeFee_hyndai(BigDecimal amount) {
-        return amount.multiply(new BigDecimal("0.02"))
-                .multiply(new BigDecimal("60"))
-                .divide(new BigDecimal("365"), 0, RoundingMode.HALF_UP);
-    }
+//    private BigDecimal calculateGuaranteeFee_hyndai(BigDecimal amount) {
+//        return amount.multiply(new BigDecimal("0.02"))
+//                .multiply(new BigDecimal("60"))
+//                .divide(new BigDecimal("365"), 0, RoundingMode.HALF_UP);
+//    }
 
     private String formatMoney(BigDecimal value) {
         if (value == null) return "";
