@@ -37,4 +37,12 @@ public class ManufacturerServiceImplement implements ManufacturerService {
         }
         return manufacturerDTOS;
     }
+    @Override
+    public ManufacturerDTO findByCode(String code) {
+
+        ManufacturerEntity entity = manufacturerRepository.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hãng với code: " + code));
+
+        return manufacturerMapper.toDto(entity);
+    }
 }

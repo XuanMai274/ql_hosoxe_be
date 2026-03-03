@@ -42,7 +42,6 @@ public class GuaranteeApplicationEntity {
 
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
-
     // ===== TOTAL INFO =====
     @Column(name = "total_vehicle_count")
     private Integer totalVehicleCount;

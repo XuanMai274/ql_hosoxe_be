@@ -28,6 +28,7 @@ public class GuaranteeLetterMapper {
         dto.setDisbursement(entity.getDisbursement());
         dto.setVehicleWarehouseCount(entity.getVehicleWarehouseCount());
         dto.setExpiryDate(entity.getExpiryDate());
+        dto.setGuaranteeTermDays(entity.getGuaranteeTermDays());
         // ===== RELATION =====
         if (entity.getCreditContract() != null) {
 
@@ -77,6 +78,10 @@ public class GuaranteeLetterMapper {
             repDTO.setId(entity.getAuthorizedRepresentative().getId());
             repDTO.setRepresentativeName(entity.getAuthorizedRepresentative().getRepresentativeName());
             repDTO.setBranchName(entity.getAuthorizedRepresentative().getBranchName());
+            repDTO.setRepresentativeTitle(entity.getAuthorizedRepresentative().getRepresentativeTitle());
+            repDTO.setAuthorizationDocNo(entity.getAuthorizedRepresentative().getAuthorizationDocNo());
+            repDTO.setAuthorizationDocDate(entity.getAuthorizedRepresentative().getAuthorizationDocDate());
+            repDTO.setAuthorizationIssuer(entity.getAuthorizedRepresentative().getAuthorizationIssuer());
             dto.setBranchAuthorizedRepresentativeDTO(repDTO);
         }
 
@@ -165,7 +170,7 @@ public class GuaranteeLetterMapper {
         entity.setTotalGuaranteeAmount(dto.getTotalGuaranteeAmount());
         entity.setUsedAmount(dto.getUsedAmount());
         entity.setRemainingAmount(dto.getRemainingAmount());
-
+        entity.setGuaranteeTermDays(dto.getGuaranteeTermDays());
         entity.setExpectedVehicleCount(dto.getExpectedVehicleCount());
         entity.setImportedVehicleCount(dto.getImportedVehicleCount());
         entity.setExportedVehicleCount(dto.getExportedVehicleCount());

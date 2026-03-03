@@ -27,6 +27,11 @@ public class ManufacturerAPI {
                 .status(HttpStatus.CREATED)
                 .body(result);
     }
+    @GetMapping("/officer/manufacturer/code/{code}")
+    public ResponseEntity<ManufacturerDTO> getByCode(@PathVariable String code) {
+        ManufacturerDTO result = manufacturerService.findByCode(code);
+        return ResponseEntity.ok(result);
+    }
     @GetMapping("/officer/manufacturer/findAll")
     public ResponseEntity<Map<String,Object>> findAll(){
         Map<String, Object> response = new HashMap<>();

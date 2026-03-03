@@ -7,4 +7,5 @@ import java.util.List;
 public interface ManufacturerService {
     ManufacturerDTO addManufacturer(ManufacturerDTO manufacturerDTO);
     List<ManufacturerDTO> findAll();
+    ManufacturerDTO findByCode(String code);
 }

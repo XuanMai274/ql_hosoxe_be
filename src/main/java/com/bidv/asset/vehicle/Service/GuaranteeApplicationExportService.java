@@ -1,7 +1,14 @@
 package com.bidv.asset.vehicle.Service;
 
-public interface GuaranteeApplicationExportService {
-    byte[] exportDeNghiCapBaoLanh(Long applicationId) throws Exception;
+import com.bidv.asset.vehicle.DTO.GuaranteeApplicationDTO;
 
-    byte[] exportDanhSachXeBaoLanh(Long applicationId) throws Exception;
+import java.io.IOException;
+import java.util.Map;
+
+public interface GuaranteeApplicationExportService {
+    public Map<String, byte[]> exportAll(GuaranteeApplicationDTO dto)
+            throws IOException;
+//    byte[] exportDeNghiCapBaoLanh(Long applicationId) throws Exception;
+//
+//    byte[] exportDanhSachXeBaoLanh(Long applicationId) throws Exception;
 }

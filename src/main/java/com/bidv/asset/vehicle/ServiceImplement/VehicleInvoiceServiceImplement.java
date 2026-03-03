@@ -107,9 +107,6 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
             BigDecimal guaranteeAmount = vehicle.getPrice()
                     .multiply(rate);
             vehicle.setGuaranteeAmount(guaranteeAmount);
-
-            vehicle.setGuaranteeAmount(guaranteeAmount);
-
             vehicle = vehicleRepository.save(vehicle);
             /* ================== 3. UPDATE GUARANTEE LETTER ================== */
             guaranteeLetterService.updateAfterVehicleImported(gl.getId(), guaranteeAmount);

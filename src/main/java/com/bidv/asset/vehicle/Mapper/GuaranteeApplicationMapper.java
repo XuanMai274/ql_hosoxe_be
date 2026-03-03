@@ -149,6 +149,7 @@ public class GuaranteeApplicationMapper {
         m.setId(entity.getId());
         m.setCode(entity.getCode());
         m.setName(entity.getName());
+        m.setGuaranteeRate(entity.getGuaranteeRate());
         return m;
     }
 
