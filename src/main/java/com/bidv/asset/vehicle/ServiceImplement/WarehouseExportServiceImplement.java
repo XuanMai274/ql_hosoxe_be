@@ -45,7 +45,8 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                         if (v.getWarehouseExport() != null) {
                                 throw new RuntimeException("Xe số khung " + v.getChassisNumber()
                                                 + " đã nằm trong một đơn đề nghị xuất kho khác.");
-          }
+                        }
+                }
 
                 // 2. Tính tổng tiền thu nợ (Tổng giá trị bảo lãnh của các xe)
                 java.math.BigDecimal totalAmount = vehicles.stream()
