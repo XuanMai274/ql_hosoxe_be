@@ -10,13 +10,16 @@ import java.util.stream.Collectors;
 
 @Component
 public class MortgageContractMapper {
+    @org.springframework.beans.factory.annotation.Autowired
+    CustomerMapper customerMapper;
 
     // =====================================================
     // ENTITY → DTO
     // =====================================================
-    public  MortgageContractDTO toDTO(MortgageContractEntity entity) {
+    public MortgageContractDTO toDTO(MortgageContractEntity entity) {
 
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         MortgageContractDTO dto = new MortgageContractDTO();
 
@@ -33,11 +36,12 @@ public class MortgageContractMapper {
         // ===== CUSTOMER =====
         if (entity.getCustomer() != null) {
             dto.setCustomerId(entity.getCustomer().getId());
+            dto.setCustomerDTO(customerMapper.toDTO(entity.getCustomer()));
         }
 
         // ===== MANUFACTURER =====
         if (entity.getManufacturer() != null) {
-            ManufacturerDTO manufacturerDTO=new ManufacturerDTO();
+            ManufacturerDTO manufacturerDTO = new ManufacturerDTO();
             manufacturerDTO.setId(entity.getManufacturer().getId());
             manufacturerDTO.setTemplateCode(entity.getTemplateCode());
             dto.setManufacturerDTO(manufacturerDTO);
@@ -49,8 +53,7 @@ public class MortgageContractMapper {
                     entity.getCreditContracts()
                             .stream()
                             .map(CreditContractEntity::getId)
-                            .collect(Collectors.toList())
-            );
+                            .collect(Collectors.toList()));
         }
 
         // ===== GUARANTEE LETTER IDS =====
@@ -59,25 +62,23 @@ public class MortgageContractMapper {
                     entity.getGuaranteeLetters()
                             .stream()
                             .map(GuaranteeLetterEntity::getId)
-                            .collect(Collectors.toList())
-            );
+                            .collect(Collectors.toList()));
         }
 
         return dto;
     }
 
-
     // =====================================================
     // DTO → ENTITY (CREATE)
     // =====================================================
-    public  MortgageContractEntity toEntity(
+    public MortgageContractEntity toEntity(
             MortgageContractDTO dto,
             CustomerEntity customer,
             ManufacturerEntity manufacturer,
-            List<CreditContractEntity> creditContracts
-    ) {
+            List<CreditContractEntity> creditContracts) {
 
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         MortgageContractEntity entity = new MortgageContractEntity();
 
@@ -94,25 +95,24 @@ public class MortgageContractMapper {
         entity.setCustomer(customer);
         entity.setManufacturer(manufacturer);
         entity.setCreditContracts(creditContracts);
-//        entity.setGuaranteeLetters(guaranteeLetters);
+        // entity.setGuaranteeLetters(guaranteeLetters);
 
         return entity;
     }
 
-
     // =====================================================
     // UPDATE ENTITY FROM DTO
     // =====================================================
-    public  void updateEntity(
+    public void updateEntity(
             MortgageContractEntity entity,
             MortgageContractDTO dto,
             CustomerEntity customer,
             ManufacturerEntity manufacturer,
             List<CreditContractEntity> creditContracts,
-            List<GuaranteeLetterEntity> guaranteeLetters
-    ) {
+            List<GuaranteeLetterEntity> guaranteeLetters) {
 
-        if (entity == null || dto == null) return;
+        if (entity == null || dto == null)
+            return;
 
         entity.setContractNumber(dto.getContractNumber());
         entity.setContractDate(dto.getContractDate());

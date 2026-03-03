@@ -27,7 +27,7 @@ public class MortgageContractDTO {
     private ManufacturerDTO manufacturerDTO;
     // ===== RELATION =====
     private Long customerId;
-
+    private CustomerDTO customerDTO;
 
     private List<Long> creditContractIds;
     private List<Long> guaranteeLetterIds;

@@ -38,13 +38,14 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/officer/**").hasAuthority("ROLE_OFFICER")
                         .requestMatchers("/customer/**").hasAuthority("ROLE_CUSTOMER")
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         // Xử lý khi đã đăng nhập nhưng sai Role (403)
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            System.err.println(">>> Security 403 Error (Access Denied): " + accessDeniedException.getMessage() + " | Request URI: " + request.getRequestURI());
+                            System.err.println(
+                                    ">>> Security 403 Error (Access Denied): " + accessDeniedException.getMessage()
+                                            + " | Request URI: " + request.getRequestURI());
                             response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write(
@@ -52,7 +53,8 @@ public class SecurityConfig {
                         })
                         // Xử lý khi chưa đăng nhập hoặc Token hết hạn (401)
                         .authenticationEntryPoint((request, response, authException) -> {
-                            System.err.println(">>> Security 401 Error (Auth Required): " + authException.getMessage() + " | Request URI: " + request.getRequestURI());
+                            System.err.println(">>> Security 401 Error (Auth Required): " + authException.getMessage()
+                                    + " | Request URI: " + request.getRequestURI());
                             response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write(
@@ -69,7 +71,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOriginPatterns(List.of("http://localhost:4200"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 

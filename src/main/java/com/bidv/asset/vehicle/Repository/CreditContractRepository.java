@@ -13,20 +13,32 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CreditContractRepository extends JpaRepository<CreditContractEntity,Long> {
+public interface CreditContractRepository extends JpaRepository<CreditContractEntity, Long> {
     @NonNull
     List<CreditContractEntity> findAll();
+
     Optional<CreditContractEntity> findByContractNumber(String contractNumber);
 
     boolean existsByContractNumber(String contractNumber);
 
     List<CreditContractEntity> findByCustomer_Id(Long customerId);
+
     Optional<CreditContractEntity> findFirstByStatus(
-            String status
-    );
+            String status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from CreditContractEntity c where c.id = :id")
     Optional<CreditContractEntity> findByIdForUpdate(@Param("id") Long id);
 
+    @Query("SELECT SUM(c.issuedGuaranteeBalance) FROM CreditContractEntity c")
+    java.math.BigDecimal sumIssuedGuaranteeBalance();
+
+    @Query("SELECT SUM(c.guaranteeBalance) FROM CreditContractEntity c")
+    java.math.BigDecimal sumActualGuaranteeBalance();
+
+    @Query("SELECT SUM(c.vehicleLoanBalance) FROM CreditContractEntity c")
+    java.math.BigDecimal sumVehicleLoanBalance();
+
+    @Query("SELECT SUM(c.realEstateLoanBalance) FROM CreditContractEntity c")
+    java.math.BigDecimal sumRealEstateLoanBalance();
 }

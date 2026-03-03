@@ -34,6 +34,18 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
     MortgageContractSequenceRepository mortgageContractSequenceRepository;
     @Autowired
     MortgageNumberService mortgageNumberService;
+    @Autowired
+    VehicleRepository vehicleRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.bidv.asset.vehicle.DTO.GuaranteeStatisticsDTO getStatistics() {
+        return com.bidv.asset.vehicle.DTO.GuaranteeStatisticsDTO.builder()
+                .totalVehicles(vehicleRepository.countAllVehicles())
+                .inWarehouseCount(vehicleRepository.countByWarehouseImportIsNotNullAndWarehouseExportIsNull())
+                .disbursedCount(vehicleRepository.countByLoansIsNotEmpty())
+                .build();
+    }
 
     @Override
     @Transactional

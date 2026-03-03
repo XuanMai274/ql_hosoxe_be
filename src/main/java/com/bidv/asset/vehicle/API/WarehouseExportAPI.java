@@ -27,8 +27,7 @@ public class WarehouseExportAPI {
     public ResponseEntity<?> approveExport(
             @RequestBody WarehouseExportDTO requestDTO) {
         try {
-            WarehouseExportDTO result =
-                    warehouseExportService.approveExport(requestDTO);
+            WarehouseExportDTO result = warehouseExportService.approveExport(requestDTO);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -49,6 +48,38 @@ public class WarehouseExportAPI {
     public ResponseEntity<?> getPendingRequests() {
         try {
             return ResponseEntity.ok(warehouseExportService.getPendingRequests());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/officer/warehouse-export/all")
+    public ResponseEntity<?> getAll(
+            @RequestParam(required = false) String exportNumber,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
+                    size);
+            return ResponseEntity.ok(warehouseExportService.getAll(exportNumber, pageable));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/officer/warehouse-export/{id}")
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(warehouseExportService.getById(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/officer/warehouse-export/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody WarehouseExportDTO dto) {
+        try {
+            return ResponseEntity.ok(warehouseExportService.updateWarehouseExport(id, dto));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

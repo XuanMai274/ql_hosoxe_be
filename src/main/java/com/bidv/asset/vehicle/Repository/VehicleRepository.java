@@ -235,4 +235,14 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
             @Param("manufacturerCode") String manufacturerCode,
             @Param("loanContractNumber") String loanContractNumber,
             Pageable pageable);
+
+    @Query("SELECT COUNT(v) FROM VehicleEntity v")
+    long countAllVehicles();
+
+    long countByWarehouseImportIsNotNullAndWarehouseExportIsNull();
+
+    long countByWarehouseExportIsNotNull();
+
+    @Query("SELECT COUNT(v) FROM VehicleEntity v WHERE v.loans IS NOT EMPTY")
+    long countByLoansIsNotEmpty();
 }
