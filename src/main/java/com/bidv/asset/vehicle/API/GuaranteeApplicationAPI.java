@@ -85,4 +85,10 @@ public class GuaranteeApplicationAPI {
     public ResponseEntity<GuaranteeApplicationDTO> reject(@PathVariable Long id) {
         return ResponseEntity.ok(service.reject(id));
     }
+
+    // STATISTICS
+    @GetMapping("/statistics")
+    public ResponseEntity<com.bidv.asset.vehicle.DTO.GuaranteeStatisticsDTO> getStatistics() {
+        return ResponseEntity.ok(service.getStatistics());
+    }
 }

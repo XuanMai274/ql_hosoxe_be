@@ -21,4 +21,6 @@ public interface GuaranteeApplicationService {
 
     Page<GuaranteeApplicationDTO> search(Long customerId, Long manufacturerId, String fromDate, String toDate,
             Pageable pageable);
+
+    com.bidv.asset.vehicle.DTO.GuaranteeStatisticsDTO getStatistics();
 }

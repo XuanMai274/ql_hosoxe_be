@@ -30,4 +30,10 @@ public interface LoanService {
                         int size);
 
         Page<LoanDTO> getLoansByCustomerId(Long customerId, int page, int size);
+
+        /**
+         * Cập nhật thông tin cơ bản (status, accountNumber, docId, ...) không tính lại
+         * balance
+         */
+        LoanDTO patchLoan(Long id, LoanDTO dto);
 }

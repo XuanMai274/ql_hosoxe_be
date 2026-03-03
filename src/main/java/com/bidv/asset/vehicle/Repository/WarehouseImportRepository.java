@@ -35,4 +35,16 @@ public interface WarehouseImportRepository extends JpaRepository<WarehouseImport
                 WHERE wi.mortgageContract.customer.id = :customerId
             """)
     Page<WarehouseImportEntity> findByCustomerId(@Param("customerId") Long customerId, Pageable pageable);
+
+    @Query(value = """
+                SELECT DISTINCT wi FROM WarehouseImportEntity wi
+                LEFT JOIN FETCH wi.manufacturer
+                LEFT JOIN FETCH wi.vehicles
+                WHERE (:importNumber IS NULL OR wi.importNumber LIKE %:importNumber%)
+                ORDER BY wi.createdAt DESC
+            """, countQuery = """
+                SELECT COUNT(wi) FROM WarehouseImportEntity wi
+                WHERE (:importNumber IS NULL OR wi.importNumber LIKE %:importNumber%)
+            """)
+    Page<WarehouseImportEntity> findAllWithFilter(@Param("importNumber") String importNumber, Pageable pageable);
 }

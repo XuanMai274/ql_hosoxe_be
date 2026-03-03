@@ -1,6 +1,5 @@
 package com.bidv.asset.vehicle.API;
 
-
 import com.bidv.asset.vehicle.DTO.BatchLoanResponse;
 import com.bidv.asset.vehicle.DTO.LoanDTO;
 import com.bidv.asset.vehicle.Service.LoanService;
@@ -20,28 +19,29 @@ import java.util.List;
 public class LoanAPI {
     @Autowired
     LoanService loanService;
+
     /* ================= CREATE SINGLE ================= */
-//    @PostMapping
-//    public ResponseEntity<LoanDTO> createLoan(
-//            @RequestBody LoanDTO dto
-//    ) {
-//        LoanDTO result = loanService.createLoan(dto);
-//
-//        return ResponseEntity
-//                .status(HttpStatus.CREATED)
-//                .body(result);
-//    }
-//    @GetMapping
-//    public ResponseEntity<Page<LoanDTO>> getAllLoans(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size
-//    ) {
-//        Page<LoanDTO> result;
-//
-//        result = loanService.getAllLoans(page, size);
-//
-//        return ResponseEntity.ok(result);
-//    }
+    // @PostMapping
+    // public ResponseEntity<LoanDTO> createLoan(
+    // @RequestBody LoanDTO dto
+    // ) {
+    // LoanDTO result = loanService.createLoan(dto);
+    //
+    // return ResponseEntity
+    // .status(HttpStatus.CREATED)
+    // .body(result);
+    // }
+    // @GetMapping
+    // public ResponseEntity<Page<LoanDTO>> getAllLoans(
+    // @RequestParam(defaultValue = "0") int page,
+    // @RequestParam(defaultValue = "10") int size
+    // ) {
+    // Page<LoanDTO> result;
+    //
+    // result = loanService.getAllLoans(page, size);
+    //
+    // return ResponseEntity.ok(result);
+    // }
     @GetMapping
     public ResponseEntity<Page<LoanDTO>> searchLoans(
             @RequestParam(defaultValue = "0") int page,
@@ -51,7 +51,7 @@ public class LoanAPI {
             @RequestParam(required = false) String chassisNumber,
             @RequestParam(required = false) LoanStatus status,
             @RequestParam(required = false) String docId,
-            @RequestParam(required = false) Integer dueInDays   // lọc gần đến hạn
+            @RequestParam(required = false) Integer dueInDays // lọc gần đến hạn
     ) {
 
         Page<LoanDTO> result = loanService.searchLoans(
@@ -61,8 +61,7 @@ public class LoanAPI {
                 docId,
                 dueInDays,
                 page,
-                size
-        );
+                size);
 
         return ResponseEntity.ok(result);
     }
@@ -70,8 +69,7 @@ public class LoanAPI {
     /* ================= CREATE BATCH ================= */
     @PostMapping("/batch")
     public ResponseEntity<BatchLoanResponse> createBatchLoans(
-            @RequestBody List<LoanDTO> dtos
-    ) {
+            @RequestBody List<LoanDTO> dtos) {
         List<LoanDTO> loans = loanService.createBatchLoans(dtos);
 
         BigDecimal totalAmount = loans.stream()
@@ -85,15 +83,28 @@ public class LoanAPI {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    /* ================= UPDATE ================= */
+
+    /* ================= UPDATE (full, with balance recalc) ================= */
     @PutMapping("/{id}")
     public ResponseEntity<LoanDTO> updateLoan(
             @PathVariable Long id,
-            @RequestBody LoanDTO dto
-    ) {
+            @RequestBody LoanDTO dto) {
         LoanDTO result = loanService.updateLoan(id, dto);
         return ResponseEntity.ok(result);
     }
+
+    /*
+     * ================= PATCH (simple fields only, no balance recalc)
+     * =================
+     */
+    @PatchMapping("/{id}")
+    public ResponseEntity<LoanDTO> patchLoan(
+            @PathVariable Long id,
+            @RequestBody LoanDTO dto) {
+        LoanDTO result = loanService.patchLoan(id, dto);
+        return ResponseEntity.ok(result);
+    }
+
     // ================= VIEW DETAIL =================
     @GetMapping("/{id}")
     public ResponseEntity<LoanDTO> getDetail(@PathVariable Long id) {

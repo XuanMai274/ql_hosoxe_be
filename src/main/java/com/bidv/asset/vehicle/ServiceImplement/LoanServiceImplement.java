@@ -330,6 +330,46 @@ public class LoanServiceImplement implements LoanService {
         }
 
         @Override
+        @Transactional
+        public LoanDTO patchLoan(Long id, LoanDTO dto) {
+
+                LoanEntity existing = loanRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Loan not found: " + id));
+
+                // Chỉ cập nhật các trường cơ bản, KHÔNG động vào vehicle/balance
+                if (dto.getAccountNumber() != null) {
+                        existing.setAccountNumber(dto.getAccountNumber());
+                }
+                if (dto.getLoanTerm() != null) {
+                        existing.setLoanTerm(dto.getLoanTerm());
+                }
+                if (dto.getLoanDate() != null) {
+                        existing.setLoanDate(dto.getLoanDate());
+                }
+                if (dto.getDueDate() != null) {
+                        existing.setDueDate(dto.getDueDate());
+                }
+                if (dto.getLoanStatus() != null) {
+                        existing.setLoanStatus(dto.getLoanStatus());
+                }
+                if (dto.getDocId() != null) {
+                        existing.setDocId(dto.getDocId());
+                }
+                if (dto.getCollateralAndPurpose() != null) {
+                        existing.setCollateralAndPurpose(dto.getCollateralAndPurpose());
+                }
+                if (dto.getLoanAmount() != null) {
+                        existing.setLoanAmount(dto.getLoanAmount());
+                }
+
+                existing.setUpdatedAt(LocalDateTime.now());
+                LoanEntity saved = loanRepository.save(existing);
+
+                // Dùng toDtoList (lightweight) để tránh LazyInitializationException
+                return loanMapper.toDtoList(saved);
+        }
+
+        @Override
         public Page<LoanDTO> getAllLoans(int page, int size) {
                 Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 

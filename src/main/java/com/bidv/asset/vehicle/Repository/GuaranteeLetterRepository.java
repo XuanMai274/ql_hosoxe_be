@@ -17,19 +17,20 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-
 @Repository
-public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetterEntity,Long> {
+public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetterEntity, Long> {
     GuaranteeLetterEntity findByGuaranteeContractNumber(String guaranteeContractNumber);
+
     GuaranteeLetterEntity findByReferenceCode(String referenceCode);
+
     @Query("""
-    SELECT gl
-    FROM GuaranteeLetterEntity gl
-    JOIN gl.manufacturer m
-    WHERE (:manufacturerCode IS NULL OR m.code = :manufacturerCode)
-      AND (:fromDate IS NULL OR gl.guaranteeContractDate >= :fromDate)
-      AND (:toDate IS NULL OR gl.guaranteeContractDate <= :toDate)
-""")
+                SELECT gl
+                FROM GuaranteeLetterEntity gl
+                JOIN gl.manufacturer m
+                WHERE (:manufacturerCode IS NULL OR m.code = :manufacturerCode)
+                  AND (:fromDate IS NULL OR gl.guaranteeContractDate >= :fromDate)
+                  AND (:toDate IS NULL OR gl.guaranteeContractDate <= :toDate)
+            """)
     @EntityGraph(attributePaths = {
             "manufacturer",
             "creditContract",
@@ -41,29 +42,29 @@ public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetter
             @Param("manufacturerCode") String manufacturerCode,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate,
-            Pageable pageable
-    );
+            Pageable pageable);
+
     @Query("""
-    SELECT gl FROM GuaranteeLetterEntity gl
-    JOIN gl.manufacturer m
-    WHERE (
-        COALESCE(:keyword, '') = ''
-        OR LOWER(gl.guaranteeContractNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))
-        OR LOWER(gl.referenceCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
-    )
+                SELECT gl FROM GuaranteeLetterEntity gl
+                JOIN gl.manufacturer m
+                WHERE (
+                    COALESCE(:keyword, '') = ''
+                    OR LOWER(gl.guaranteeContractNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(gl.referenceCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                )
 
-    AND (COALESCE(:manufacturerCode, '') = '' OR m.code = :manufacturerCode)
+                AND (COALESCE(:manufacturerCode, '') = '' OR m.code = :manufacturerCode)
 
-    AND (:fromDate IS NULL OR gl.guaranteeContractDate >= :fromDate)
+                AND (:fromDate IS NULL OR gl.guaranteeContractDate >= :fromDate)
 
-    AND (:toDate IS NULL OR gl.guaranteeContractDate <= :toDate)
+                AND (:toDate IS NULL OR gl.guaranteeContractDate <= :toDate)
 
-    AND (
-        :hasLetterNumber IS NULL
-        OR (:hasLetterNumber = true AND gl.guaranteeNoticeNumber IS NOT NULL)
-        OR (:hasLetterNumber = false AND gl.guaranteeNoticeNumber IS NULL)
-    )
-""")
+                AND (
+                    :hasLetterNumber IS NULL
+                    OR (:hasLetterNumber = true AND gl.guaranteeNoticeNumber IS NOT NULL)
+                    OR (:hasLetterNumber = false AND gl.guaranteeNoticeNumber IS NULL)
+                )
+            """)
     @EntityGraph(attributePaths = {
             "manufacturer",
             "creditContract",
@@ -77,25 +78,25 @@ public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetter
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate,
             @Param("hasLetterNumber") Boolean hasLetterNumber,
-            Pageable pageable
-    );
+            Pageable pageable);
+
     @Query("""
-        SELECT gl
-        FROM GuaranteeLetterEntity gl
-        JOIN gl.manufacturer m
-        WHERE
-            m.code = :manufacturerCode
-            AND (
-                gl.guaranteeNoticeNumber ILIKE CONCAT(:keyword, '%')
-                OR gl.referenceCode ILIKE CONCAT(:keyword, '%')
-            )
-        ORDER BY gl.guaranteeContractDate DESC
-    """)
+                SELECT gl
+                FROM GuaranteeLetterEntity gl
+                JOIN gl.manufacturer m
+                WHERE
+                    m.code = :manufacturerCode
+                    AND (
+                        gl.guaranteeNoticeNumber ILIKE CONCAT(:keyword, '%')
+                        OR gl.referenceCode ILIKE CONCAT(:keyword, '%')
+                    )
+                ORDER BY gl.guaranteeContractDate DESC
+            """)
     List<GuaranteeLetterEntity> suggestGuaranteeLetters(
             @Param("keyword") String keyword,
             @Param("manufacturerCode") String manufacturerCode,
-            Pageable pageable
-    );
+            Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select g from GuaranteeLetterEntity g where g.id = :id")
     Optional<GuaranteeLetterEntity> findByIdForUpdate(@Param("id") Long id);
@@ -105,10 +106,12 @@ public interface GuaranteeLetterRepository extends JpaRepository<GuaranteeLetter
      * Scheduler sẽ dùng list này để batch-update sang EXPIRED.
      */
     @Query("""
-        SELECT g FROM GuaranteeLetterEntity g
-        WHERE g.status = 'ACTIVE'
-          AND g.expiryDate IS NOT NULL
-          AND g.expiryDate < :today
-    """)
+                SELECT g FROM GuaranteeLetterEntity g
+                WHERE g.status = 'ACTIVE'
+                  AND g.expiryDate IS NOT NULL
+                  AND g.expiryDate < :today
+            """)
     List<GuaranteeLetterEntity> findExpiredActiveGuarantees(@Param("today") LocalDate today);
+
+    long countByStatus(String status);
 }
