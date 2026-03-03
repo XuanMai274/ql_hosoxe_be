@@ -45,7 +45,6 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                         if (v.getWarehouseExport() != null) {
                                 throw new RuntimeException("Xe số khung " + v.getChassisNumber()
                                                 + " đã nằm trong một đơn đề nghị xuất kho khác.");
-                                // private final WarehouseExportRepository warehouseExportRepository;
                                 // private final VehicleRepository vehicleRepository;
                                 // private final WarehouseExportMapper warehouseExportMapper;
                                 // private final MortgageContractRepository mortgageContractRepository;
@@ -250,12 +249,6 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                 WarehouseExportEntity exportEntity = warehouseExportRepository.findById(dto.getId())
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đề nghị xuất kho"));
 
-        credit.setUpdatedAt(LocalDateTime.now());
-        creditContractRepository.save(credit);
-        String exportNumber = "XK" + LocalDateTime.now();
-        exportEntity.setExportNumber(exportNumber);
-        exportEntity.setExportDate(LocalDateTime.now());
-        exportEntity.setStatus("APPROVED");
                 if (!"PENDING".equals(exportEntity.getStatus())) {
                         throw new RuntimeException(
                                         "Đề nghị này đã được xử lý (Trạng thái: "
