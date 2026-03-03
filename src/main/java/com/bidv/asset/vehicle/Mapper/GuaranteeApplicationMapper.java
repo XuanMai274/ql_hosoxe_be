@@ -2,13 +2,14 @@ package com.bidv.asset.vehicle.Mapper;
 
 import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.entity.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class GuaranteeApplicationMapper {
-
+        @Autowired ManufacturerMapper manufacturerMapper;
     // =====================================================
     // ENTITY → DTO
     // =====================================================
@@ -30,7 +31,7 @@ public class GuaranteeApplicationMapper {
                 .approvedAt(entity.getApprovedAt())
 
                 // ===== MAP BASIC RELATION ONLY =====
-                .manufacturerDTO(mapManufacturerBasic(entity.getManufacturer()))
+                .manufacturerDTO(manufacturerMapper.toDto(entity.getManufacturer()))
                 .creditContractDTO(mapCreditBasic(entity.getCreditContract()))
                 .mortgageContractDTO(mapMortgageBasic(entity.getMortgageContract()))
                 .customerDTO(mapCustomerBasic(entity.getCustomer()))

@@ -208,7 +208,7 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
 
         credit.setUpdatedAt(LocalDateTime.now());
         creditContractRepository.save(credit);
-        String exportNumber = "XK" + LocalDate.now();
+        String exportNumber = "XK" + LocalDateTime.now();
         exportEntity.setExportNumber(exportNumber);
         exportEntity.setExportDate(LocalDateTime.now());
         exportEntity.setStatus("APPROVED");

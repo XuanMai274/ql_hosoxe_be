@@ -1,11 +1,14 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
 import com.bidv.asset.vehicle.DTO.DisbursementDTO;
+import com.bidv.asset.vehicle.DTO.LoanDTO;
+import com.bidv.asset.vehicle.DTO.UpdateInterestRequest;
 import com.bidv.asset.vehicle.Mapper.DisbursementMapper;
 import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.DisbursementService;
 import com.bidv.asset.vehicle.entity.CreditContractEntity;
 import com.bidv.asset.vehicle.entity.DisbursementEntity;
+import com.bidv.asset.vehicle.entity.LoanEntity;
 import com.bidv.asset.vehicle.entity.MortgageContractEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -231,5 +234,102 @@ public class DisbursementServiceImplement implements DisbursementService {
 //        dto.setTotalVehiclesCount(storedVehicles != null ? storedVehicles.size() : 0);
 
         return dto;
+    }
+
+
+    //KIỂM TRA XEM HỢP ĐỒNG NÀY CÓ TẤT TOÁN HAY KHÔNG
+    @Override
+    @Transactional(readOnly = true)
+    public List<DisbursementDTO> checkDisbursementWillBeClosed(List<Long> loanIds) {
+
+        if (loanIds == null || loanIds.isEmpty()) {
+            return List.of();
+        }
+
+        // 1️⃣ Load loan + disbursement
+        List<LoanEntity> targetLoans =
+                loanRepository.findAllWithDisbursementByIdIn(loanIds);
+
+        if (targetLoans.isEmpty()) {
+            return List.of();
+        }
+
+        // 2️⃣ Group loan đang truyền theo disbursement
+        Map<Long, List<LoanEntity>> groupedByDisbursement =
+                targetLoans.stream()
+                        .collect(Collectors.groupingBy(
+                                l -> l.getDisbursement().getId()
+                        ));
+
+        List<Long> disbursementIds =
+                new ArrayList<>(groupedByDisbursement.keySet());
+
+        // 3️⃣ Load toàn bộ loan thuộc các disbursement đó
+        List<LoanEntity> allLoansOfDisbursements =
+                loanRepository.findByDisbursementIds(disbursementIds);
+
+        Map<Long, List<LoanEntity>> allLoansGrouped =
+                allLoansOfDisbursements.stream()
+                        .collect(Collectors.groupingBy(
+                                l -> l.getDisbursement().getId()
+                        ));
+
+        List<DisbursementDTO> result = new ArrayList<>();
+
+        for (Long disbursementId : groupedByDisbursement.keySet()) {
+
+            List<LoanEntity> loansBeingPaid =
+                    groupedByDisbursement.get(disbursementId);
+
+            List<LoanEntity> allLoans =
+                    allLoansGrouped.get(disbursementId);
+
+            if (allLoans == null || allLoans.isEmpty()) {
+                continue;
+            }
+
+            long activeLoansCount = allLoans.stream()
+                    .filter(l -> "ACTIVE".equalsIgnoreCase(l.getLoanStatus()))
+                    .count();
+
+            long activeLoansBeingPaid = loansBeingPaid.stream()
+                    .filter(l -> "ACTIVE".equalsIgnoreCase(l.getLoanStatus()))
+                    .count();
+
+            if (activeLoansCount > 0 &&
+                    activeLoansCount == activeLoansBeingPaid) {
+
+                DisbursementEntity disbursement =
+                        loansBeingPaid.get(0).getDisbursement();
+
+                result.add(disbursementMapper.toDto(disbursement));
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public void updateInterestBatch(List<UpdateInterestRequest> requests) {
+
+        List<Long> ids = requests.stream()
+                .map(UpdateInterestRequest::getDisbursementId)
+                .toList();
+
+        List<DisbursementEntity> entities =
+                disbursementRepository.findAllById(ids);
+
+        Map<Long, BigDecimal> interestMap = requests.stream()
+                .collect(Collectors.toMap(
+                        UpdateInterestRequest::getDisbursementId,
+                        UpdateInterestRequest::getInterestAmount
+                ));
+
+        for (DisbursementEntity entity : entities) {
+            entity.setInterestAmount(interestMap.get(entity.getId()));
+        }
+
+        disbursementRepository.saveAll(entities);
     }
 }

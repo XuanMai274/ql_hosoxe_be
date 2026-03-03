@@ -11,6 +11,7 @@ import com.bidv.asset.vehicle.Service.DisbursementExportService;
 import com.bidv.asset.vehicle.Utill.VietnameseNumberUtil;
 import com.bidv.asset.vehicle.entity.ManufacturerEntity;
 import com.bidv.asset.vehicle.entity.MortgageContractEntity;
+import com.bidv.asset.vehicle.entity.VehicleEntity;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xwpf.usermodel.*;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
@@ -69,10 +70,26 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
 
     @Override
     public Map<String, byte[]> exportAll(DisbursementDTO disbursementDTO, List<Long> vehicleIds) throws IOException {
+        // Lấy hãng xe từ danh sách vehicleIds
+        List<VehicleEntity> vehicles = vehicleRepository.findAllById(vehicleIds);
+
+        if (vehicles.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy xe");
+        }
+
+        // Giả sử tất cả xe cùng hãng
+        String manufacturer = vehicles.get(0).getManufacturerEntity().getCode();
+
+        String contractTemplate;
+
+        if (manufacturer.contains("hyundai")) {
+            contractTemplate = "hop-dong-tin-dung-cu-the_hyundai.docx";
+        } else if (manufacturer.contains("VINFAST")) {
+            contractTemplate = "hop-dong-tin-dung-cu-the-hyundai.docx";
+        }
         String[] templates = {
                 "de-xuat-giai-ngan.docx",
                 "duyet-ngan-hang.docx",
-                "hop-dong-tin-dung-cu-the_K.docx",
                 "phieu-tiep-nhan-ho-so_K.docx",
                 "phieu-tiep-nhan-ho-so.docx",
                 "y-kien-quan-tri.docx"
@@ -94,9 +111,24 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
             DisbursementDTO disbursementDTO,
             List<Long> vehicleIds
     ) throws IOException {
+        // Lấy hãng xe từ danh sách vehicleIds
+        List<VehicleEntity> vehicles = vehicleRepository.findAllById(vehicleIds);
 
+        if (vehicles.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy xe");
+        }
+
+        // Giả sử tất cả xe cùng hãng
+        String manufacturer = vehicles.get(0).getManufacturerEntity().getCode();
+
+        String contractTemplate;
+
+        if (manufacturer.contains("hyundai")) {
+            contractTemplate = "hop-dong-tin-dung-cu-the_hyundai.docx";
+        } else if (manufacturer.contains("VINFAST")) {
+            contractTemplate = "hop-dong-tin-dung-cu-the-hyundai.docx";
+        }
         String[] templates = {
-                "hop-dong-tin-dung-cu-the_K.docx",
                 "phieu-tiep-nhan-ho-so_K.docx"
         };
 
@@ -135,7 +167,7 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         map.put("{{loan_term}}",safe(String.valueOf(dto.getLoanTerm())));
         map.put("{{dueDate}}",formatDate(dto.getDueDate()));
         map.put("{{loanDate}}",formatDate(dto.getStartDate()));
-        BigDecimal tongTSBD=dto.getTotalCollateralValue().add(dto.getTotalCollateralValue());
+        BigDecimal tongTSBD=dto.getTotalCollateralValue().add(dto.getRealEstateValue());
         map.put("{{TONG_TSBD}}",formatMoney(tongTSBD));
         BigDecimal tongTSBDFactor=dto.getCollateralValueAfterFactor().add(dto.getRealEstateValueAfterFactor());
         map.put("{{TONG_HE}}",formatMoney(tongTSBDFactor));
@@ -258,6 +290,9 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         map.put("{{color}}", safe(v.getColor()));
         map.put("{{price}}", formatMoney(v.getGuaranteeAmount()));
         map.put("{{description}}", safe(v.getDescription()));
+        map.put("{{gate}}",safe(String.valueOf(v.getGuaranteeLetterDTO().getManufacturerDTO().getGuaranteeRate())));
+        map.put("{{TBL}}",safe(v.getGuaranteeLetterDTO().getGuaranteeNoticeNumber()));
+        map.put("{{REF}}",safe(v.getGuaranteeLetterDTO().getReferenceCode()));
         return map;
     }
 

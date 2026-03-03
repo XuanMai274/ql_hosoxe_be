@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -100,6 +101,73 @@ public class VehicleWarehouseAPI {
                         "attachment; filename=" + fileName)
                 .body(file);
     }
+
+    @PostMapping("/officer/vehicles/nhapkho/exportAll")
+    public ResponseEntity<byte[]> exportHoSoNhapKhoZip(
+            @RequestBody ExportPNKRequest request
+    ) throws IOException {
+
+        List<VehicleDTO> vehicles =
+                vehicleService.findByIds(request.getVehicleIds());
+
+        if (vehicles == null || vehicles.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
+        }
+
+        // ===== Generate tất cả file =====
+        byte[] pnk =
+                vehicleWarehouseExportService
+                        .generatePNK(vehicles, request.getImportNumber());
+
+        byte[] baoCao =
+                vehicleWarehouseExportService
+                        .generateBaoCaoDinhGia(vehicles, request.getImportNumber());
+
+        byte[] bienBan =
+                vehicleWarehouseExportService
+                        .generateBienBanDinhGia(vehicles, request.getImportNumber());
+
+        byte[] phuLuc =
+                vehicleWarehouseExportService
+                        .generatePhuLucHopDongTheChap(vehicles, request.getImportNumber());
+
+        byte[] dangKy =
+                vehicleWarehouseExportService
+                        .generateDangKiGiaoDichDamBao(vehicles, request.getImportNumber());
+
+        // ===== Tạo tên file zip =====
+        String importNumber = request.getImportNumber();
+
+        if (importNumber == null || importNumber.isBlank()) {
+            importNumber = "UNKNOWN";
+        }
+
+        // sanitize tên file
+        importNumber = importNumber.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+
+        String zipFileName = "HO_SO_NHAP_KHO_" + importNumber + ".zip";
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             java.util.zip.ZipOutputStream zos =
+                     new java.util.zip.ZipOutputStream(baos)) {
+
+            addToZip(zos, "01_PNK.docx", pnk);
+            addToZip(zos, "02_BAO_CAO_DINH_GIA.docx", baoCao);
+            addToZip(zos, "03_BIEN_BAN_DINH_GIA.docx", bienBan);
+            addToZip(zos, "04_PHU_LUC_HOP_DONG_THE_CHAP.docx", phuLuc);
+            addToZip(zos, "05_DANG_KY_GIAO_DICH_DAM_BAO.docx", dangKy);
+
+            zos.finish();
+
+            return ResponseEntity.ok()
+                    .header("Content-Disposition",
+                            "attachment; filename=\"" + zipFileName + "\"")
+                    .header("Content-Type", "application/zip")
+                    .body(baos.toByteArray());
+        }
+    }
+
+
     // XUẤT MẪU XUẤT KHO CHO KHÁCH HÀNG
     @PostMapping("/customer/vehicles/nhapkho/export-ho-so-khach-hang")
     public ResponseEntity<byte[]> exportCustomerZip(

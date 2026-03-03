@@ -5,6 +5,7 @@ import com.bidv.asset.vehicle.Mapper.CreditContractMapper;
 import com.bidv.asset.vehicle.Repository.CreditContractRepository;
 import com.bidv.asset.vehicle.Service.CreditContractService;
 import com.bidv.asset.vehicle.entity.CreditContractEntity;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,5 +61,15 @@ public class CreditContractServiceImplement implements CreditContractService {
             return creditContractMapper.toDto(updatedEntity);
         }
         return null;
+    }
+
+    @Override
+    public CreditContractDTO findById(Long id) {
+
+        CreditContractEntity entity = creditContractRepository.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("CreditContract not found with id: " + id));
+
+        return creditContractMapper.toDto(entity);
     }
 }

@@ -112,7 +112,9 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
 
     private byte[] generateDoc(String templateName, WarehouseExportEntity export, List<VehicleDTO> vehicles, String manufacturerCode) throws IOException {
         XWPFDocument doc = loadTemplate(TEMPLATE_PATH + templateName);
-
+        if ("de-nghi-thu-no.docx".equals(templateName)) {
+            replaceDebtRequestTable(doc, vehicles);
+        }
         // Tìm DisbursementDTO từ danh sách xe
         DisbursementDTO disbursementDTO = null;
         if (vehicles != null) {
@@ -143,7 +145,9 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
         Map<String, String> data = buildData(export, vehicles, manufacturerDTO, disbursementDTO,totalVehicleAmountHDMB,totalVehicleAmountVay);
         
         replaceAll(doc, data);
-        replaceVehicleTable(doc, vehicles);
+        if (!"de-nghi-thu-no.docx".equals(templateName)) {
+            replaceVehicleTable(doc, vehicles);
+        }
         replaceLoanDetailBlock(doc, vehicles);
         forceTimesNewRoman(doc);
 
@@ -825,5 +829,153 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
         return "ngày " + date.getDayOfMonth()
                 + " tháng " + date.getMonthValue()
                 + " năm " + date.getYear();
+    }
+    // phần dành cho giấy thu nợ
+    private void replaceDebtRequestTable(XWPFDocument doc, List<VehicleDTO> vehicles) {
+
+        if (vehicles == null || vehicles.isEmpty()) return;
+
+        // Group theo disbursementId thay vì accountNumber
+        Map<Long, List<VehicleDTO>> grouped =
+                vehicles.stream()
+                        .filter(v -> v.getLoan() != null
+                                && v.getLoan().getDisbursementDTO() != null
+                                && v.getLoan().getDisbursementDTO().getId() != null)
+                        .collect(Collectors.groupingBy(
+                                v -> v.getLoan().getDisbursementDTO().getId()
+                        ));
+
+        if (grouped.isEmpty()) return;
+
+        for (XWPFTable table : doc.getTables()) {
+
+            for (int i = 0; i < table.getRows().size(); i++) {
+
+                XWPFTableRow templateRow = table.getRow(i);
+                if (templateRow.getCell(0) == null) continue;
+
+                String firstCell = templateRow.getCell(0).getText();
+                if (firstCell == null || !firstCell.contains("{{stt}}")) continue;
+
+                int templateIndex = i;
+                int rowIndex = 0;
+
+                for (Map.Entry<Long, List<VehicleDTO>> entry : grouped.entrySet()) {
+
+                    rowIndex++;
+
+                    List<VehicleDTO> accountVehicles = entry.getValue();
+
+                    // Lấy disbursement chung
+                    DisbursementDTO dis =
+                            accountVehicles.get(0).getLoan().getDisbursementDTO();
+
+                    String accountNumber = safe(
+                            accountVehicles.get(0).getLoan().getAccountNumber()
+                    );
+
+                    BigDecimal totalPrincipal = accountVehicles.stream()
+                            .map(v -> {
+                                DisbursementDTO d = v.getLoan().getDisbursementDTO();
+                                return d != null && d.getDisbursementAmount() != null
+                                        ? d.getDisbursementAmount()
+                                        : BigDecimal.ZERO;
+                            })
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    BigDecimal totalInterest = accountVehicles.stream()
+                            .map(v -> {
+                                DisbursementDTO d = v.getLoan().getDisbursementDTO();
+                                if (d != null && "PAID_OFF".equalsIgnoreCase(d.getStatus())) {
+                                    return Optional.ofNullable(d.getInterestAmount())
+                                            .orElse(BigDecimal.ZERO);
+                                }
+                                return BigDecimal.ZERO;
+                            })
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    String paymentNote = buildGroupedPaymentNote(accountVehicles);
+
+                    XWPFTableRow newRow =
+                            table.insertNewTableRow(templateIndex + rowIndex - 1);
+
+                    copyRow(templateRow, newRow);
+
+                    Map<String, String> rowData = new HashMap<>();
+                    rowData.put("{{stt}}", String.valueOf(rowIndex));
+                    rowData.put("{{accountNumber}}", accountNumber);
+                    rowData.put("{{price}}", formatMoney(totalPrincipal));
+                    rowData.put("{{interestAmount}}", formatMoney(totalInterest));
+                    rowData.put("{{payment_note}}", paymentNote);
+
+                    replaceRowPlaceholders(newRow, rowData);
+                }
+
+                // Xóa template row
+                table.removeRow(templateIndex + rowIndex);
+                return;
+            }
+        }
+    }
+    private String buildGroupedPaymentNote(List<VehicleDTO> vehicles) {
+
+        if (vehicles == null || vehicles.isEmpty()) return "";
+
+        VehicleDTO first = vehicles.get(0);
+        LoanDTO loan = first.getLoan();
+        DisbursementDTO dis = loan != null ? loan.getDisbursementDTO() : null;
+
+        if (loan == null || dis == null) return "";
+
+        String contractNumber = safe(loan.getLoanContractNumber());
+        String loanDate = formatDate(loan.getLoanDate());
+
+        String chassisList = vehicles.stream()
+                .map(VehicleDTO::getChassisNumber)
+                .filter(Objects::nonNull)
+                .map(c -> c.length() > 6 ? c.substring(c.length() - 6) : c)
+                .collect(Collectors.joining(", "));
+
+        BigDecimal principal = vehicles.stream()
+                .map(v -> Optional.ofNullable(
+                        v.getLoan().getDisbursementDTO() != null
+                                ? v.getLoan().getDisbursementDTO().getDisbursementAmount()
+                                : BigDecimal.ZERO
+                ).orElse(BigDecimal.ZERO))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal interest = vehicles.stream()
+                .map(v -> {
+                    DisbursementDTO d = v.getLoan().getDisbursementDTO();
+                    if (d != null && "PAID_OFF".equalsIgnoreCase(d.getStatus())) {
+                        return Optional.ofNullable(d.getInterestAmount()).orElse(BigDecimal.ZERO);
+                    }
+                    return BigDecimal.ZERO;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        boolean allPaidOff = vehicles.stream().allMatch(v -> {
+            LoanDTO loan1 = v.getLoan();
+            if (loan1 == null) return false;
+
+            DisbursementDTO d = loan1.getDisbursementDTO();
+            return d != null && "PAID_OFF".equalsIgnoreCase(d.getStatus());
+        });
+        if (allPaidOff) {
+            return String.format(
+                    "Thu tất toán hợp đồng số %s ngày %s; SK: %s; gốc %s; lãi: %s",
+                    contractNumber,
+                    loanDate,
+                    chassisList,
+                    formatMoney(principal),
+                    formatMoney(interest)
+            );
+        }
+
+        return String.format(
+                "Thu một phần nợ gốc của HD số %s ngày %s; SK: %s",
+                contractNumber,
+                loanDate,
+                chassisList
+        );
     }
 }

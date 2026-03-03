@@ -2,6 +2,7 @@ package com.bidv.asset.vehicle.API;
 
 import com.bidv.asset.vehicle.DTO.DisbursementDTO;
 import com.bidv.asset.vehicle.DTO.DisbursementExportRequest;
+import com.bidv.asset.vehicle.DTO.UpdateInterestRequest;
 import com.bidv.asset.vehicle.Service.DisbursementExportService;
 import com.bidv.asset.vehicle.Service.DisbursementService;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +67,24 @@ public class DisbursementAPI {
     @GetMapping("/preview")
     public ResponseEntity<DisbursementDTO> previewDisbursement() {
         return ResponseEntity.ok(disbursementService.previewDisbursement());
+    }
+    // kiểm tra tất toán
+    @PostMapping("/check-paidOff")
+    public ResponseEntity<List<DisbursementDTO>> checkDisbursementWillBeClosed(
+            @RequestBody List<Long> loanIds) {
+
+        List<DisbursementDTO> result =
+                disbursementService.checkDisbursementWillBeClosed(loanIds);
+
+        return ResponseEntity.ok(result);
+    }
+    // cập nhật lãi
+    @PostMapping("/update-interest")
+    public ResponseEntity<Void> updateInterest(
+            @RequestBody List<UpdateInterestRequest> requests) {
+
+        disbursementService.updateInterestBatch(requests);
+        return ResponseEntity.ok().build();
     }
 
 }

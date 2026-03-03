@@ -150,8 +150,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // 7. CHECK CREDIT LIMIT
                 // =====================================================
                 BigDecimal creditLimit = creditContract.getCreditLimit();
-                BigDecimal currentUsedLimit = creditContract.getUsedLimit() == null ? BigDecimal.ZERO
-                                : creditContract.getUsedLimit();
+                BigDecimal currentUsedLimit = creditContract.getIssuedGuaranteeBalance().add(creditContract.getRealEstateLoanBalance().add(creditContract.getVehicleLoanBalance()));
                 BigDecimal newUsedLimit = currentUsedLimit.add(dto.getExpectedGuaranteeAmount());
 
                 if (newUsedLimit.compareTo(creditLimit) > 0) {

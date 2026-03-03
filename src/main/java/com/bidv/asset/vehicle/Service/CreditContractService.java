@@ -10,4 +10,5 @@ public interface CreditContractService {
     public List<CreditContractDTO> findAll();
 
     public CreditContractDTO updateCreditContract(Long id, CreditContractDTO creditContractDTO);
+    public CreditContractDTO findById(Long id);
 }

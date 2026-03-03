@@ -64,4 +64,9 @@ public class CustomerAPI {
 
         return ResponseEntity.ok(service.getAll());
     }
+//    @GetMapping({"/admin/customers", "/officer/customers"})
+//    public ResponseEntity<List<CustomerDTO>> getAll() {
+//
+//        return ResponseEntity.ok(service.getAll());
+//    }
 }

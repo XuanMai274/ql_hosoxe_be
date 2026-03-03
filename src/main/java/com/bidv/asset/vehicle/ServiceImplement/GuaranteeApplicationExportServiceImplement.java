@@ -23,7 +23,6 @@ public class GuaranteeApplicationExportServiceImplement
         implements GuaranteeApplicationExportService {
 
     private static final String TEMPLATE_PATH = "/templates/DeNghiCapBaoLanh/";
-    BigDecimal gate= BigDecimal.valueOf(0);
     // =====================================================
     // ================= MAIN EXPORT =======================
     // =====================================================
@@ -33,34 +32,47 @@ public class GuaranteeApplicationExportServiceImplement
 
         Map<String, byte[]> results = new LinkedHashMap<>();
 
-        // luôn có danh sách xe
-        results.put(
-                "danh-sach-xe-de-nghi-cap-bao-lanh.docx",
-                exportVehicleList(dto)
-        );
 
         // chọn template theo hãng
         String manufacturer = Optional.ofNullable(dto.getManufacturerDTO())
                 .map(m -> m.getCode())
                 .orElse("");
-
         if (manufacturer.contains("HYUNDAI")) {
             results.put(
                     "de-nghi-cap-bao-lanh-hyundai.docx",
                     exportCommon(dto, "de-nghi-cap-bao-lanh-hyundai.docx")
             );
-            gate= BigDecimal.valueOf(85);
         } else if(manufacturer.contains("VINFAST")) {
             results.put(
                     "de-nghi-cap-bao-lanh-vinfast.docx",
                     exportCommon(dto, "de-nghi-cap-bao-lanh-vinfast.docx")
             );
-            gate= BigDecimal.valueOf(75);
         }
-
+        BigDecimal gate = calculateGate(manufacturer);
+        // luôn có danh sách xe
+        results.put(
+                "danh-sach-xe-de-nghi-cap-bao-lanh.docx",
+                exportVehicleList(dto,gate)
+        );
         return results;
     }
+    private BigDecimal calculateGate(String manufacturer) {
 
+        if (manufacturer == null) {
+            return BigDecimal.ZERO;
+        }
+
+        String code = manufacturer.trim().toUpperCase();
+
+        switch (code) {
+            case "HYUNDAI":
+                return BigDecimal.valueOf(85);
+            case "VINFAST":
+                return BigDecimal.valueOf(75);
+            default:
+                return BigDecimal.ZERO;
+        }
+    }
     // =====================================================
     // =============== EXPORT COMMON =======================
     // =====================================================
@@ -83,7 +95,7 @@ public class GuaranteeApplicationExportServiceImplement
     // =====================================================
     // ============ EXPORT VEHICLE LIST ====================
     // =====================================================
-    private byte[] exportVehicleList(GuaranteeApplicationDTO dto)
+    private byte[] exportVehicleList(GuaranteeApplicationDTO dto, BigDecimal gate)
             throws IOException {
 
         XWPFDocument doc = loadTemplate(
@@ -96,7 +108,7 @@ public class GuaranteeApplicationExportServiceImplement
 
         replaceVehicleTable(doc,
                 Optional.ofNullable(dto.getVehicles())
-                        .orElse(Collections.emptyList()));
+                        .orElse(Collections.emptyList()),gate);
 
         forceTimesNewRoman(doc);
 
@@ -113,7 +125,6 @@ public class GuaranteeApplicationExportServiceImplement
 
         map.put("{{CURRENT_DATE}}", formatDate(LocalDate.now()));
         map.put("{{CURRENT_DATE_TITLE}}", toVietnameseDate(LocalDate.now()));
-        map.put("{{expiryDate}}",safe(String.valueOf(dto.getGuaranteeTermDays())));
         map.put("{{HDBDCT}}", safe(dto.getSubGuaranteeContractNumber()));
         if (dto.getCreditContractDTO() != null) {
             map.put("{{HDTD}}",
@@ -151,7 +162,8 @@ public class GuaranteeApplicationExportServiceImplement
     // =====================================================
     private Map<String, String> buildVehicleData(
             GuaranteeApplicationVehicleDTO v,
-            int stt
+            int stt,
+            BigDecimal gate
     ) {
 
         Map<String, String> map = new HashMap<>();
@@ -163,7 +175,7 @@ public class GuaranteeApplicationExportServiceImplement
         map.put("{{invoice}}", safe(v.getInvoiceNumber()));
         map.put("{{price}}", formatMoney(v.getVehiclePrice()));
         map.put("{{guarantee}}", formatMoney(v.getGuaranteeAmount()));
-        map.put("{{gate}}",safe(String.valueOf(gate)));
+        map.put("{{gate}}", gate.toPlainString() + "%");
 //        map.put("{{gate}}",
 //                v.get() == null
 //                        ? "0"
@@ -177,16 +189,17 @@ public class GuaranteeApplicationExportServiceImplement
     // =====================================================
     private void replaceVehicleTable(
             XWPFDocument doc,
-            List<GuaranteeApplicationVehicleDTO> vehicles
+            List<GuaranteeApplicationVehicleDTO> vehicles,BigDecimal gate
     ) {
         for (XWPFTable table : doc.getTables()) {
-            processTableRecursive(table, vehicles);
+            processTableRecursive(table, vehicles,gate);
         }
     }
 
     private void processTableRecursive(
             XWPFTable table,
-            List<GuaranteeApplicationVehicleDTO> vehicles
+            List<GuaranteeApplicationVehicleDTO> vehicles,
+            BigDecimal gate
     ) {
         for (int i = 0; i < table.getRows().size(); i++) {
             XWPFTableRow row = table.getRow(i);
@@ -207,7 +220,7 @@ public class GuaranteeApplicationExportServiceImplement
                     copyRow(row, newRow);
 
                     Map<String, String> vData =
-                            buildVehicleData(v, j + 1);
+                            buildVehicleData(v, j + 1,gate);
 
                     replaceRowPlaceholders(newRow, vData);
                 }
@@ -222,37 +235,65 @@ public class GuaranteeApplicationExportServiceImplement
     // ================= REPLACE CORE ======================
     // =====================================================
     private void replaceAll(XWPFDocument doc, Map<String, String> data) {
+
         for (XWPFParagraph p : doc.getParagraphs()) {
             replaceInParagraph(p, data);
         }
 
         for (XWPFTable table : doc.getTables()) {
-            for (XWPFTableRow row : table.getRows()) {
-                replaceRowPlaceholders(row, data);
-            }
+            processTable(table, data);
         }
     }
 
-    private void replaceInParagraph(XWPFParagraph paragraph, Map<String, String> data) {
+    private void processTable(XWPFTable table, Map<String, String> data) {
 
-        for (XWPFRun run : paragraph.getRuns()) {
-            String text = run.getText(0);
-            if (text == null) continue;
+        for (XWPFTableRow row : table.getRows()) {
 
-            String replaced = text;
+            for (XWPFTableCell cell : row.getTableCells()) {
 
-            for (Map.Entry<String, String> e : data.entrySet()) {
-                if (replaced.contains(e.getKey())) {
-                    replaced = replaced.replace(e.getKey(), e.getValue());
+                for (XWPFParagraph p : cell.getParagraphs()) {
+                    replaceInParagraph(p, data);
+                }
+
+                // xử lý nested table nếu có
+                for (XWPFTable nested : cell.getTables()) {
+                    processTable(nested, data);
                 }
             }
+        }
+    }
+    private void replaceInParagraph(XWPFParagraph paragraph, Map<String, String> data) {
 
-            if (!text.equals(replaced)) {
-                run.setText(replaced, 0); // giữ nguyên style
+        List<XWPFRun> runs = paragraph.getRuns();
+        if (runs == null || runs.isEmpty()) return;
+
+        StringBuilder fullText = new StringBuilder();
+        for (XWPFRun run : runs) {
+            if (run.getText(0) != null) {
+                fullText.append(run.getText(0));
+            }
+        }
+
+        String text = fullText.toString();
+        if (text.isEmpty()) return;
+
+        String replaced = text;
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            replaced = replaced.replace(entry.getKey(), entry.getValue());
+        }
+
+        if (!text.equals(replaced)) {
+
+            // giữ run đầu để preserve style
+            XWPFRun firstRun = runs.get(0);
+            firstRun.setText(replaced, 0);
+
+            // xóa run còn lại
+            for (int i = runs.size() - 1; i > 0; i--) {
+                paragraph.removeRun(i);
             }
         }
     }
-
     private void replaceRowPlaceholders(
             XWPFTableRow row,
             Map<String, String> data
@@ -298,9 +339,22 @@ public class GuaranteeApplicationExportServiceImplement
     }
 
     private void forceTimesNewRoman(XWPFDocument doc) {
+
         for (XWPFParagraph p : doc.getParagraphs()) {
             for (XWPFRun r : p.getRuns()) {
                 r.setFontFamily("Times New Roman");
+            }
+        }
+
+        for (XWPFTable table : doc.getTables()) {
+            for (XWPFTableRow row : table.getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    for (XWPFParagraph p : cell.getParagraphs()) {
+                        for (XWPFRun r : p.getRuns()) {
+                            r.setFontFamily("Times New Roman");
+                        }
+                    }
+                }
             }
         }
     }
@@ -309,7 +363,17 @@ public class GuaranteeApplicationExportServiceImplement
         target.getCtRow().setTrPr(source.getCtRow().getTrPr());
         for (XWPFTableCell cell : source.getTableCells()) {
             XWPFTableCell newCell = target.addNewTableCell();
-            newCell.setText(cell.getText());
+            newCell.getCTTc().setTcPr(cell.getCTTc().getTcPr());
+            for (XWPFParagraph p : cell.getParagraphs()) {
+                XWPFParagraph newP = newCell.addParagraph();
+                newP.getCTP().setPPr(p.getCTP().getPPr());
+                for (XWPFRun r : p.getRuns()) {
+                    XWPFRun newRun = newP.createRun();
+                    newRun.getCTR().setRPr(r.getCTR().getRPr());
+                    newRun.setText(r.text());
+                }
+            }
+            newCell.removeParagraph(0);
         }
     }
     // ngày thàng năm

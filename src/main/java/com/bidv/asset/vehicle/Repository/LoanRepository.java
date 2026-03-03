@@ -58,4 +58,19 @@ public interface LoanRepository extends JpaRepository<LoanEntity, Long> {
      * Lấy danh sách khoản vay theo customerId, sắp xếp theo ngày tạo giảm dần
      */
     List<LoanEntity> findByCustomerIdOrderByCreatedAtDesc(@Param("customerId") Long customerId);
+        @Query("""
+        SELECT l
+        FROM LoanEntity l
+        JOIN FETCH l.disbursement d
+        WHERE l.id IN :loanIds
+    """)
+        List<LoanEntity> findAllWithDisbursementByIdIn(@Param("loanIds") List<Long> loanIds);
+
+
+        @Query("""
+        SELECT l
+        FROM LoanEntity l
+        WHERE l.disbursement.id IN :disbursementIds
+    """)
+    List<LoanEntity> findByDisbursementIds(@Param("disbursementIds") List<Long> disbursementIds);
 }

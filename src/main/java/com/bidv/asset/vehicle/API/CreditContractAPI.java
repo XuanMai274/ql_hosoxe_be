@@ -30,7 +30,10 @@ public class CreditContractAPI {
         response.put("creditContract", null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
+    @GetMapping("/{id}")
+    public CreditContractDTO getById(@PathVariable Long id) {
+        return creditContractService.findById(id);
+    }
     @PostMapping("/add")
     public ResponseEntity<Map<String, Object>> addCreditContract(@RequestBody CreditContractDTO creditContractDTO) {
         Map<String, Object> response = new HashMap<>();

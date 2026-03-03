@@ -61,4 +61,11 @@ public class GuaranteeLetterDTO {
     private List<Long> vehicleIds;
     private GuaranteeLetterFileDTO fileId;
     private GuaranteeApplicationDTO guaranteeApplicationDTO;
+    // thông tin về hạn mức đã sử dụng
+    private BigDecimal creditLimit; // GTTD được sử dụng
+    private BigDecimal usedLimit; // GTTD đã sử dụng
+    private BigDecimal remainingLimit; // giá trị còn được sử dụng
+    private BigDecimal issuedGuaranteeBalance; // dư bảo lãnh
+    private BigDecimal vehicleLoanBalance; // dư vay xe
+    private BigDecimal realEstateLoanBalance; // dư vay BDS
 }
