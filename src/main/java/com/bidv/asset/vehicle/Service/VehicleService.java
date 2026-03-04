@@ -32,4 +32,6 @@ public interface VehicleService {
             String loanContractNumber, Pageable pageable);
 
     List<VehicleDTO> getVehiclesByExportId(Long exportId);
+    public List<VehicleDTO> getVinfastInSafeVehicles();
+    public int updateVehicleInSafe(List<Long> vehicleIds, Boolean inSafe);
 }

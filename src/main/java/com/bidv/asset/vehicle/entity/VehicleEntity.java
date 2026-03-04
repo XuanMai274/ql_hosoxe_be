@@ -78,5 +78,7 @@ public class VehicleEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_export_id")
     private WarehouseExportEntity warehouseExport;
-
+    // chiếc xe này có thuộc giữ trong két hay không
+    @Column(name = "is_in_safe")
+    private Boolean inSafe;
 }

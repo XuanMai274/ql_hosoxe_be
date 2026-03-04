@@ -93,15 +93,16 @@ public class WarehouseExportAPI {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
-        // // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
-        // @GetMapping("/officer/vehicles/warehouse-export/{exportId}")
-        // public ResponseEntity<List<VehicleDTO>> getByExportRequest(@PathVariable Long exportId) {
-        //     return ResponseEntity.ok(vehicleService.getVehiclesByExportId(exportId));
-        // }
-        // // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
-        // @GetMapping("/customer/vehicles/warehouse-export/{exportId}")
-        // public ResponseEntity<List<VehicleDTO>> getByExportRequestCustomer(@PathVariable Long exportId) {
-        //     return ResponseEntity.ok(vehicleService.getVehiclesByExportId(exportId));
-        // }
+
+    }
+    // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
+    @GetMapping("/officer/vehicles/warehouse-export/{exportId}")
+    public ResponseEntity<List<VehicleDTO>> getByExportRequest(@PathVariable Long exportId) {
+        return ResponseEntity.ok(vehicleService.getVehiclesByExportId(exportId));
+    }
+    // Danh sách xe trong một đơn đề nghị rút hồ sơ cụ thể (Officer xem)
+    @GetMapping("/customer/vehicles/warehouse-export/{exportId}")
+    public ResponseEntity<List<VehicleDTO>> getByExportRequestCustomer(@PathVariable Long exportId) {
+        return ResponseEntity.ok(vehicleService.getVehiclesByExportId(exportId));
     }
 }

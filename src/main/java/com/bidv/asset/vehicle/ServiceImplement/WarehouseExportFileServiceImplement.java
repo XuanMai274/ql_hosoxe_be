@@ -44,67 +44,125 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
     public Map<String, byte[]> exportAll(Long exportId, List<Long> vehicleIds) throws IOException {
         WarehouseExportEntity export = warehouseExportRepository.findById(exportId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy WarehouseExport"));
-        
-        List<VehicleEntity> vehicleEntities = vehicleRepository.findAllById(vehicleIds);
-        List<VehicleDTO> vehicles = vehicleEntities.stream().map(vehicleMapper::toDto).toList();
+
+        List<VehicleEntity> vehicleEntities;
+        if (vehicleIds == null || vehicleIds.isEmpty()) {
+            vehicleEntities = export.getVehicles();
+        } else {
+            vehicleEntities = vehicleRepository.findAllById(vehicleIds);
+        }
+
+        if (vehicleEntities == null || vehicleEntities.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống, không thể xuất file");
+        }
+        List<VehicleDTO> allVehicles = vehicleEntities.stream().map(vehicleMapper::toDto).toList();
 
         Map<String, byte[]> results = new HashMap<>();
-        
-        String[] generalTemplates = {
-                "to-trinh.docx",
-                "phieu-xuat-kho.docx",
-                "de-nghi-thu-no.docx",
-                "bien-ban-de-nghi-giao-tra.docx"
-        };
 
-        for (String template : generalTemplates) {
-            try {
-                results.put(template, generateDoc(template, export, vehicles, null));
-            } catch (Exception e) {
-                System.err.println("Lỗi khi export template " + template + ": " + e.getMessage());
+        // Phân loại xe cho Officer
+        // Logic:
+        // - Xe inSafe = false hoặc hãng không phải VINFAST: Xuất như bình thường trong tất cả các file.
+        // - Xe VINFAST và inSafe = true: Chỉ xuất trong "biên bản đề nghị giao trả" và "tờ trình xuất két".
+        //   Các file khác (to-trinh, phieu-xuat-kho, de-nghi-thu-no, dang-ky-giao-dich) KHÔNG có xe này.
+
+        List<VehicleDTO> vehiclesForGeneral = allVehicles.stream()
+                .filter(v -> {
+                    boolean isVinfast = v.getManufacturerDTO() != null && "VINFAST".equalsIgnoreCase(v.getManufacturerDTO().getCode());
+                    if (isVinfast) {
+                        return v.getInSafe() == null || !v.getInSafe();
+                    }
+                    return true;
+                }).toList();
+
+        List<VehicleDTO> vinfastInSafe = allVehicles.stream()
+                .filter(v -> v.getManufacturerDTO() != null && "VINFAST".equalsIgnoreCase(v.getManufacturerDTO().getCode())
+                        && v.getInSafe() != null && v.getInSafe())
+                .toList();
+
+        // 1. Các file chung (chỉ chứa xe inSafe=false hoặc non-Vinfast)
+        String[] officerGeneralTemplates = {
+                "to-trinh.docx",
+                "phieu-xuat-kho.docx"
+        };
+        for (String template : officerGeneralTemplates) {
+            if (!vehiclesForGeneral.isEmpty()) {
+                results.put(template, generateDoc(template, export, vehiclesForGeneral, null));
             }
         }
 
-        // Xử lý dang-ky-giao-dich-dam-bao theo manufacturer
-        Map<String, List<VehicleDTO>> groupedByManufacturer = vehicles.stream()
+        // 2. Biên bản đề nghị giao trả (Chứa TẤT CẢ xe)
+        results.put("bien-ban-de-nghi-giao-tra.docx", generateDoc("bien-ban-de-nghi-giao-tra.docx", export, allVehicles, null));
+
+        // 3. Tờ trình xuất két (Chỉ dành cho xe Vinfast có inSafe=true)
+        if (!vinfastInSafe.isEmpty()) {
+            results.put("xuat-ket.docx", generateDoc("xuat-ket.docx", export, vinfastInSafe, "VINFAST"));
+        }
+
+        // 4. Đăng ký giao dịch đảm bảo (Chỉ chứa xe inSafe=false)
+        Map<String, List<VehicleDTO>> groupedByManufacturer = vehiclesForGeneral.stream()
                 .filter(v -> v.getManufacturerDTO() != null)
                 .collect(Collectors.groupingBy(v -> v.getManufacturerDTO().getCode()));
 
         if (groupedByManufacturer.containsKey("VINFAST")) {
-            results.put("dang-ky-giao-dich-dam-bao-vinfast.docx", 
-                generateDoc("dang-ky-giao-dich-dam-bao-vinfast.docx", export, groupedByManufacturer.get("VINFAST"), "VINFAST"));
+            results.put("dang-ky-giao-dich-dam-bao-vinfast.docx",
+                    generateDoc("dang-ky-giao-dich-dam-bao-vinfast.docx", export, groupedByManufacturer.get("VINFAST"), "VINFAST"));
         }
         if (groupedByManufacturer.containsKey("HYUNDAI")) {
-            results.put("dang-ky-giao-dich-bao-dam-hyundai.docx", 
-                generateDoc("dang-ky-giao-dich-bao-dam-hyundai.docx", export, groupedByManufacturer.get("HYUNDAI"), "HYUNDAI"));
+            results.put("dang-ky-giao-dich-bao-dam-hyundai.docx",
+                    generateDoc("dang-ky-giao-dich-bao-dam-hyundai.docx", export, groupedByManufacturer.get("HYUNDAI"), "HYUNDAI"));
         }
+        // 5. Giấy đề nghị thu nợ cho tất cả các xe
+        // 2. Biên bản đề nghị giao trả (Chứa TẤT CẢ xe)
+        results.put("de-nghi-thu-no.docx", generateDoc("de-nghi-thu-no.docx", export, allVehicles, null));
 
         return results;
     }
 
     @Override
     public Map<String, byte[]> exportSpecific(Long exportId, List<Long> vehicleIds) throws IOException {
-         WarehouseExportEntity export = warehouseExportRepository.findById(exportId)
+        WarehouseExportEntity export = warehouseExportRepository.findById(exportId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy WarehouseExport"));
-        
-        List<VehicleEntity> vehicleEntities = vehicleRepository.findAllById(vehicleIds);
-        List<VehicleDTO> vehicles = vehicleEntities.stream().map(vehicleMapper::toDto).toList();
+
+        List<VehicleEntity> vehicleEntities;
+        if (vehicleIds == null || vehicleIds.isEmpty()) {
+            vehicleEntities = export.getVehicles();
+        } else {
+            vehicleEntities = vehicleRepository.findAllById(vehicleIds);
+        }
+
+        if (vehicleEntities == null || vehicleEntities.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống, không thể xuất file");
+        }
+        List<VehicleDTO> allVehicles = vehicleEntities.stream().map(vehicleMapper::toDto).toList();
 
         Map<String, byte[]> results = new HashMap<>();
-        
-        results.put("bien-ban-de-nghi-giao-tra.docx", generateDoc("bien-ban-de-nghi-giao-tra.docx", export, vehicles, null));
 
-        Map<String, List<VehicleDTO>> groupedByManufacturer = vehicles.stream()
+        // 1. Biên bản đề nghị giao trả: Luôn xuất đủ tất cả xe
+        results.put("bien-ban-de-nghi-giao-tra.docx", generateDoc("bien-ban-de-nghi-giao-tra.docx", export, allVehicles, null));
+
+        // 2. Đăng ký giao dịch đảm bảo:
+        // - Với Vinfast: Chỉ lọc những xe có inSafe = false (hoặc null)
+        // - Các hãng khác: Giữ nguyên
+        List<VehicleDTO> vehiclesForRegistration = allVehicles.stream()
+                .filter(v -> {
+                    boolean isVinfast = v.getManufacturerDTO() != null && "VINFAST".equalsIgnoreCase(v.getManufacturerDTO().getCode());
+                    if (isVinfast) {
+                        return v.getInSafe() == null || !v.getInSafe();
+                    }
+                    return true;
+                }).toList();
+
+        Map<String, List<VehicleDTO>> groupedByManufacturer = vehiclesForRegistration.stream()
                 .filter(v -> v.getManufacturerDTO() != null)
                 .collect(Collectors.groupingBy(v -> v.getManufacturerDTO().getCode()));
 
         if (groupedByManufacturer.containsKey("VINFAST")) {
-            results.put("dang-ky-giao-dich-dam-bao-vinfast.docx", 
-                generateDoc("dang-ky-giao-dich-dam-bao-vinfast.docx", export, groupedByManufacturer.get("VINFAST"), "VINFAST"));
+            results.put("dang-ky-giao-dich-dam-bao-vinfast.docx",
+                    generateDoc("dang-ky-giao-dich-dam-bao-vinfast.docx", export, groupedByManufacturer.get("VINFAST"), "VINFAST"));
         }
         if (groupedByManufacturer.containsKey("HYUNDAI")) {
-            results.put("dang-ky-giao-dich-bao-dam-hyundai.docx", 
-                generateDoc("dang-ky-giao-dich-bao-dam-hyundai.docx", export, groupedByManufacturer.get("HYUNDAI"), "HYUNDAI"));
+            results.put("dang-ky-giao-dich-bao-dam-hyundai.docx",
+                    generateDoc("dang-ky-giao-dich-bao-dam-hyundai.docx", export, groupedByManufacturer.get("HYUNDAI"), "HYUNDAI"));
         }
 
         return results;
@@ -142,6 +200,7 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
                 .map(VehicleDTO::getGuaranteeAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         Map<String, String> data = buildData(export, vehicles, manufacturerDTO, disbursementDTO,totalVehicleAmountHDMB,totalVehicleAmountVay);
         
         replaceAll(doc, data);
@@ -199,10 +258,14 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
                 map.put("{{manufacturerName}}", safe(manufacturer.getName()));
                 map.put("{{manufacturer_name}}", safe(manufacturer.getName()));
                 map.put("{{manufacturer_code}}", safe(manufacturer.getCode()));
-                
-                BigDecimal rate = Optional.ofNullable(manufacturer.getGuaranteeRate()).orElse(BigDecimal.ZERO);
-                BigDecimal result = rate.subtract(BigDecimal.TEN);
-                map.put("{{gate}}", result.toPlainString());
+
+                BigDecimal rate = Optional.ofNullable(manufacturer.getGuaranteeRate())
+                        .orElse(BigDecimal.ZERO);
+
+                BigDecimal percent = rate.multiply(BigDecimal.valueOf(100));
+
+                map.put("{{gate}}",
+                        percent.stripTrailingZeros().toPlainString());
 
                 Long customerId = null;
                 if (refVehicle.getLoan() != null && refVehicle.getLoan().getCustomerDTO() != null) {
@@ -231,6 +294,7 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
             map.put("{{usedLimit}}", formatMoney(dto.getUsedLimit()));
             map.put("{{remainingLimit}}", formatMoney(dto.getRemainingLimit()));
             map.put("{{realEstateFactor}}", formatMoney(dto.getRealEstateValueAfterFactor()));
+            map.put("{{totalCollateralValue}}", formatMoney(dto.getTotalCollateralValue()));
             map.put("{{collateralFactor}}", formatMoney(dto.getCollateralValueAfterFactor()));
             map.put("{{issuedGuaranteeBalance}}", formatMoney(dto.getIssuedGuaranteeBalance()));
             map.put("{{vehicleLoanBalance}}", formatMoney(dto.getVehicleLoanBalance()));
@@ -434,7 +498,9 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
         map.put("{{priceHDMB}}",formatMoney(v.getPrice()));
         map.put("{{description}}", safe(v.getDescription()));
         map.put("{{importDossier}}",safe(v.getImportDossier()));
+        map.put("{{manufacturer}}",safe(v.getManufacturerDTO().getCode()));
         map.put("{{doc_id}}",safe(v.getLoan() != null
+
                 ? safe(v.getLoan().getDocId())
                 : " "));
         map.put("{{accountNumber}}",
@@ -832,25 +898,10 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
     }
     // phần dành cho giấy thu nợ
     private void replaceDebtRequestTable(XWPFDocument doc, List<VehicleDTO> vehicles) {
-
         if (vehicles == null || vehicles.isEmpty()) return;
 
-        // Group theo disbursementId thay vì accountNumber
-        Map<Long, List<VehicleDTO>> grouped =
-                vehicles.stream()
-                        .filter(v -> v.getLoan() != null
-                                && v.getLoan().getDisbursementDTO() != null
-                                && v.getLoan().getDisbursementDTO().getId() != null)
-                        .collect(Collectors.groupingBy(
-                                v -> v.getLoan().getDisbursementDTO().getId()
-                        ));
-
-        if (grouped.isEmpty()) return;
-
         for (XWPFTable table : doc.getTables()) {
-
             for (int i = 0; i < table.getRows().size(); i++) {
-
                 XWPFTableRow templateRow = table.getRow(i);
                 if (templateRow.getCell(0) == null) continue;
 
@@ -860,122 +911,53 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
                 int templateIndex = i;
                 int rowIndex = 0;
 
-                for (Map.Entry<Long, List<VehicleDTO>> entry : grouped.entrySet()) {
+                for (int j = 0; j < vehicles.size(); j++) {
+                    VehicleDTO v = vehicles.get(j);
+                    if (v.getLoan() == null) continue;
 
                     rowIndex++;
+                    DisbursementDTO dis = v.getLoan().getDisbursementDTO();
+                    boolean isPaidOff = dis != null && "PAID_OFF".equalsIgnoreCase(dis.getStatus());
+                    boolean isLast = (j == vehicles.size() - 1);
 
-                    List<VehicleDTO> accountVehicles = entry.getValue();
-
-                    // Lấy disbursement chung
-                    DisbursementDTO dis =
-                            accountVehicles.get(0).getLoan().getDisbursementDTO();
-
-                    String accountNumber = safe(
-                            accountVehicles.get(0).getLoan().getAccountNumber()
-                    );
-
-                    BigDecimal totalPrincipal = accountVehicles.stream()
-                            .map(v -> {
-                                DisbursementDTO d = v.getLoan().getDisbursementDTO();
-                                return d != null && d.getDisbursementAmount() != null
-                                        ? d.getDisbursementAmount()
-                                        : BigDecimal.ZERO;
-                            })
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                    BigDecimal totalInterest = accountVehicles.stream()
-                            .map(v -> {
-                                DisbursementDTO d = v.getLoan().getDisbursementDTO();
-                                if (d != null && "PAID_OFF".equalsIgnoreCase(d.getStatus())) {
-                                    return Optional.ofNullable(d.getInterestAmount())
-                                            .orElse(BigDecimal.ZERO);
-                                }
-                                return BigDecimal.ZERO;
-                            })
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                    String paymentNote = buildGroupedPaymentNote(accountVehicles);
-
-                    XWPFTableRow newRow =
-                            table.insertNewTableRow(templateIndex + rowIndex - 1);
-
+                    XWPFTableRow newRow = table.insertNewTableRow(templateIndex + rowIndex - 1);
                     copyRow(templateRow, newRow);
 
                     Map<String, String> rowData = new HashMap<>();
                     rowData.put("{{stt}}", String.valueOf(rowIndex));
-                    rowData.put("{{accountNumber}}", accountNumber);
-                    rowData.put("{{price}}", formatMoney(totalPrincipal));
-                    rowData.put("{{interestAmount}}", formatMoney(totalInterest));
-                    rowData.put("{{payment_note}}", paymentNote);
+                    rowData.put("{{accountNumber}}", safe(v.getLoan().getAccountNumber()));
+
+                    BigDecimal vehiclePrincipal = Optional.ofNullable(v.getGuaranteeAmount()).orElse(BigDecimal.ZERO);
+                    rowData.put("{{price}}", formatMoney(vehiclePrincipal));
+
+                    BigDecimal interest = BigDecimal.ZERO;
+                    if (isPaidOff && isLast) {
+                        interest = dis.getInterestAmount() != null ? dis.getInterestAmount() : BigDecimal.ZERO;
+                    }
+                    rowData.put("{{interestAmount}}", formatMoney(interest));
+
+                    String note = "";
+                    String contractNo = safe(v.getLoan().getLoanContractNumber());
+                    String loanDate = formatDate(v.getLoan().getLoanDate());
+                    String chassis = safe(v.getChassisNumber());
+                    if (chassis.length() > 6) chassis = chassis.substring(chassis.length() - 6);
+
+                    if (isPaidOff && isLast) {
+                        BigDecimal totalDisPrincipal = dis.getDisbursementAmount();
+                        note = String.format("Thu tất toán hợp đồng số %s ngày %s; SK: %s; gốc %s; lãi: %s",
+                                contractNo, loanDate, chassis, formatMoney(totalDisPrincipal), formatMoney(interest));
+                    } else {
+                        note = String.format("Thu một phần nợ gốc của HD số %s ngày %s; SK: %s",
+                                contractNo, loanDate, chassis);
+                    }
+                    rowData.put("{{payment_note}}", note);
 
                     replaceRowPlaceholders(newRow, rowData);
                 }
 
-                // Xóa template row
-                table.removeRow(templateIndex + rowIndex);
+                table.removeRow(templateIndex + vehicles.size());
                 return;
             }
         }
-    }
-    private String buildGroupedPaymentNote(List<VehicleDTO> vehicles) {
-
-        if (vehicles == null || vehicles.isEmpty()) return "";
-
-        VehicleDTO first = vehicles.get(0);
-        LoanDTO loan = first.getLoan();
-        DisbursementDTO dis = loan != null ? loan.getDisbursementDTO() : null;
-
-        if (loan == null || dis == null) return "";
-
-        String contractNumber = safe(loan.getLoanContractNumber());
-        String loanDate = formatDate(loan.getLoanDate());
-
-        String chassisList = vehicles.stream()
-                .map(VehicleDTO::getChassisNumber)
-                .filter(Objects::nonNull)
-                .map(c -> c.length() > 6 ? c.substring(c.length() - 6) : c)
-                .collect(Collectors.joining(", "));
-
-        BigDecimal principal = vehicles.stream()
-                .map(v -> Optional.ofNullable(
-                        v.getLoan().getDisbursementDTO() != null
-                                ? v.getLoan().getDisbursementDTO().getDisbursementAmount()
-                                : BigDecimal.ZERO
-                ).orElse(BigDecimal.ZERO))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal interest = vehicles.stream()
-                .map(v -> {
-                    DisbursementDTO d = v.getLoan().getDisbursementDTO();
-                    if (d != null && "PAID_OFF".equalsIgnoreCase(d.getStatus())) {
-                        return Optional.ofNullable(d.getInterestAmount()).orElse(BigDecimal.ZERO);
-                    }
-                    return BigDecimal.ZERO;
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        boolean allPaidOff = vehicles.stream().allMatch(v -> {
-            LoanDTO loan1 = v.getLoan();
-            if (loan1 == null) return false;
-
-            DisbursementDTO d = loan1.getDisbursementDTO();
-            return d != null && "PAID_OFF".equalsIgnoreCase(d.getStatus());
-        });
-        if (allPaidOff) {
-            return String.format(
-                    "Thu tất toán hợp đồng số %s ngày %s; SK: %s; gốc %s; lãi: %s",
-                    contractNumber,
-                    loanDate,
-                    chassisList,
-                    formatMoney(principal),
-                    formatMoney(interest)
-            );
-        }
-
-        return String.format(
-                "Thu một phần nợ gốc của HD số %s ngày %s; SK: %s",
-                contractNumber,
-                loanDate,
-                chassisList
-        );
     }
 }

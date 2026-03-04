@@ -124,50 +124,50 @@ public class VehicleServiceImplement implements VehicleService {
        DEADLINE LOGIC
        ========================================================= */
 
-    // Xác định số ngày nhập kho theo từng xe
-    private int resolveImportDeadlineDays(VehicleEntity vehicle) {
-
-        if (vehicle == null || vehicle.getManufacturerEntity() == null)
-            return 0;
-
-        String brand = vehicle.getManufacturerEntity().getCode() != null
-                ? vehicle.getManufacturerEntity().getCode().toUpperCase()
-                : "";
-
-        String name = vehicle.getVehicleName() != null
-                ? vehicle.getVehicleName().toUpperCase()
-                : "";
-
-        // VINFAST → 3 ngày
-        if ("VINFAST".equals(brand)) {
-            return 3;
-        }
-
-        // HYUNDAI
-        if ("HYUNDAI".equals(brand)) {
-
-            if (name.contains("TUCSON") ||
-                    name.contains("CRETA") ||
-                    name.contains("IONIQ") ||
-                    name.contains("LONIQ") ||
-                    name.contains("STARIA")) {
-
-                return 15;
-            }
-
-            if (name.contains("ACCENT") ||
-                    name.contains("ELANTRA") ||
-                    name.contains("STARGAZER") ||
-                    name.contains("SANTA FE")) {
-
-                return 60;
-            }
-
-            return 30; // mặc định Hyundai
-        }
-
-        return 0;
-    }
+//    // Xác định số ngày nhập kho theo từng xe
+//    private int resolveImportDeadlineDays(VehicleEntity vehicle) {
+//
+//        if (vehicle == null || vehicle.getManufacturerEntity() == null)
+//            return 0;
+//
+//        String brand = vehicle.getManufacturerEntity().getCode() != null
+//                ? vehicle.getManufacturerEntity().getCode().toUpperCase()
+//                : "";
+//
+//        String name = vehicle.getVehicleName() != null
+//                ? vehicle.getVehicleName().toUpperCase()
+//                : "";
+//
+//        // VINFAST → 3 ngày
+//        if ("VINFAST".equals(brand)) {
+//            return 3;
+//        }
+//
+//        // HYUNDAI
+//        if ("HYUNDAI".equals(brand)) {
+//
+//            if (name.contains("TUCSON") ||
+//                    name.contains("CRETA") ||
+//                    name.contains("IONIQ") ||
+//                    name.contains("LONIQ") ||
+//                    name.contains("STARIA")) {
+//
+//                return 15;
+//            }
+//
+//            if (name.contains("ACCENT") ||
+//                    name.contains("ELANTRA") ||
+//                    name.contains("STARGAZER") ||
+//                    name.contains("SANTA FE")) {
+//
+//                return 60;
+//            }
+//
+//            return 30; // mặc định Hyundai
+//        }
+//
+//        return 0;
+//    }
 
     // Deadline nhập kho (dựa vào createdAt)
     private String calculateImportDeadlineLabel(VehicleEntity vehicle) {
@@ -175,24 +175,19 @@ public class VehicleServiceImplement implements VehicleService {
         if (vehicle == null || vehicle.getCreatedAt() == null)
             return null;
 
-        int days = resolveImportDeadlineDays(vehicle);
-
-        if (days == 0)
-            return null;
-
         LocalDate deadline = vehicle.getCreatedAt()
                 .toLocalDate()
-                .plusDays(days);
+                .plusDays(3); // hardcode 3 ngày
 
         long diff = ChronoUnit.DAYS.between(LocalDate.now(), deadline);
 
         if (diff > 0)
-            return "Còn " + diff + " ngày đến hạn nhập kho";
+            return "Còn " + diff + " ngày đến hạn thanh toán";
 
         if (diff == 0)
-            return "Cần nhập kho hôm nay";
+            return "Cần thanh toán hôm nay";
 
-        return "Đã quá hạn nhập kho " + Math.abs(diff) + " ngày";
+        return "Đã quá hạn thanh toán " + Math.abs(diff) + " ngày";
     }
 
     // Deadline rút hồ sơ (importDate + 60 ngày)
@@ -379,5 +374,54 @@ public class VehicleServiceImplement implements VehicleService {
         return vehicles.stream()
                 .map(vehicleMapper::toDto)
                 .toList();
+    }
+
+    @Override
+    public List<VehicleDTO> getVinfastInSafeVehicles() {
+
+        List<VehicleEntity> vehicles =
+                vehicleRepository.findVinfastInSafe(
+                        "VINFAST",
+                        "Giữ trong kho"
+                );
+
+        return vehicles.stream()
+                .map(vehicle -> {
+                    VehicleDTO dto = vehicleMapper.toDto(vehicle);
+                    dto.setDeadlineLabel(
+                            calculateImportDeadlineLabelForVin(vehicle)
+                    );
+                    return dto;
+                })
+                .toList();
+    }
+    private String calculateImportDeadlineLabelForVin(VehicleEntity vehicle) {
+
+        if (vehicle == null || vehicle.getCreatedAt() == null)
+            return null;
+
+        LocalDate deadline = vehicle.getCreatedAt()
+                .toLocalDate()
+                .plusDays(15); // hardcode 3 ngày
+
+        long diff = ChronoUnit.DAYS.between(LocalDate.now(), deadline);
+
+        if (diff > 0)
+            return "Còn " + diff + " ngày đến hạn nhập kho";
+
+        if (diff == 0)
+            return "Cần nhập kho hôm nay";
+
+        return "Đã quá hạn nhập kho " + Math.abs(diff) + " ngày";
+    }
+    @Override
+    @Transactional
+    public int updateVehicleInSafe(List<Long> vehicleIds, Boolean inSafe) {
+
+        if (vehicleIds == null || vehicleIds.isEmpty()) {
+            throw new RuntimeException("Danh sách xe không được để trống");
+        }
+
+        return vehicleRepository.updateInSafeByIds(vehicleIds, inSafe);
     }
 }

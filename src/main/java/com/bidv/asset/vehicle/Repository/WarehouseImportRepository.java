@@ -47,4 +47,6 @@ public interface WarehouseImportRepository extends JpaRepository<WarehouseImport
                 WHERE (:importNumber IS NULL OR wi.importNumber LIKE %:importNumber%)
             """)
     Page<WarehouseImportEntity> findAllWithFilter(@Param("importNumber") String importNumber, Pageable pageable);
+    WarehouseImportEntity findByImportNumber(String importNumber);
+
 }

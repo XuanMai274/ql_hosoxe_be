@@ -5,10 +5,7 @@ import com.bidv.asset.vehicle.entity.VehicleEntity;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -245,4 +242,23 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
 
     @Query("SELECT COUNT(v) FROM VehicleEntity v WHERE v.loans IS NOT EMPTY")
     long countByLoansIsNotEmpty();
+    // tìm xe vinfast trong thời hạn cần nhập kho chính thức
+    @Query("""
+    SELECT v FROM VehicleEntity v
+    WHERE v.manufacturerEntity.code = :manufacturerCode
+      AND v.status = :status
+      AND v.inSafe = true
+""")
+    List<VehicleEntity> findVinfastInSafe(
+            @Param("manufacturerCode") String manufacturerCode,
+            @Param("status") String status
+    );
+    @Modifying
+    @Query("""
+           UPDATE VehicleEntity v
+           SET v.inSafe = :inSafe
+           WHERE v.id IN :ids
+           """)
+    int updateInSafeByIds(@Param("ids") List<Long> ids,
+                          @Param("inSafe") Boolean inSafe);
 }

@@ -219,6 +219,9 @@ public class LoanServiceImplement implements LoanService {
                 /* ================= UPDATE VEHICLE ================= */
 
                 vehicle.setStatus("Giữ trong kho");
+                if(vehicle.getManufacturerEntity().getCode().equals("VINFAST")){
+                        vehicle.setInSafe(true);
+                }
                 vehicle.setImportDate(LocalDate.now());
                 /* ================= CREATE LOAN ================= */
 
@@ -234,7 +237,7 @@ public class LoanServiceImplement implements LoanService {
                 entity.setDisbursement(disbursementEntity);
                 entity.setCreatedAt(LocalDateTime.now());
                 entity.setUpdatedAt(LocalDateTime.now());
-
+                entity.setLoanDate(LocalDate.now());
                 LoanEntity saved = loanRepository.save(entity);
 
                 return loanMapper.toDto(saved);
