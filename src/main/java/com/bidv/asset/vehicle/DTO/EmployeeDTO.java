@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -16,13 +17,14 @@ public class EmployeeDTO {
     private String employeeCode;
     private String fullName;
     private String position;
-    private String department;
     private String email;
     private String phone;
     private String status;
 
     private Long userAccountId;
     private String username;
+    private Long roleId;
+    private String role;
 
     private LocalDateTime createdAt;
 }

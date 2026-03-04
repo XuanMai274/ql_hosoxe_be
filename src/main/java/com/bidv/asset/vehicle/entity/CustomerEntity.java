@@ -16,7 +16,7 @@ public class CustomerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "customer_id_seq")
-    @SequenceGenerator(name = "customer_id_seq", sequenceName = "customer_id_seq")
+    @SequenceGenerator(name = "customer_id_seq", sequenceName = "customer_id_seq", allocationSize = 1)
     private Long id;
 
     // ===== Thông tin cơ bản =====
@@ -69,7 +69,7 @@ public class CustomerEntity {
     // ===== HDTD =====
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<CreditContractEntity> creditContracts;
-    //======== Đề xuất cấp bảo lãnh========
+    // ======== Đề xuất cấp bảo lãnh========
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
     private List<GuaranteeApplicationEntity> guaranteeApplications;
 }

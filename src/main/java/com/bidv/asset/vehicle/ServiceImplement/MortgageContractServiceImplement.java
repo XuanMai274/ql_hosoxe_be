@@ -24,14 +24,17 @@ public class MortgageContractServiceImplement implements MortgageContractService
 
     @Autowired
     MortgageContractRepository mortgageRepo;
-    @Autowired CustomerRepository customerRepo;
+    @Autowired
+    CustomerRepository customerRepo;
     @Autowired
     ManufacturerRepository manufacturerRepo;
     @Autowired
     CreditContractRepository creditRepo;
-    @Autowired MortgageContractMapper mortgageContractMapper;
+    @Autowired
+    MortgageContractMapper mortgageContractMapper;
     @Autowired
     MortgageSequenceService mortgageSequenceService;
+
     // ===== CREATE =====
     @Override
     @Transactional
@@ -56,8 +59,11 @@ public class MortgageContractServiceImplement implements MortgageContractService
         }
 
         MortgageContractEntity entity = mortgageContractMapper.toEntity(
-                dto, customer, manufacturer, creditContracts
-        );
+                dto, customer, manufacturer, creditContracts);
+
+        if (entity.getContractDate() != null) {
+            entity.setExpiryDate(entity.getContractDate().plusYears(1));
+        }
 
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
@@ -65,7 +71,7 @@ public class MortgageContractServiceImplement implements MortgageContractService
         MortgageContractEntity saved = mortgageRepo.save(entity);
 
         // tạo sequence trong cùng transaction
-        mortgageSequenceService.createSequence(saved.getId());
+        mortgageSequenceService.createSequence(saved);
 
         return mortgageContractMapper.toDTO(saved);
     }
@@ -93,6 +99,9 @@ public class MortgageContractServiceImplement implements MortgageContractService
 
         entity.setContractNumber(dto.getContractNumber());
         entity.setContractDate(dto.getContractDate());
+        if (entity.getContractDate() != null) {
+            entity.setExpiryDate(entity.getContractDate().plusYears(1));
+        }
         entity.setTotalCollateralValue(dto.getTotalCollateralValue());
         entity.setRemainingCollateralValue(dto.getRemainingCollateralValue());
 

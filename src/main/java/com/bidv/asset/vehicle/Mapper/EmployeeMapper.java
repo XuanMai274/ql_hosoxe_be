@@ -10,20 +10,25 @@ public class EmployeeMapper {
 
     // ===== ENTITY -> DTO =====
     public EmployeeDTO toDto(EmployeeEntity entity) {
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         EmployeeDTO dto = new EmployeeDTO();
         dto.setId(entity.getId());
         dto.setEmployeeCode(entity.getEmployeeCode());
         dto.setFullName(entity.getFullName());
         dto.setPosition(entity.getPosition());
-        dto.setDepartment(entity.getDepartment());
         dto.setEmail(entity.getEmail());
         dto.setPhone(entity.getPhone());
         dto.setStatus(entity.getStatus());
 
         if (entity.getUserAccount() != null) {
             dto.setUserAccountId(entity.getUserAccount().getId());
+            dto.setUsername(entity.getUserAccount().getUsername());
+            if (entity.getUserAccount().getRole() != null) {
+                dto.setRoleId(entity.getUserAccount().getRole().getId());
+                dto.setRole(entity.getUserAccount().getRole().getCode());
+            }
         }
 
         return dto;
@@ -31,14 +36,14 @@ public class EmployeeMapper {
 
     // ===== DTO -> ENTITY (KHÔNG set account) =====
     public EmployeeEntity toEntity(EmployeeDTO dto) {
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         EmployeeEntity entity = new EmployeeEntity();
         entity.setId(dto.getId());
         entity.setEmployeeCode(dto.getEmployeeCode());
         entity.setFullName(dto.getFullName());
         entity.setPosition(dto.getPosition());
-        entity.setDepartment(dto.getDepartment());
         entity.setEmail(dto.getEmail());
         entity.setPhone(dto.getPhone());
         entity.setStatus(dto.getStatus());
@@ -55,4 +60,3 @@ public class EmployeeMapper {
         return entity;
     }
 }
-

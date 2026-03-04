@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,6 +19,7 @@ public class CreditContractDTO {
 
     private String contractNumber;
     private LocalDate contractDate;
+    private LocalDate expiryDate;
 
     private BigDecimal creditLimit;
     private BigDecimal usedLimit;// sử dụng thực tế

@@ -1,4 +1,5 @@
 package com.bidv.asset.vehicle.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -6,7 +7,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "employee")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class EmployeeEntity {
 
@@ -20,7 +22,6 @@ public class EmployeeEntity {
 
     private String fullName;
     private String position;
-    private String department;
     private String email;
     private String phone;
     private String status;

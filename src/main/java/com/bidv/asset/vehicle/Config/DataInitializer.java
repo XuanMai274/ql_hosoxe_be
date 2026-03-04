@@ -18,9 +18,12 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     UserAccountRepository userAccountRepository;
-    @Autowired EmployeeRepository employeeRepository;
-    @Autowired RoleRepository roleRepository;
-    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired
+    EmployeeRepository employeeRepository;
+    @Autowired
+    RoleRepository roleRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
@@ -50,7 +53,6 @@ public class DataInitializer implements CommandLineRunner {
         employee.setEmployeeCode("EMP001");
         employee.setFullName("System Administrator");
         employee.setPosition("ADMIN");
-        employee.setDepartment("IT");
         employee.setEmail("admin@system.local");
         employee.setStatus("ACTIVE");
 

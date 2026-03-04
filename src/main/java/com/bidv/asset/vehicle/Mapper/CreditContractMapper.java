@@ -13,13 +13,15 @@ import java.util.stream.Collectors;
 public class CreditContractMapper {
 
     public CreditContractDTO toDto(CreditContractEntity entity) {
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         CreditContractDTO dto = new CreditContractDTO();
 
         dto.setId(entity.getId());
         dto.setContractNumber(entity.getContractNumber());
         dto.setContractDate(entity.getContractDate());
+        dto.setExpiryDate(entity.getExpiryDate());
 
         dto.setCreditLimit(entity.getCreditLimit());
         dto.setUsedLimit(entity.getUsedLimit());
@@ -32,11 +34,10 @@ public class CreditContractMapper {
         dto.setOutstandingGuaranteeAmount(entity.getOutstandingGuaranteeAmount());
         if (entity.getMortgageContracts() != null) {
 
-            List<MortgageContractDTO> mortgageDtos =
-                    entity.getMortgageContracts()
-                            .stream()
-                            .map(this::mapMortgageToDto)
-                            .collect(Collectors.toList());
+            List<MortgageContractDTO> mortgageDtos = entity.getMortgageContracts()
+                    .stream()
+                    .map(this::mapMortgageToDto)
+                    .collect(Collectors.toList());
 
             dto.setMortgageContractIds(mortgageDtos);
 
@@ -49,8 +50,7 @@ public class CreditContractMapper {
                     entity.getGuarantees()
                             .stream()
                             .map(GuaranteeLetterEntity::getId)
-                            .collect(Collectors.toList())
-            );
+                            .collect(Collectors.toList()));
         } else {
             dto.setGuaranteeIds(Collections.emptyList());
         }
@@ -60,8 +60,7 @@ public class CreditContractMapper {
                     entity.getLoans()
                             .stream()
                             .map(LoanEntity::getId)
-                            .collect(Collectors.toList())
-            );
+                            .collect(Collectors.toList()));
         } else {
             dto.setLoanIds(Collections.emptyList());
         }
@@ -77,13 +76,15 @@ public class CreditContractMapper {
     }
 
     public CreditContractEntity toEntity(CreditContractDTO dto) {
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         CreditContractEntity entity = new CreditContractEntity();
 
         entity.setId(dto.getId());
         entity.setContractNumber(dto.getContractNumber());
         entity.setContractDate(dto.getContractDate());
+        entity.setExpiryDate(dto.getExpiryDate());
         entity.setStatus(dto.getStatus());
         entity.setCreditLimit(dto.getCreditLimit());
         entity.setUsedLimit(dto.getUsedLimit());
@@ -93,20 +94,19 @@ public class CreditContractMapper {
         entity.setRealEstateLoanBalance(dto.getRealEstateLoanBalance());
         if (dto.getMortgageContractIds() != null) {
 
-            List<MortgageContractEntity> mortgageEntities =
-                    dto.getMortgageContractIds()
-                            .stream()
-                            .map(this::mapMortgageToEntity)
-                            .collect(Collectors.toList());
+            List<MortgageContractEntity> mortgageEntities = dto.getMortgageContractIds()
+                    .stream()
+                    .map(this::mapMortgageToEntity)
+                    .collect(Collectors.toList());
 
             entity.setMortgageContracts(mortgageEntities);
         }
 
-//        if (dto.getCustomerId() != null) {
-//            CustomerEntity customer = new CustomerEntity();
-//            customer.setId(dto.getCustomerId());
-//            entity.setCustomer(customer);
-//        }
+        if (dto.getCustomerId() != null) {
+            CustomerEntity customer = new CustomerEntity();
+            customer.setId(dto.getCustomerId());
+            entity.setCustomer(customer);
+        }
 
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setUpdatedAt(dto.getUpdatedAt());
@@ -119,7 +119,8 @@ public class CreditContractMapper {
 
     private MortgageContractDTO mapMortgageToDto(MortgageContractEntity entity) {
 
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         MortgageContractDTO dto = new MortgageContractDTO();
         dto.setId(entity.getId());
@@ -131,7 +132,8 @@ public class CreditContractMapper {
 
     private MortgageContractEntity mapMortgageToEntity(MortgageContractDTO dto) {
 
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         MortgageContractEntity entity = new MortgageContractEntity();
         entity.setId(dto.getId());
@@ -140,4 +142,3 @@ public class CreditContractMapper {
         return entity;
     }
 }
-

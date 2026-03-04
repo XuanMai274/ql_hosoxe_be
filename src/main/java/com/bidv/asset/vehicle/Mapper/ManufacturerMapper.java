@@ -7,11 +7,13 @@ import com.bidv.asset.vehicle.entity.VehicleEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
+
 @Component
 public class ManufacturerMapper {
 
     public ManufacturerDTO toDto(ManufacturerEntity entity) {
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         ManufacturerDTO dto = new ManufacturerDTO();
         dto.setId(entity.getId());
@@ -27,15 +29,15 @@ public class ManufacturerMapper {
                     entity.getGuaranteeLetterEntities()
                             .stream()
                             .map(GuaranteeLetterEntity::getId)
-                            .toList()
-            );
+                            .toList());
         }
 
         return dto;
     }
 
     public ManufacturerEntity toEntity(ManufacturerDTO dto) {
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         ManufacturerEntity entity = new ManufacturerEntity();
         entity.setId(dto.getId());
@@ -47,5 +49,16 @@ public class ManufacturerMapper {
         entity.setGuaranteeRate(dto.getGuaranteeRate());
         entity.setTemplateCode(dto.getTemplateCode());
         return entity;
+    }
+
+    public void updateEntity(ManufacturerEntity entity, ManufacturerDTO dto) {
+        if (dto == null)
+            return;
+        entity.setCode(dto.getCode());
+        entity.setName(dto.getName());
+        entity.setLogo(dto.getLogo());
+        entity.setDescription(dto.getDescription());
+        entity.setGuaranteeRate(dto.getGuaranteeRate());
+        entity.setTemplateCode(dto.getTemplateCode());
     }
 }
