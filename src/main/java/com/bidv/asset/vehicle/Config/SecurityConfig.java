@@ -18,67 +18,78 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
+        private final JwtAuthenticationFilter jwtAuthFilter;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http
-                .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**", "/error").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/officer/**").hasAuthority("ROLE_OFFICER")
-                        .requestMatchers("/customer/**").hasAuthority("ROLE_CUSTOMER")
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception -> exception
-                        // Xử lý khi đã đăng nhập nhưng sai Role (403)
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            System.err.println(
-                                    ">>> Security 403 Error (Access Denied): " + accessDeniedException.getMessage()
-                                            + " | Request URI: " + request.getRequestURI());
-                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write(
-                                    "{\"success\": false, \"message\": \"Bạn không có quyền thực hiện hành động này\", \"status\": 403}");
-                        })
-                        // Xử lý khi chưa đăng nhập hoặc Token hết hạn (401)
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            System.err.println(">>> Security 401 Error (Auth Required): " + authException.getMessage()
-                                    + " | Request URI: " + request.getRequestURI());
-                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write(
-                                    "{\"success\": false, \"message\": \"Phiên đăng nhập hết hạn, vui lòng đăng nhập lại\", \"status\": 401}");
-                        }))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                http
+                                .cors(Customizer.withDefaults())
+                                .csrf(csrf -> csrf.disable())
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**")
+                                                .permitAll()
+                                                .requestMatchers("/api/auth/**", "/error").permitAll()
+                                                .requestMatchers("/uploads/**").permitAll()
+                                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
+                                                                "/swagger-ui.html")
+                                                .permitAll()
+                                                .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+                                                .requestMatchers("/officer/**").hasAuthority("ROLE_OFFICER")
+                                                .requestMatchers("/customer/**").hasAuthority("ROLE_CUSTOMER")
+                                                .anyRequest().authenticated())
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .exceptionHandling(exception -> exception
+                                                // Xử lý khi đã đăng nhập nhưng sai Role (403)
+                                                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                                                        System.err.println(
+                                                                        ">>> Security 403 Error (Access Denied): "
+                                                                                        + accessDeniedException
+                                                                                                        .getMessage()
+                                                                                        + " | Request URI: "
+                                                                                        + request.getRequestURI());
+                                                        response.setStatus(
+                                                                        jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                                                        response.setContentType("application/json;charset=UTF-8");
+                                                        response.getWriter().write(
+                                                                        "{\"success\": false, \"message\": \"Bạn không có quyền thực hiện hành động này\", \"status\": 403}");
+                                                })
+                                                // Xử lý khi chưa đăng nhập hoặc Token hết hạn (401)
+                                                .authenticationEntryPoint((request, response, authException) -> {
+                                                        System.err.println(">>> Security 401 Error (Auth Required): "
+                                                                        + authException.getMessage()
+                                                                        + " | Request URI: " + request.getRequestURI());
+                                                        response.setStatus(
+                                                                        jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                                                        response.setContentType("application/json;charset=UTF-8");
+                                                        response.getWriter().write(
+                                                                        "{\"success\": false, \"message\": \"Phiên đăng nhập hết hạn, vui lòng đăng nhập lại\", \"status\": 401}");
+                                                }))
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration config = new CorsConfiguration();
+                CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(List.of("http://localhost:4200"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+                config.setAllowedOriginPatterns(List.of("http://localhost:4200"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                config.setAllowedHeaders(List.of("*"));
+                config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", config);
+                source.registerCorsConfiguration("/**", config);
 
-        return source;
-    }
+                return source;
+        }
 }

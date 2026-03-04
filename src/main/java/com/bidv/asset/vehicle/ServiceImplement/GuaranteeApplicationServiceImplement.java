@@ -133,7 +133,8 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
 
     @Override
     @Transactional(readOnly = true)
-    public Page<GuaranteeApplicationDTO> search(Long customerId, Long manufacturerId, String fromDate, String toDate,
+    public Page<GuaranteeApplicationDTO> search(Long customerId, Long manufacturerId, String status, String fromDate,
+            String toDate,
             Pageable pageable) {
         LocalDateTime start = null;
         LocalDateTime end = null;
@@ -149,7 +150,15 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
             // Log error or handle invalid date format
         }
 
-        return repository.search(customerId, manufacturerId, start, end, pageable).map(mapper::toDTO);
+        // Map simplified status to actual DB status
+        String dbStatus = status;
+        if ("PENDING".equalsIgnoreCase(status)) {
+            dbStatus = "PENDING_APPROVAL";
+        } else if ("ACTIVE".equalsIgnoreCase(status)) {
+            dbStatus = "APPROVED";
+        }
+
+        return repository.search(customerId, manufacturerId, dbStatus, start, end, pageable).map(mapper::toDTO);
     }
 
     @Override

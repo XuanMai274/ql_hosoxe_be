@@ -30,6 +30,9 @@ public class CreditContractEntity {
     @Column(name = "contract_date")
     private LocalDate contractDate;
 
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+
     // ===== Tổng hạn mức =====
     @Column(name = "creditLimit", precision = 18, scale = 2)
     private BigDecimal creditLimit;
@@ -46,7 +49,7 @@ public class CreditContractEntity {
     @Column(name = "guarantee_balance", precision = 18, scale = 2)
     private BigDecimal guaranteeBalance = BigDecimal.ZERO;
     // ===== Dư bảo lãnh phát hành =====
-    @Column(name="issued_guarantee_balance", precision = 18, scale = 2)
+    @Column(name = "issued_guarantee_balance", precision = 18, scale = 2)
     private BigDecimal issuedGuaranteeBalance;
     @Column(name = "outstanding_guarantee_amount", precision = 18, scale = 2)
     private BigDecimal outstandingGuaranteeAmount;
@@ -81,8 +84,6 @@ public class CreditContractEntity {
     @OneToMany(mappedBy = "creditContract", fetch = FetchType.LAZY)
     private List<GuaranteeApplicationEntity> guaranteeApplications;
     // giải ngân
-    @OneToMany(mappedBy = "creditContract",
-            orphanRemoval = false,
-            fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "creditContract", orphanRemoval = false, fetch = FetchType.LAZY)
     private List<DisbursementEntity> disbursements;
 }

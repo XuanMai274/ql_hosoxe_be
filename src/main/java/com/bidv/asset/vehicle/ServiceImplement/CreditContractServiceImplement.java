@@ -3,8 +3,10 @@ package com.bidv.asset.vehicle.ServiceImplement;
 import com.bidv.asset.vehicle.DTO.CreditContractDTO;
 import com.bidv.asset.vehicle.Mapper.CreditContractMapper;
 import com.bidv.asset.vehicle.Repository.CreditContractRepository;
+import com.bidv.asset.vehicle.Repository.CustomerRepository;
 import com.bidv.asset.vehicle.Service.CreditContractService;
 import com.bidv.asset.vehicle.entity.CreditContractEntity;
+import com.bidv.asset.vehicle.entity.CustomerEntity;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,10 +21,22 @@ public class CreditContractServiceImplement implements CreditContractService {
     CreditContractRepository creditContractRepository;
     @Autowired
     CreditContractMapper creditContractMapper;
+    @Autowired
+    CustomerRepository customerRepository;
 
     @Override
     public CreditContractDTO createCreditContract(CreditContractDTO creditContractDTO) {
         CreditContractEntity creditContract = creditContractMapper.toEntity(creditContractDTO);
+
+        if (creditContractDTO.getCustomerId() != null) {
+            CustomerEntity customer = customerRepository.findById(creditContractDTO.getCustomerId())
+                    .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+            creditContract.setCustomer(customer);
+        }
+
+        if (creditContract.getContractDate() != null) {
+            creditContract.setExpiryDate(creditContract.getContractDate().plusYears(1));
+        }
         creditContract.setCreatedAt(LocalDateTime.now());
         try {
             CreditContractEntity creditContract1 = creditContractRepository.save(creditContract);
@@ -48,6 +62,9 @@ public class CreditContractServiceImplement implements CreditContractService {
         if (existingEntity != null) {
             existingEntity.setContractNumber(creditContractDTO.getContractNumber());
             existingEntity.setContractDate(creditContractDTO.getContractDate());
+            if (existingEntity.getContractDate() != null) {
+                existingEntity.setExpiryDate(existingEntity.getContractDate().plusYears(1));
+            }
             existingEntity.setStatus(creditContractDTO.getStatus());
             existingEntity.setCreditLimit(creditContractDTO.getCreditLimit());
             existingEntity.setUsedLimit(creditContractDTO.getUsedLimit());
@@ -55,6 +72,13 @@ public class CreditContractServiceImplement implements CreditContractService {
             existingEntity.setGuaranteeBalance(creditContractDTO.getGuaranteeBalance());
             existingEntity.setVehicleLoanBalance(creditContractDTO.getVehicleLoanBalance());
             existingEntity.setRealEstateLoanBalance(creditContractDTO.getRealEstateLoanBalance());
+
+            if (creditContractDTO.getCustomerId() != null) {
+                CustomerEntity customer = customerRepository.findById(creditContractDTO.getCustomerId())
+                        .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+                existingEntity.setCustomer(customer);
+            }
+
             existingEntity.setUpdatedAt(LocalDateTime.now());
 
             CreditContractEntity updatedEntity = creditContractRepository.save(existingEntity);
@@ -67,8 +91,7 @@ public class CreditContractServiceImplement implements CreditContractService {
     public CreditContractDTO findById(Long id) {
 
         CreditContractEntity entity = creditContractRepository.findById(id)
-                .orElseThrow(() ->
-                        new EntityNotFoundException("CreditContract not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("CreditContract not found with id: " + id));
 
         return creditContractMapper.toDto(entity);
     }

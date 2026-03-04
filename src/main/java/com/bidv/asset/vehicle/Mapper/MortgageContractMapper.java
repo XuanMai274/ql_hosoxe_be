@@ -26,6 +26,7 @@ public class MortgageContractMapper {
         dto.setId(entity.getId());
         dto.setContractNumber(entity.getContractNumber());
         dto.setContractDate(entity.getContractDate());
+        dto.setExpiryDate(entity.getExpiryDate());
         dto.setTotalCollateralValue(entity.getTotalCollateralValue());
         dto.setRemainingCollateralValue(entity.getRemainingCollateralValue());
         dto.setStatus(entity.getStatus());
@@ -85,6 +86,7 @@ public class MortgageContractMapper {
         entity.setId(dto.getId());
         entity.setContractNumber(dto.getContractNumber());
         entity.setContractDate(dto.getContractDate());
+        entity.setExpiryDate(dto.getExpiryDate());
         entity.setStatus(dto.getStatus());
         entity.setTotalCollateralValue(dto.getTotalCollateralValue());
         entity.setRemainingCollateralValue(dto.getRemainingCollateralValue());
@@ -116,6 +118,7 @@ public class MortgageContractMapper {
 
         entity.setContractNumber(dto.getContractNumber());
         entity.setContractDate(dto.getContractDate());
+        entity.setExpiryDate(dto.getExpiryDate());
         entity.setStatus(dto.getStatus());
         entity.setTotalCollateralValue(dto.getTotalCollateralValue());
         entity.setRemainingCollateralValue(dto.getRemainingCollateralValue());

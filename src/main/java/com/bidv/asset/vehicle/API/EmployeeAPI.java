@@ -8,6 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 @RestController
@@ -47,9 +51,14 @@ public class EmployeeAPI {
         return ResponseEntity.ok(service.getById(id));
     }
 
-    // ===== GET ALL =====
+    // ===== GET ALL (with search & pagination) =====
     @GetMapping
-    public ResponseEntity<List<EmployeeDTO>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+    public ResponseEntity<Page<EmployeeDTO>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(service.getAll(pageable, keyword));
     }
 }

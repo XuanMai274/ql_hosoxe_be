@@ -7,9 +7,13 @@ import com.bidv.asset.vehicle.Repository.EmployeeRepository;
 import com.bidv.asset.vehicle.Service.EmployeeService;
 import com.bidv.asset.vehicle.Service.UserAccountService;
 import com.bidv.asset.vehicle.entity.EmployeeEntity;
+import com.bidv.asset.vehicle.entity.RoleEntity;
 import com.bidv.asset.vehicle.entity.UserAccountEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,7 +26,10 @@ public class EmployeeServiceImplement implements EmployeeService {
     @Autowired
     EmployeeRepository employeeRepository;
     @Autowired
+    com.bidv.asset.vehicle.Repository.RoleRepository roleRepo;
+    @Autowired
     EmployeeMapper employeeMapper;
+
     @Override
     public EmployeeDTO createEmployeeWithAccount(EmployeeCreateRequestDTO request) {
         UserAccountEntity account = userAccountService.create(
@@ -49,10 +56,16 @@ public class EmployeeServiceImplement implements EmployeeService {
         entity.setEmployeeCode(dto.getEmployeeCode());
         entity.setFullName(dto.getFullName());
         entity.setPosition(dto.getPosition());
-        entity.setDepartment(dto.getDepartment());
         entity.setEmail(dto.getEmail());
         entity.setPhone(dto.getPhone());
         entity.setStatus(dto.getStatus());
+
+        // Cập nhật vai trò nếu có
+        if (dto.getRoleId() != null && entity.getUserAccount() != null) {
+            RoleEntity newRole = roleRepo.findById(dto.getRoleId())
+                    .orElseThrow(() -> new RuntimeException("Role not found"));
+            entity.getUserAccount().setRole(newRole);
+        }
 
         return employeeMapper.toDto(employeeRepository.save(entity));
     }
@@ -78,13 +91,10 @@ public class EmployeeServiceImplement implements EmployeeService {
         return employeeMapper.toDto(entity);
     }
 
-    // ================= GET ALL =================
+    // ================= GET ALL (with search & pagination) =================
     @Override
-    public List<EmployeeDTO> getAll() {
-
-        return StreamSupport
-                .stream(employeeRepository.findAll().spliterator(), false)
-                .map(employeeMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<EmployeeDTO> getAll(Pageable pageable, String keyword) {
+        return employeeRepository.search(keyword, pageable)
+                .map(employeeMapper::toDto);
     }
 }

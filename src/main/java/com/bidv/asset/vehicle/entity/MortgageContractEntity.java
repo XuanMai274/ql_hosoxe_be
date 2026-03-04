@@ -9,76 +9,70 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "mortgage_contract",
-        indexes = {
+@Table(name = "mortgage_contract", indexes = {
                 @Index(name = "idx_mortgage_contract_number", columnList = "contract_number"),
                 @Index(name = "idx_mortgage_customer", columnList = "customer_id")
-        })
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class MortgageContractEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mortgage_id_seq")
-    @SequenceGenerator(name = "mortgage_id_seq", sequenceName = "mortgage_id_seq")
-    private Long id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mortgage_id_seq")
+        @SequenceGenerator(name = "mortgage_id_seq", sequenceName = "mortgage_id_seq")
+        private Long id;
 
-    @Column(name = "contract_number", nullable = false, unique = true)
-    private String contractNumber; // Số HĐBD
+        @Column(name = "contract_number", nullable = false, unique = true)
+        private String contractNumber; // Số HĐBD
 
-    @Column(name = "contract_date")
-    private LocalDate contractDate;
+        @Column(name = "contract_date")
+        private LocalDate contractDate;
 
-    @Column(name = "total_collateral_value", precision = 18, scale = 2)
-    private BigDecimal totalCollateralValue; // Tổng giá trị TSBĐ
+        @Column(name = "expiry_date")
+        private LocalDate expiryDate;
 
-    @Column(name = "remaining_collateral_value", precision = 18, scale = 2)
-    private BigDecimal remainingCollateralValue;
-    @Column(name="security_registration_number")
-    private String securityRegistrationNumber; // số đơn đăng kí giao dịch đảm bảo
-    @Column(name="personal_id_number")
-    private String personalIdNumber; // mã cá nhân
-    // loại xe
-    @Column(name = "template_code")
-    private String templateCode;
-    @Column
-    private String status;
-    // ===== CUSTOMER =====
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
-    private CustomerEntity customer;
+        @Column(name = "total_collateral_value", precision = 18, scale = 2)
+        private BigDecimal totalCollateralValue; // Tổng giá trị TSBĐ
 
-    // ===== HDTD sử dụng tài sản này =====
-    @ManyToMany(mappedBy = "mortgageContracts")
-    private List<CreditContractEntity> creditContracts;
-    @OneToMany(
-            mappedBy = "mortgageContract",
-            fetch = FetchType.LAZY,
-            cascade = CascadeType.ALL
-    )
-    private List<GuaranteeLetterEntity> guaranteeLetters;
-    // LOẠI XE
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manufacturer_id")
-    private ManufacturerEntity manufacturer;
-    // liên kết với nhập kho
-    @OneToMany(
-            mappedBy = "mortgageContract",
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY
-    )
-    private List<WarehouseImportEntity> warehouseImports;
-    // đề xuất cấp bảo lãnh
-    @OneToMany(mappedBy = "mortgageContract", fetch = FetchType.LAZY)
-    private List<GuaranteeApplicationEntity> guaranteeApplications;
-    // số tự tăng
-    @OneToOne(mappedBy = "mortgageContract", cascade = CascadeType.ALL)
-    private MortgageContractSequenceEntity sequence;
-    // giải ngân
-    @OneToMany(mappedBy = "mortgageContract",
-            orphanRemoval = false,
-            fetch = FetchType.LAZY)
-    private List<DisbursementEntity> disbursements;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+        @Column(name = "remaining_collateral_value", precision = 18, scale = 2)
+        private BigDecimal remainingCollateralValue;
+        @Column(name = "security_registration_number")
+        private String securityRegistrationNumber; // số đơn đăng kí giao dịch đảm bảo
+        @Column(name = "personal_id_number")
+        private String personalIdNumber; // mã cá nhân
+        // loại xe
+        @Column(name = "template_code")
+        private String templateCode;
+        @Column
+        private String status;
+        // ===== CUSTOMER =====
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "customer_id", nullable = false)
+        private CustomerEntity customer;
+
+        // ===== HDTD sử dụng tài sản này =====
+        @ManyToMany(mappedBy = "mortgageContracts")
+        private List<CreditContractEntity> creditContracts;
+        @OneToMany(mappedBy = "mortgageContract", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+        private List<GuaranteeLetterEntity> guaranteeLetters;
+        // LOẠI XE
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "manufacturer_id")
+        private ManufacturerEntity manufacturer;
+        // liên kết với nhập kho
+        @OneToMany(mappedBy = "mortgageContract", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+        private List<WarehouseImportEntity> warehouseImports;
+        // đề xuất cấp bảo lãnh
+        @OneToMany(mappedBy = "mortgageContract", fetch = FetchType.LAZY)
+        private List<GuaranteeApplicationEntity> guaranteeApplications;
+        // số tự tăng
+        @OneToOne(mappedBy = "mortgageContract", cascade = CascadeType.ALL)
+        private MortgageContractSequenceEntity sequence;
+        // giải ngân
+        @OneToMany(mappedBy = "mortgageContract", orphanRemoval = false, fetch = FetchType.LAZY)
+        private List<DisbursementEntity> disbursements;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
 }

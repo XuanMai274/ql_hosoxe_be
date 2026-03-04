@@ -75,8 +75,11 @@ public class CustomerServiceImplement implements CustomerService {
                 CustomerEntity entity = customerRepo.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-                UserAccountEntity user = userRepo.findById(dto.getUserAccountId())
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                if (dto.getUserAccountId() != null) {
+                        UserAccountEntity user = userRepo.findById(dto.getUserAccountId())
+                                        .orElseThrow(() -> new RuntimeException("User not found"));
+                        entity.setUserAccount(user);
+                }
 
                 entity.setCustomerName(dto.getCustomerName());
                 entity.setCustomerType(dto.getCustomerType());
@@ -91,7 +94,6 @@ public class CustomerServiceImplement implements CustomerService {
                 entity.setBankAccountNo(dto.getBankAccountNo());
                 entity.setBankName(dto.getBankName());
                 entity.setStatus(dto.getStatus());
-                entity.setUserAccount(user);
 
                 entity.setUpdatedAt(LocalDateTime.now());
 

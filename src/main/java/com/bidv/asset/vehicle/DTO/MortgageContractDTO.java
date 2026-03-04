@@ -19,6 +19,7 @@ public class MortgageContractDTO {
 
     private String contractNumber;
     private LocalDate contractDate;
+    private LocalDate expiryDate;
     private String securityRegistrationNumber; // số đơn đăng kí giao dịch đảm bảo
     private String personalIdNumber; // mã cá nhân
     private BigDecimal totalCollateralValue;

@@ -60,12 +60,13 @@ public class GuaranteeApplicationAPI {
     @GetMapping
     public ResponseEntity<org.springframework.data.domain.Page<GuaranteeApplicationDTO>> getAll(
             @RequestParam(required = false) Long manufacturerId,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             org.springframework.data.domain.Pageable pageable,
             HttpServletRequest request) {
         Long customerId = getCustomerIdIfCustomer(request);
-        return ResponseEntity.ok(service.search(customerId, manufacturerId, fromDate, toDate, pageable));
+        return ResponseEntity.ok(service.search(customerId, manufacturerId, status, fromDate, toDate, pageable));
     }
 
     // GET BY ID
