@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.WarehouseExportDTO;
 import com.bidv.asset.vehicle.Mapper.WarehouseExportMapper;
 import com.bidv.asset.vehicle.Repository.*;
@@ -49,10 +50,10 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                 }
 
                 // 2. Tính tổng tiền thu nợ (Tổng giá trị bảo lãnh của các xe)
-                java.math.BigDecimal totalAmount = vehicles.stream()
+                java.math.BigDecimal totalAmount = MoneyUtil.format(vehicles.stream()
                                 .map(v -> v.getGuaranteeAmount() != null ? v.getGuaranteeAmount()
                                                 : java.math.BigDecimal.ZERO)
-                                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add));
 
                 // 3. Tạo đề nghị xuất kho (PENDING)
                 WarehouseExportEntity exportEntity = warehouseExportMapper.toEntity(dto);
@@ -137,8 +138,8 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                                         : BigDecimal.ZERO;
 
                         credit.setVehicleLoanBalance(
-                                        nvl(credit.getVehicleLoanBalance())
-                                                        .subtract(loanAmount));
+                                        MoneyUtil.format(nvl(credit.getVehicleLoanBalance())
+                                                        .subtract(loanAmount)));
 
                         v.setStatus("Đã trả khách hàng");
 //                        v.setInSafe(false);
@@ -165,8 +166,8 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
 
                                                                 // Cập nhật tổng tiền đã trả
                                                                 BigDecimal paidAmount = nvl(db.getTotalAmountPaid());
-                                                                db.setTotalAmountPaid(paidAmount
-                                                                                .add(nvl(loan.getLoanAmount())));
+                                                                db.setTotalAmountPaid(MoneyUtil.format(paidAmount
+                                                                                .add(nvl(loan.getLoanAmount()))));
 
                                                                 // Kiểm tra trạng thái Disbursement
                                                                 if (nvl(db.getDisbursementAmount()).compareTo(
@@ -181,13 +182,13 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                 }
 
                 credit.setUsedLimit(
-                                nvl(credit.getRealEstateLoanBalance())
+                                MoneyUtil.format(nvl(credit.getRealEstateLoanBalance())
                                                 .add(nvl(credit.getVehicleLoanBalance()))
-                                                .add(nvl(credit.getIssuedGuaranteeBalance())));
+                                                .add(nvl(credit.getIssuedGuaranteeBalance()))));
 
                 credit.setRemainingLimit(
-                                nvl(credit.getCreditLimit())
-                                                .subtract(credit.getUsedLimit()));
+                                MoneyUtil.format(nvl(credit.getCreditLimit())
+                                                .subtract(credit.getUsedLimit())));
 
                 credit.setUpdatedAt(LocalDateTime.now());
                 creditContractRepository.save(credit);
@@ -231,9 +232,9 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
 
                 BigDecimal collateralFromDb = vehicleRepository.sumPriceByStatus("Giữ trong kho");
 
-                final BigDecimal totalCollateral = collateralFromDb != null ? collateralFromDb : BigDecimal.ZERO;
-
-                final BigDecimal realEstate = new BigDecimal("8910000000");
+                final BigDecimal totalCollateral = collateralFromDb != null ? MoneyUtil.format(collateralFromDb) : BigDecimal.ZERO;
+ 
+                final BigDecimal realEstate = MoneyUtil.format(new BigDecimal("8910000000"));
 
                 return warehouseExportRepository.findByStatus("PENDING")
                                 .stream()

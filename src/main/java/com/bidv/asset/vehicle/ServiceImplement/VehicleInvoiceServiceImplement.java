@@ -1,5 +1,7 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
+
 import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.Mapper.InvoiceMapper;
 import com.bidv.asset.vehicle.Repository.*;
@@ -101,11 +103,9 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
 
             vehicle.setGuaranteeLetter(gl);
             /* ===== TÍNH guaranteeAmount ===== */
-            BigDecimal rate = gl.getManufacturer()
-                    .getGuaranteeRate();
-
-            BigDecimal guaranteeAmount = vehicle.getPrice()
-                    .multiply(rate);
+            BigDecimal rate = MoneyUtil.rate(gl.getManufacturer().getGuaranteeRate());
+ 
+            BigDecimal guaranteeAmount = MoneyUtil.format(vehicle.getPrice().multiply(rate));
             vehicle.setGuaranteeAmount(guaranteeAmount);
             vehicle = vehicleRepository.save(vehicle);
             /* ================== 3. UPDATE GUARANTEE LETTER ================== */

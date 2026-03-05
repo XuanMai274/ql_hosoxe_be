@@ -16,16 +16,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class VehicleExportServiceImplement implements VehicleExportService {
 
     @Autowired
     VehicleRepository vehicleRepository;
+
+    @Value("${app.template-root}")
+    private String templateRoot;
 
     /* ========================================================= */
     /* ======================= EXCEL ============================ */
@@ -80,7 +87,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
             throw new RuntimeException("Không có xe thuộc loại " + manufacturer);
         }
 
-        XWPFDocument doc = loadTemplate("/templates/NhapKho/PNK.docx");
+        XWPFDocument doc = loadTemplate("NhapKho/PNK.docx");
 
         BigDecimal total = calculateTotal(filtered);
 
@@ -113,7 +120,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
                 filterByManufacturer(vehicles, manufacturer);
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/bao-cao-dinh-gia-tai-san.docx");
+                loadTemplate("NhapKho/bao-cao-dinh-gia-tai-san.docx");
 
         BigDecimal total = calculateTotal(filtered);
 
@@ -146,7 +153,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
                 filterByManufacturer(vehicles, manufacturer);
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/bien-ban-dinh-gia-NK.docx");
+                loadTemplate("NhapKho/bien-ban-dinh-gia-NK.docx");
 
         BigDecimal total = calculateTotal(filtered);
 
@@ -189,7 +196,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         validateSingleManufacturer(vehicles, "HYUNDAI");
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/phu-luc-hop-dong-thue-chap-hyndai.docx");
+                loadTemplate("NhapKho/phu-luc-hop-dong-thue-chap-hyndai.docx");
 
         BigDecimal total = calculateTotal(vehicles);
 
@@ -214,7 +221,7 @@ public class VehicleExportServiceImplement implements VehicleExportService {
         validateSingleManufacturer(vehicles, "VINFAST");
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/phu-luc-hop-dong-thue-chap-vinfast.docx");
+                loadTemplate("NhapKho/phu-luc-hop-dong-thue-chap-vinfast.docx");
 
         BigDecimal total = calculateTotal(vehicles);
 
@@ -511,15 +518,12 @@ public class VehicleExportServiceImplement implements VehicleExportService {
     }
 
 
-    private XWPFDocument loadTemplate(String path) throws IOException {
-
-        var is = getClass().getResourceAsStream(path);
-
-        if (is == null) {
-            throw new IOException("Không tìm thấy template: " + path);
+    private XWPFDocument loadTemplate(String relativePath) throws IOException {
+        Path path = Paths.get(templateRoot, relativePath);
+        if (!Files.exists(path)) {
+            throw new IOException("Không tìm thấy template: " + path.toAbsolutePath());
         }
-
-        return new XWPFDocument(is);
+        return new XWPFDocument(Files.newInputStream(path));
     }
 
     private byte[] writeDoc(XWPFDocument doc) throws IOException {

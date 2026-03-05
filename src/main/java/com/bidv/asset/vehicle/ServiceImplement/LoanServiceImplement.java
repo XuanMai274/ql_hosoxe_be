@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.LoanDTO;
 import com.bidv.asset.vehicle.Mapper.LoanMapper;
 import com.bidv.asset.vehicle.entity.*;
@@ -182,9 +183,9 @@ public class LoanServiceImplement implements LoanService {
                                                 : guaranteeLetterEntity.getVehicleWarehouseCount() + 1);
                 // tăng tiền xe đã giải ngân
                 guaranteeLetterEntity.setDisbursement(
-                                guaranteeLetterEntity.getDisbursement() == null
+                                MoneyUtil.format(guaranteeLetterEntity.getDisbursement() == null
                                                 ? loanAmount
-                                                : guaranteeLetterEntity.getDisbursement().add(loanAmount));
+                                                : guaranteeLetterEntity.getDisbursement().add(loanAmount)));
 
                 guaranteeLetterEntity.setUpdatedAt(LocalDateTime.now());
 
@@ -196,24 +197,24 @@ public class LoanServiceImplement implements LoanService {
 
                 // giảm dư bảo lãnh phát hành
                 credit.setIssuedGuaranteeBalance(
-                                nvl(credit.getIssuedGuaranteeBalance()).subtract(loanAmount));
+                                MoneyUtil.format(nvl(credit.getIssuedGuaranteeBalance()).subtract(loanAmount)));
                 // giảm dư bảo lãnh thực tế
-                credit.setGuaranteeBalance(nvl(credit.getGuaranteeBalance().subtract(loanAmount)));
+                credit.setGuaranteeBalance(MoneyUtil.format(nvl(credit.getGuaranteeBalance().subtract(loanAmount))));
                 // tăng dư nợ vay xe
                 credit.setVehicleLoanBalance(
-                                nvl(credit.getVehicleLoanBalance()).add(loanAmount));
+                                MoneyUtil.format(nvl(credit.getVehicleLoanBalance()).add(loanAmount)));
                 // tính lại hạn mức đã sử dụng=dư nợ vay xe+dư bảo lãnh+dư nợ vay BDS
                 credit.setUsedLimit(
-                                nvl(credit.getRealEstateLoanBalance())
+                                MoneyUtil.format(nvl(credit.getRealEstateLoanBalance())
                                                 .add(nvl(credit.getVehicleLoanBalance()))
-                                                .add(nvl(credit.getIssuedGuaranteeBalance())));
+                                                .add(nvl(credit.getIssuedGuaranteeBalance()))));
                 // Tính số dư bảo lãnh chênh lệch
                 credit.setOutstandingGuaranteeAmount(
                                 credit.getIssuedGuaranteeBalance()
                                                 .subtract(credit.getGuaranteeBalance()));
                 // tính lại hạn mức còn lại= tổng hạn mức - hạn mức đã sử dụng
                 credit.setRemainingLimit(
-                                nvl(credit.getCreditLimit()).subtract(credit.getUsedLimit()));
+                                MoneyUtil.format(nvl(credit.getCreditLimit()).subtract(credit.getUsedLimit())));
 
                 credit.setUpdatedAt(LocalDateTime.now());
                 /* ================= UPDATE VEHICLE ================= */
@@ -267,7 +268,7 @@ public class LoanServiceImplement implements LoanService {
                                 credit.getUsedLimit().subtract(oldAmount));
 
                 credit.setRemainingLimit(
-                                credit.getCreditLimit().subtract(credit.getUsedLimit()));
+                                MoneyUtil.format(credit.getCreditLimit().subtract(credit.getUsedLimit())));
 
                 oldGuarantee.setRemainingAmount(
                                 oldGuarantee.getRemainingAmount().add(oldAmount));
@@ -304,7 +305,7 @@ public class LoanServiceImplement implements LoanService {
                                 credit.getUsedLimit().add(newAmount));
 
                 credit.setRemainingLimit(
-                                credit.getCreditLimit().subtract(credit.getUsedLimit()));
+                                MoneyUtil.format(credit.getCreditLimit().subtract(credit.getUsedLimit())));
 
                 newGuarantee.setRemainingAmount(
                                 newGuarantee.getRemainingAmount().subtract(newAmount));

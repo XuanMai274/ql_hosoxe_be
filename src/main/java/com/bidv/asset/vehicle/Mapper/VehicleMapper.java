@@ -55,6 +55,10 @@ public class VehicleMapper {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setGuaranteeAmount(entity.getGuaranteeAmount());
         dto.setInSafe(entity.getInSafe());
+        if(entity.getWarehouseImport()!=null){
+            dto.setWarehouseExportId(entity.getWarehouseImport().getId());
+            dto.setWarehouseImportId(entity.getWarehouseImport().getId());
+        }
         /* ===== INVOICE ===== */
         if (entity.getInvoice() != null) {
             InvoiceEntity invoice = entity.getInvoice();

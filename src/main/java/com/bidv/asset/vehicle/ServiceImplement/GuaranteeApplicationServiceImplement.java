@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.GuaranteeApplicationDTO;
 import com.bidv.asset.vehicle.Mapper.GuaranteeApplicationMapper;
 import com.bidv.asset.vehicle.Repository.*;
@@ -88,7 +89,7 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
 
             BigDecimal guaranteeRate = manufacturer.getGuaranteeRate() == null
                     ? BigDecimal.ZERO
-                    : manufacturer.getGuaranteeRate();
+                    : MoneyUtil.rate(manufacturer.getGuaranteeRate());
 
             for (GuaranteeApplicationVehicleEntity vehicle : entity.getVehicles()) {
 
@@ -99,7 +100,7 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
                         : vehicle.getVehiclePrice();
 
                 // ===== AUTO CALCULATE GUARANTEE AMOUNT =====
-                BigDecimal guaranteeAmount = price.multiply(guaranteeRate);
+                BigDecimal guaranteeAmount = MoneyUtil.format(price.multiply(guaranteeRate));
                 vehicle.setGuaranteeAmount(guaranteeAmount);
 
                 // ===== AUTO CALCULATE TERM =====
@@ -229,8 +230,8 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
                 .map(v -> v.getGuaranteeAmount() == null ? BigDecimal.ZERO : v.getGuaranteeAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        entity.setTotalVehicleAmount(totalVehicle);
-        entity.setTotalGuaranteeAmount(totalGuarantee);
+        entity.setTotalVehicleAmount(MoneyUtil.format(totalVehicle));
+        entity.setTotalGuaranteeAmount(MoneyUtil.format(totalGuarantee));
     }
 
     private int calculateTermDays(String manufacturerName, String vehicleName) {

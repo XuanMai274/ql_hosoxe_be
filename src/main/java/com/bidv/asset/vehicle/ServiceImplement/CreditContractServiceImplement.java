@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.CreditContractDTO;
 import com.bidv.asset.vehicle.Mapper.CreditContractMapper;
 import com.bidv.asset.vehicle.Repository.CreditContractRepository;
@@ -11,6 +12,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +29,13 @@ public class CreditContractServiceImplement implements CreditContractService {
     @Override
     public CreditContractDTO createCreditContract(CreditContractDTO creditContractDTO) {
         CreditContractEntity creditContract = creditContractMapper.toEntity(creditContractDTO);
-
+        creditContract.setUsedLimit(MoneyUtil.format(BigDecimal.ZERO));
+        creditContract.setIssuedGuaranteeBalance(MoneyUtil.format(BigDecimal.ZERO));
+        creditContract.setOutstandingGuaranteeAmount(MoneyUtil.format(BigDecimal.ZERO));
+        creditContract.setGuaranteeBalance(MoneyUtil.format(BigDecimal.ZERO));
+        creditContract.setRemainingLimit(MoneyUtil.format(creditContract.getCreditLimit()));
+        creditContract.setVehicleLoanBalance(MoneyUtil.format(BigDecimal.ZERO));
+        creditContract.setRealEstateLoanBalance(MoneyUtil.format(BigDecimal.ZERO));
         if (creditContractDTO.getCustomerId() != null) {
             CustomerEntity customer = customerRepository.findById(creditContractDTO.getCustomerId())
                     .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
@@ -66,12 +74,12 @@ public class CreditContractServiceImplement implements CreditContractService {
                 existingEntity.setExpiryDate(existingEntity.getContractDate().plusYears(1));
             }
             existingEntity.setStatus(creditContractDTO.getStatus());
-            existingEntity.setCreditLimit(creditContractDTO.getCreditLimit());
-            existingEntity.setUsedLimit(creditContractDTO.getUsedLimit());
-            existingEntity.setRemainingLimit(creditContractDTO.getRemainingLimit());
-            existingEntity.setGuaranteeBalance(creditContractDTO.getGuaranteeBalance());
-            existingEntity.setVehicleLoanBalance(creditContractDTO.getVehicleLoanBalance());
-            existingEntity.setRealEstateLoanBalance(creditContractDTO.getRealEstateLoanBalance());
+            existingEntity.setCreditLimit(MoneyUtil.format(creditContractDTO.getCreditLimit()));
+            existingEntity.setUsedLimit(MoneyUtil.format(creditContractDTO.getUsedLimit()));
+            existingEntity.setRemainingLimit(MoneyUtil.format(creditContractDTO.getRemainingLimit()));
+            existingEntity.setGuaranteeBalance(MoneyUtil.format(creditContractDTO.getGuaranteeBalance()));
+            existingEntity.setVehicleLoanBalance(MoneyUtil.format(creditContractDTO.getVehicleLoanBalance()));
+            existingEntity.setRealEstateLoanBalance(MoneyUtil.format(creditContractDTO.getRealEstateLoanBalance()));
 
             if (creditContractDTO.getCustomerId() != null) {
                 CustomerEntity customer = customerRepository.findById(creditContractDTO.getCustomerId())
