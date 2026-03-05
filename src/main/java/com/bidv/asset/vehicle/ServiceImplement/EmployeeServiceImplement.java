@@ -41,6 +41,7 @@ public class EmployeeServiceImplement implements EmployeeService {
         EmployeeEntity employee = employeeMapper.toEntity(
                 request.getEmployee(),
                 account);
+        employee.setStatus("ACTIVE");
 
         return employeeMapper.toDto(employeeRepository.save(employee));
     }
