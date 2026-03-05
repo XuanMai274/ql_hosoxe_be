@@ -11,6 +11,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,11 +68,30 @@ public class CreditContractServiceImplement implements CreditContractService {
             }
             existingEntity.setStatus(creditContractDTO.getStatus());
             existingEntity.setCreditLimit(creditContractDTO.getCreditLimit());
-            existingEntity.setUsedLimit(creditContractDTO.getUsedLimit());
-            existingEntity.setRemainingLimit(creditContractDTO.getRemainingLimit());
-            existingEntity.setGuaranteeBalance(creditContractDTO.getGuaranteeBalance());
-            existingEntity.setVehicleLoanBalance(creditContractDTO.getVehicleLoanBalance());
-            existingEntity.setRealEstateLoanBalance(creditContractDTO.getRealEstateLoanBalance());
+
+            // Cập nhật các giá trị số dư
+            BigDecimal issued = nvl(creditContractDTO.getIssuedGuaranteeBalance());
+            BigDecimal vehicleLoan = nvl(creditContractDTO.getVehicleLoanBalance());
+            BigDecimal realEstateLoan = nvl(creditContractDTO.getRealEstateLoanBalance());
+            BigDecimal creditLimit = nvl(creditContractDTO.getCreditLimit());
+            BigDecimal actualGuarantee = nvl(creditContractDTO.getGuaranteeBalance());
+
+            existingEntity.setIssuedGuaranteeBalance(issued);
+            existingEntity.setVehicleLoanBalance(vehicleLoan);
+            existingEntity.setRealEstateLoanBalance(realEstateLoan);
+
+            // Tự động tính Used Limit
+            BigDecimal usedLimit = issued.add(vehicleLoan).add(realEstateLoan);
+            existingEntity.setUsedLimit(usedLimit);
+
+            // Tự động tính Remaining Limit
+            existingEntity.setRemainingLimit(creditLimit.subtract(usedLimit));
+
+            // Cập nhật Dư bảo lãnh thực tế (lấy từ DTO)
+            existingEntity.setGuaranteeBalance(actualGuarantee);
+
+            // Cập nhật Dư bảo lãnh phát hành (Outstanding) = BL phát hành - BL thực tế
+            existingEntity.setOutstandingGuaranteeAmount(issued.subtract(actualGuarantee));
 
             if (creditContractDTO.getCustomerId() != null) {
                 CustomerEntity customer = customerRepository.findById(creditContractDTO.getCustomerId())
@@ -85,6 +105,10 @@ public class CreditContractServiceImplement implements CreditContractService {
             return creditContractMapper.toDto(updatedEntity);
         }
         return null;
+    }
+
+    private BigDecimal nvl(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 
     @Override

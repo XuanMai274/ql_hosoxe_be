@@ -5,6 +5,7 @@ import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.entity.*;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,11 +30,24 @@ public class MortgageContractMapper {
         dto.setExpiryDate(entity.getExpiryDate());
         dto.setTotalCollateralValue(entity.getTotalCollateralValue());
         dto.setRemainingCollateralValue(entity.getRemainingCollateralValue());
-        dto.setStatus(entity.getStatus());
+
+        // Logic kiểm tra hết hạn tại thời điểm truy vấn
+        if (entity.getExpiryDate() != null && entity.getExpiryDate().isBefore(LocalDate.now())) {
+            dto.setStatus("EXPIRED");
+        } else {
+            dto.setStatus(entity.getStatus());
+        }
+
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         dto.setSecurityRegistrationNumber(entity.getSecurityRegistrationNumber());
         dto.setPersonalIdNumber(entity.getPersonalIdNumber());
+
+        // ===== SEQUENCE (Counters) =====
+        if (entity.getSequence() != null) {
+            dto.setGuaranteeRunningNo(entity.getSequence().getGuaranteeRunningNo());
+            dto.setWarehouseRunningNo(entity.getSequence().getWarehouseRunningNo());
+        }
         // ===== CUSTOMER =====
         if (entity.getCustomer() != null) {
             dto.setCustomerId(entity.getCustomer().getId());

@@ -43,12 +43,13 @@ public class GuaranteeApplicationAPI {
     // ===================== CUSTOMER =======================
     // =====================================================
 
-    // CREATE GUARANTEE APPLICATION
-    @PostMapping
-    public ResponseEntity<GuaranteeApplicationDTO> create(
+    // UPDATE GUARANTEE APPLICATION
+    @PutMapping("/{id}")
+    public ResponseEntity<GuaranteeApplicationDTO> update(
+            @PathVariable Long id,
             @RequestBody GuaranteeApplicationDTO dto) {
 
-        GuaranteeApplicationDTO result = service.create(dto);
+        GuaranteeApplicationDTO result = service.update(id, dto);
         return ResponseEntity.ok(result);
     }
 
@@ -67,6 +68,20 @@ public class GuaranteeApplicationAPI {
             HttpServletRequest request) {
         Long customerId = getCustomerIdIfCustomer(request);
         return ResponseEntity.ok(service.search(customerId, manufacturerId, status, fromDate, toDate, pageable));
+    }
+
+    // LIST APPLICATIONS EXCLUDING REJECTED
+    @GetMapping("/exclude-rejected")
+    public ResponseEntity<org.springframework.data.domain.Page<GuaranteeApplicationDTO>> getExcludeRejected(
+            @RequestParam(required = false) Long manufacturerId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            org.springframework.data.domain.Pageable pageable,
+            HttpServletRequest request) {
+        Long customerId = getCustomerIdIfCustomer(request);
+        return ResponseEntity
+                .ok(service.searchExcludeRejected(customerId, manufacturerId, status, fromDate, toDate, pageable));
     }
 
     // GET BY ID

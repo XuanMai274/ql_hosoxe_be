@@ -5,6 +5,7 @@ import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.entity.*;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,9 +30,16 @@ public class CreditContractMapper {
         dto.setGuaranteeBalance(entity.getGuaranteeBalance());
         dto.setVehicleLoanBalance(entity.getVehicleLoanBalance());
         dto.setRealEstateLoanBalance(entity.getRealEstateLoanBalance());
-        dto.setStatus(entity.getStatus());
         dto.setIssuedGuaranteeBalance(entity.getIssuedGuaranteeBalance());
         dto.setOutstandingGuaranteeAmount(entity.getOutstandingGuaranteeAmount());
+
+        // Logic kiểm tra hết hạn tại thời điểm truy vấn
+        if (entity.getExpiryDate() != null && entity.getExpiryDate().isBefore(LocalDate.now())) {
+            dto.setStatus("EXPIRED");
+        } else {
+            dto.setStatus(entity.getStatus());
+        }
+
         if (entity.getMortgageContracts() != null) {
 
             List<MortgageContractDTO> mortgageDtos = entity.getMortgageContracts()

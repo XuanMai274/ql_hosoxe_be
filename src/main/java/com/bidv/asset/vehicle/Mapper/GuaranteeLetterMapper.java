@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 public class GuaranteeLetterMapper {
     @Autowired
     GuaranteeApplicationMapper guaranteeApplicationMapper;
+    @Autowired
+    private MortgageContractMapper mortgageContractMapper;
 
     // =====================================================
     // ENTITY → DTO
@@ -55,13 +57,7 @@ public class GuaranteeLetterMapper {
             dto.setCreditContractDTO(cc);
         }
         if (entity.getMortgageContract() != null) {
-            MortgageContractDTO mc = new MortgageContractDTO();
-            mc.setId(entity.getMortgageContract().getId());
-            mc.setContractNumber(entity.getMortgageContract().getContractNumber());
-            mc.setContractDate(entity.getMortgageContract().getContractDate());
-            mc.setSecurityRegistrationNumber(entity.getMortgageContract().getSecurityRegistrationNumber());
-            mc.setPersonalIdNumber(entity.getMortgageContract().getPersonalIdNumber());
-            dto.setMortgageContractDTO(mc);
+            dto.setMortgageContractDTO(mortgageContractMapper.toDTO(entity.getMortgageContract()));
         }
 
         if (entity.getManufacturer() != null) {
