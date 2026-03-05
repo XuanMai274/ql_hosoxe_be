@@ -21,7 +21,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 
@@ -157,6 +159,27 @@ public class VehicleAPI {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return vehicleService.getCustomerAvailableVehicles(status, chassisNumber, manufacturer, loanContractNumber,
                 pageable);
+    }
+    // lấy lên danh sách xe vinfast chưa nhập kho
+    @GetMapping("officer/vehicles/vinfast/in-safe")
+    public ResponseEntity<List<VehicleDTO>> getVinfastInSafeVehicles() {
+        return ResponseEntity.ok(
+                vehicleService.getVinfastInSafeVehicles()
+        );
+    }
+    @PutMapping("/officer/vehicles/update-safe")
+    public ResponseEntity<?> updateVehicleInSafe(
+            @RequestBody List<Long> vehicleIds,
+            @RequestParam Boolean inSafe
+    ) {
+
+        int updatedCount = vehicleService.updateVehicleInSafe(vehicleIds, inSafe);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "updatedCount", updatedCount,
+                "message", "Cập nhật thành công " + updatedCount + " xe"
+        ));
     }
 
 

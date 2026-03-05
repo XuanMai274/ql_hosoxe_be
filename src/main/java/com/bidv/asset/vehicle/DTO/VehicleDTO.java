@@ -55,6 +55,8 @@ public class VehicleDTO {
     private String loanContractNumber;
     private LoanDTO loan;
     private ManufacturerDTO manufacturerDTO;
+    // chiếc xe này có đang giữ trong két hay không
+    private Boolean inSafe;
     /* ================== OCR / VALIDATION FIELDS (MỚI) ================== */
 
     /** Giá trị VIN gốc từ OCR (để FE hiển thị & sửa) */

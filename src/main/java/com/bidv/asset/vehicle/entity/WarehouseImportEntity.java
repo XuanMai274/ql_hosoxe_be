@@ -3,6 +3,7 @@ package com.bidv.asset.vehicle.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +40,9 @@ public class WarehouseImportEntity {
 
     @OneToMany(mappedBy = "warehouseImport", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<VehicleEntity> vehicles;
-
+    @Column(name="total_collateral_value")
+    private BigDecimal totalCollateralValue; // Tổng TSHTTTL
+    @Column(name="total_outstanding_balance")
+    private BigDecimal totalOutstandingBalance; //tổng dư nợ
     private LocalDateTime createdAt;
 }

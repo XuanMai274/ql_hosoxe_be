@@ -42,6 +42,9 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
     public byte[] exportDocx(String templateName, DisbursementDTO disbursementDTO, List<Long> vehicleIds) throws IOException {
         XWPFDocument doc = loadTemplate(TEMPLATE_PATH + templateName);
 
+        if (vehicleIds == null || vehicleIds.isEmpty()) {
+            throw new RuntimeException("Danh sách xe không được để trống");
+        }
         List<VehicleDTO> vehicles = vehicleRepository.findAllById(vehicleIds)
                 .stream().map(vehicleMapper::toDto).toList();
         BigDecimal totalVehicleAmount = vehicles.stream()
@@ -64,29 +67,40 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         
         // Đảm bảo font chữ
         forceTimesNewRoman(doc);
-
+        replaceHDTDCTTableOnly(doc, data);
         return writeDoc(doc);
     }
 
     @Override
     public Map<String, byte[]> exportAll(DisbursementDTO disbursementDTO, List<Long> vehicleIds) throws IOException {
-        // Lấy hãng xe từ danh sách vehicleIds
+
+        if (vehicleIds == null || vehicleIds.isEmpty()) {
+            throw new RuntimeException("Danh sách xe không được để trống");
+        }
+
         List<VehicleEntity> vehicles = vehicleRepository.findAllById(vehicleIds);
 
         if (vehicles.isEmpty()) {
             throw new RuntimeException("Không tìm thấy xe");
         }
 
-        // Giả sử tất cả xe cùng hãng
         String manufacturer = vehicles.get(0).getManufacturerEntity().getCode();
 
-        String contractTemplate;
+        Map<String, byte[]> results = new HashMap<>();
 
-        if (manufacturer.contains("hyundai")) {
-            contractTemplate = "hop-dong-tin-dung-cu-the_hyundai.docx";
-        } else if (manufacturer.contains("VINFAST")) {
-            contractTemplate = "hop-dong-tin-dung-cu-the-hyundai.docx";
+        // 1️⃣ Export hợp đồng tín dụng cụ thể
+        String contractTemplate = switch (manufacturer) {
+            case "VINFAST" -> "hop-dong-tin-dung-cu-the-vinfast.docx";
+            case "HYUNDAI" -> "hop-dong-tin-dung-cu-the-hyundai.docx";
+            default -> null;
+        };
+
+        if (contractTemplate != null) {
+            results.put(contractTemplate,
+                    exportDocx(contractTemplate, disbursementDTO, vehicleIds));
         }
+
+        // 2️⃣ Export các template còn lại
         String[] templates = {
                 "de-xuat-giai-ngan.docx",
                 "duyet-ngan-hang.docx",
@@ -95,14 +109,11 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
                 "y-kien-quan-tri.docx"
         };
 
-        Map<String, byte[]> results = new HashMap<>();
         for (String template : templates) {
-            try {
-                results.put(template, exportDocx(template, disbursementDTO, vehicleIds));
-            } catch (Exception e) {
-                System.err.println("Lỗi khi export template " + template + ": " + e.getMessage());
-            }
+            results.put(template,
+                    exportDocx(template, disbursementDTO, vehicleIds));
         }
+
         return results;
     }
 
@@ -111,37 +122,63 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
             DisbursementDTO disbursementDTO,
             List<Long> vehicleIds
     ) throws IOException {
-        // Lấy hãng xe từ danh sách vehicleIds
+
+        if (vehicleIds == null || vehicleIds.isEmpty()) {
+            throw new IllegalArgumentException("Danh sách xe không được để trống");
+        }
+
+        // Làm sạch danh sách ID
+        vehicleIds = vehicleIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
         List<VehicleEntity> vehicles = vehicleRepository.findAllById(vehicleIds);
 
         if (vehicles.isEmpty()) {
             throw new RuntimeException("Không tìm thấy xe");
         }
 
-        // Giả sử tất cả xe cùng hãng
-        String manufacturer = vehicles.get(0).getManufacturerEntity().getCode();
+        String manufacturerCode =
+                vehicles.get(0).getManufacturerEntity().getCode();
 
-        String contractTemplate;
+        Map<String, byte[]> results = new LinkedHashMap<>();
 
-        if (manufacturer.contains("hyundai")) {
-            contractTemplate = "hop-dong-tin-dung-cu-the_hyundai.docx";
-        } else if (manufacturer.contains("VINFAST")) {
-            contractTemplate = "hop-dong-tin-dung-cu-the-hyundai.docx";
+        // =========================
+        // 1️ Export HỢP ĐỒNG TÍN DỤNG CỤ THỂ
+        // =========================
+        String contractTemplate = null;
+
+        switch (manufacturerCode.toUpperCase()) {
+            case "VINFAST":
+                contractTemplate = "hop-dong-tin-dung-cu-the-vinfast.docx";
+                break;
+            case "HYUNDAI":
+                contractTemplate = "hop-dong-tin-dung-cu-the-hyundai.docx";
+                break;
+            default:
+                break;
         }
+
+        if (contractTemplate != null) {
+            results.put(
+                    contractTemplate,
+                    exportDocx(contractTemplate, disbursementDTO, vehicleIds)
+            );
+        }
+
+        // =========================
+        // 2️ Export các file khác
+        // =========================
         String[] templates = {
                 "phieu-tiep-nhan-ho-so_K.docx"
         };
 
-        Map<String, byte[]> results = new LinkedHashMap<>();
-
         for (String template : templates) {
-            try {
-                results.put(template,
-                        exportDocx(template, disbursementDTO, vehicleIds));
-            } catch (Exception e) {
-                System.err.println("Lỗi khi export template "
-                        + template + ": " + e.getMessage());
-            }
+            results.put(
+                    template,
+                    exportDocx(template, disbursementDTO, vehicleIds)
+            );
         }
 
         return results;
@@ -184,9 +221,10 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         BigDecimal rate = Optional.ofNullable(manufacturer.getGuaranteeRate())
                 .orElse(BigDecimal.ZERO);
 
-        BigDecimal result = rate.subtract(BigDecimal.TEN);
+        BigDecimal percent = rate.multiply(BigDecimal.valueOf(100));
 
-        map.put("{{gate}}", result.toPlainString());
+        map.put("{{gate}}",
+                percent.stripTrailingZeros().toPlainString());
         map.put("{{total_vehicle_text}}",
                 VietnameseNumberUtil.toVietnamese(totalVehicleAmount));
         BigDecimal disbursementAmount = dto.getDisbursementAmount();
@@ -290,7 +328,17 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         map.put("{{color}}", safe(v.getColor()));
         map.put("{{price}}", formatMoney(v.getGuaranteeAmount()));
         map.put("{{description}}", safe(v.getDescription()));
-        map.put("{{gate}}",safe(String.valueOf(v.getGuaranteeLetterDTO().getManufacturerDTO().getGuaranteeRate())));
+        BigDecimal rate = Optional.ofNullable(
+                v.getGuaranteeLetterDTO()
+                        .getManufacturerDTO()
+                        .getGuaranteeRate()
+        ).orElse(BigDecimal.ZERO);
+
+        // chuyển 0.75 -> 75
+        BigDecimal percent = rate.multiply(BigDecimal.valueOf(100));
+
+        map.put("{{gate}}",
+                safe(percent.stripTrailingZeros().toPlainString()));
         map.put("{{TBL}}",safe(v.getGuaranteeLetterDTO().getGuaranteeNoticeNumber()));
         map.put("{{REF}}",safe(v.getGuaranteeLetterDTO().getReferenceCode()));
         return map;
@@ -430,5 +478,37 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
     private String formatDate(LocalDate date) {
         if (date == null) return "";
         return String.format("%02d/%02d/%d", date.getDayOfMonth(), date.getMonthValue(), date.getYear());
+    }
+    private void replaceHDTDCTTableOnly(XWPFDocument doc, Map<String, String> data) {
+
+        for (XWPFTable table : doc.getTables()) {
+
+            boolean isTargetTable = false;
+
+            // Kiểm tra bảng có chứa cụm đặc trưng
+            for (XWPFTableRow row : table.getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    if (cell.getText() != null &&
+                            cell.getText().contains("Hợp đồng tín dụng cụ thể")) {
+                        isTargetTable = true;
+                        break;
+                    }
+                }
+                if (isTargetTable) break;
+            }
+
+            if (!isTargetTable) continue;
+
+            // Chỉ replace 2 placeholder
+            Map<String, String> smallMap = new HashMap<>();
+            smallMap.put("{{HDTDCT}}", data.get("{{HDTDCT}}"));
+            smallMap.put("{{CURRENT_DATE}}", data.get("{{CURRENT_DATE}}"));
+
+            for (XWPFTableRow row : table.getRows()) {
+                replaceRowPlaceholders(row, smallMap);
+            }
+
+            break; // xử lý 1 bảng là đủ
+        }
     }
 }

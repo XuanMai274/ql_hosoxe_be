@@ -2,9 +2,12 @@ package com.bidv.asset.vehicle.ServiceImplement;
 
 import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDTO;
+import com.bidv.asset.vehicle.DTO.WarehouseImportDTO;
 import com.bidv.asset.vehicle.Repository.VehicleRepository;
+import com.bidv.asset.vehicle.Repository.WarehouseImportRepository;
 import com.bidv.asset.vehicle.Service.VehicleWarehouseExportService;
 import com.bidv.asset.vehicle.Utill.VietnameseNumberUtil;
+import com.bidv.asset.vehicle.entity.WarehouseImportEntity;
 import org.apache.poi.xwpf.usermodel.*;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +17,15 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 @Service
 public class VehicleWarehouseExportImplement implements VehicleWarehouseExportService {
     @Autowired
     VehicleRepository vehicleRepository;
-
+    @Autowired
+    WarehouseImportRepository warehouseImportRepository;
     /* ========================================================= */
     /* ======================= PNK ============================== */
     /* ========================================================= */
@@ -83,6 +89,51 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         Map<String,String> map =
                 buildCommonData(filtered, total,importNumber);
 
+        replaceAll(doc, map);
+        forceTimesNewRoman(doc);
+        return writeDoc(doc);
+    }
+    /* ========================================================= */
+    /* =================== NHẬP KÉT ===================== */
+    /* ========================================================= */
+    @Override
+    public byte[] generateNhapKet(
+            List<VehicleDTO> vehicles,String importNumber
+    ) throws IOException {
+
+        if (vehicles == null || vehicles.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
+        }
+        // lấy lên thông tin nhập kho
+        WarehouseImportEntity warehouseImportEntity=warehouseImportRepository.findByImportNumber(importNumber);
+        String manufacturer =
+                vehicles.get(0).getManufacturerDTO().getName();
+
+        List<VehicleDTO> filtered =
+                filterByManufacturer(vehicles, manufacturer);
+
+        XWPFDocument doc =
+                loadTemplate("/templates/NhapKho/nhap-ket.docx");
+
+        BigDecimal total = calculateTotal(filtered);
+
+        replaceVehicleTable(doc, filtered);
+
+        Map<String,String> map =
+                buildCommonData(filtered, total,importNumber);
+        map.put("{{totalOutstandingBalance}}",formatMoney(warehouseImportEntity.getTotalOutstandingBalance()));
+        map.put("{{totalCollateralValue}}",formatMoney(warehouseImportEntity.getTotalCollateralValue()));
+        LocalDateTime createdAt = vehicles.get(0).getCreatedAt();
+
+        if (createdAt == null) {
+            throw new RuntimeException("Xe chưa có ngày tạo");
+        }
+
+        LocalDate datePlus15 = createdAt.plusDays(15).toLocalDate();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        map.put("{{DATE_15}}", datePlus15.format(formatter));
         replaceAll(doc, map);
         forceTimesNewRoman(doc);
         return writeDoc(doc);
@@ -442,7 +493,8 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
             matchedMortgage =
                     first.getGuaranteeLetterDTO().getMortgageContractDTO();
         }
-
+        map.put("{{HDTDCT}}",safe(first.getLoan().getLoanContractNumber()));
+        map.put("{{HDTDCT_DATE}}",formatDate(first.getLoan().getLoanDate()));
         if (matchedMortgage != null) {
             map.put("{{HDBD}}",
                     safe(matchedMortgage.getContractNumber()));
@@ -777,6 +829,18 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
                     }
                 }
             }
+        }
+
+}
+    @Override
+    public void updateSafeStatus(List<Long> vehicleIds, boolean inSafe) {
+        if (vehicleIds == null || vehicleIds.isEmpty()) return;
+
+        for (Long id : vehicleIds) {
+            vehicleRepository.findById(id).ifPresent(v -> {
+                v.setInSafe(inSafe);
+                vehicleRepository.save(v);
+            });
         }
     }
 }

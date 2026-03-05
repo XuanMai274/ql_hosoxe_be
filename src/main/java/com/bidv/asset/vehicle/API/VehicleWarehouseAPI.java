@@ -114,26 +114,32 @@ public class VehicleWarehouseAPI {
             throw new RuntimeException("Danh sách xe trống");
         }
 
-        // ===== Generate tất cả file =====
-        byte[] pnk =
-                vehicleWarehouseExportService
-                        .generatePNK(vehicles, request.getImportNumber());
+        // ===== Kiểm tra loại xe và xử lý logic riêng =====
+        String manufacturerCode = vehicles.get(0).getManufacturerDTO().getCode();
+        boolean isVinfast = "VINFAST".equalsIgnoreCase(manufacturerCode);
 
-        byte[] baoCao =
-                vehicleWarehouseExportService
-                        .generateBaoCaoDinhGia(vehicles, request.getImportNumber());
+        byte[] pnk = null;
+        byte[] baoCao = null;
+        byte[] bienBan = null;
+        byte[] phuLuc = null;
+        byte[] dangKy = null;
+        byte[] nhapket=null;
 
-        byte[] bienBan =
-                vehicleWarehouseExportService
-                        .generateBienBanDinhGia(vehicles, request.getImportNumber());
+        if (isVinfast) {
+            // Vinfast: 4 files và cập nhật trạng thái is_in_safe
+            baoCao = vehicleWarehouseExportService.generateBaoCaoDinhGia(vehicles, request.getImportNumber());
+            bienBan = vehicleWarehouseExportService.generateBienBanDinhGia(vehicles, request.getImportNumber());
+            phuLuc = vehicleWarehouseExportService.generatePhuLucHopDongTheChap(vehicles, request.getImportNumber());
+            nhapket=vehicleWarehouseExportService.generateNhapKet(vehicles,request.getImportNumber());
 
-        byte[] phuLuc =
-                vehicleWarehouseExportService
-                        .generatePhuLucHopDongTheChap(vehicles, request.getImportNumber());
-
-        byte[] dangKy =
-                vehicleWarehouseExportService
-                        .generateDangKiGiaoDichDamBao(vehicles, request.getImportNumber());
+        } else {
+            // Hyundai và các loại khác: giữ nguyên logic gốc
+            pnk = vehicleWarehouseExportService.generatePNK(vehicles, request.getImportNumber());
+            baoCao = vehicleWarehouseExportService.generateBaoCaoDinhGia(vehicles, request.getImportNumber());
+            bienBan = vehicleWarehouseExportService.generateBienBanDinhGia(vehicles, request.getImportNumber());
+            phuLuc = vehicleWarehouseExportService.generatePhuLucHopDongTheChap(vehicles, request.getImportNumber());
+            dangKy = vehicleWarehouseExportService.generateDangKiGiaoDichDamBao(vehicles, request.getImportNumber());
+        }
 
         // ===== Tạo tên file zip =====
         String importNumber = request.getImportNumber();
@@ -151,11 +157,12 @@ public class VehicleWarehouseAPI {
              java.util.zip.ZipOutputStream zos =
                      new java.util.zip.ZipOutputStream(baos)) {
 
-            addToZip(zos, "01_PNK.docx", pnk);
-            addToZip(zos, "02_BAO_CAO_DINH_GIA.docx", baoCao);
-            addToZip(zos, "03_BIEN_BAN_DINH_GIA.docx", bienBan);
-            addToZip(zos, "04_PHU_LUC_HOP_DONG_THE_CHAP.docx", phuLuc);
-            addToZip(zos, "05_DANG_KY_GIAO_DICH_DAM_BAO.docx", dangKy);
+            if (pnk != null) addToZip(zos, "PNK.docx", pnk);
+            if (baoCao != null) addToZip(zos, "BAO_CAO_DINH_GIA.docx", baoCao);
+            if (bienBan != null) addToZip(zos, "BIEN_BAN_DINH_GIA.docx", bienBan);
+            if (phuLuc != null) addToZip(zos, "PHU_LUC_HOP_DONG_THE_CHAP.docx", phuLuc);
+            if (dangKy != null) addToZip(zos, "DANG_KY_GIAO_DICH_DAM_BAO.docx", dangKy);
+            if (nhapket != null) addToZip(zos, "TO_TRINH_NHAP_KET.docx", nhapket);
 
             zos.finish();
 

@@ -3,6 +3,7 @@ package com.bidv.asset.vehicle.DTO;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,8 +22,8 @@ public class WarehouseImportDTO {
     private List<Long> vehicleIds;
     // Danh sách vehicle đầy đủ (dùng cho view chi tiết)
     private List<VehicleDTO> vehicles;
-
     private Integer vehicleCount;
-
     private LocalDateTime createdAt;
+    private BigDecimal totalCollateralValue; // Tổng TSHTTTL
+    private BigDecimal totalOutstandingBalance; //tổng dư nợ
 }

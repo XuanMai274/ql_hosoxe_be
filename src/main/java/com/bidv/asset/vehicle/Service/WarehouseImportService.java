@@ -1,5 +1,7 @@
 package com.bidv.asset.vehicle.Service;
 
+import com.bidv.asset.vehicle.DTO.FullProcessNKGNRequest;
+import com.bidv.asset.vehicle.DTO.FullProcessResponse;
 import com.bidv.asset.vehicle.DTO.WarehouseImportDTO;
 import com.bidv.asset.vehicle.DTO.WarehouseImportRequestDTO;
 
@@ -14,4 +16,7 @@ public interface WarehouseImportService {
     WarehouseImportDTO getById(Long id);
 
     WarehouseImportDTO updateWarehouseImport(Long id, WarehouseImportDTO dto);
+
+    FullProcessResponse executeFullProcess(
+            FullProcessNKGNRequest request);
 }

@@ -34,7 +34,8 @@ public class WarehouseImportMapper {
         dto.setId(entity.getId());
         dto.setImportNumber(entity.getImportNumber());
         dto.setCreatedAt(entity.getCreatedAt());
-
+        dto.setTotalCollateralValue(entity.getTotalCollateralValue());
+        dto.setTotalOutstandingBalance(entity.getTotalOutstandingBalance());
         // Manufacturer
         if (entity.getManufacturer() != null) {
             dto.setManufacturerDTO(
@@ -84,7 +85,8 @@ public class WarehouseImportMapper {
         entity.setId(dto.getId());
         entity.setImportNumber(dto.getImportNumber());
         entity.setCreatedAt(dto.getCreatedAt());
-
+        entity.setTotalCollateralValue(dto.getTotalCollateralValue());
+        entity.setTotalOutstandingBalance(dto.getTotalOutstandingBalance());
         // manufacturer, mortgageContract, vehicles
         // sẽ set trong service sau khi findById()
 

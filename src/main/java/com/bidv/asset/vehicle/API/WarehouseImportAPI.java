@@ -1,7 +1,6 @@
 package com.bidv.asset.vehicle.API;
 
-import com.bidv.asset.vehicle.DTO.WarehouseImportDTO;
-import com.bidv.asset.vehicle.DTO.WarehouseImportRequestDTO;
+import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.DTO.WarehouseImportRequestDTO;
 import com.bidv.asset.vehicle.Service.WarehouseImportService;
 import lombok.RequiredArgsConstructor;
@@ -25,19 +24,22 @@ public class WarehouseImportAPI {
     @PostMapping("/import")
     public ResponseEntity<?> importWarehouse(
             @RequestBody WarehouseImportRequestDTO request) {
-
         try {
-
             WarehouseImportDTO result = warehouseImportService.importWarehouse(request);
-
             return ResponseEntity.ok(result);
-
         } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
+    }
+
+    @PostMapping("/full-process")
+    public ResponseEntity<FullProcessResponse> executeFullProcess(
+            @RequestBody FullProcessNKGNRequest request) {
+
+        FullProcessResponse response =
+                warehouseImportService.executeFullProcess(request);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/all")

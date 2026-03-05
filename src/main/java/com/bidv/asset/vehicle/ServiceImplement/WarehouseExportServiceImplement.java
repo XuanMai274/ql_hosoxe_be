@@ -123,7 +123,7 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                 String baseNumber = mortgage.getContractNumber();
                 String[] parts = baseNumber.split("/", 2);
                 String exportNumber = parts[0] + "." + String.format("%02d", nextNo)
-                                + "/" + parts[1].replace("HDBD", "XUAT");
+                                + "/" + parts[1].replace("HDBDCT", "XUAT");
 
                 CreditContractEntity credit = creditContractRepository.findByIdForUpdate(
                                 firstVehicle.getGuaranteeLetter()
@@ -141,6 +141,7 @@ public class WarehouseExportServiceImplement implements WarehouseExportService {
                                                         .subtract(loanAmount));
 
                         v.setStatus("Đã trả khách hàng");
+//                        v.setInSafe(false);
                         v.setExportDate(LocalDate.now());
 
                         // 🔹 Xử lý khoản vay liên quan

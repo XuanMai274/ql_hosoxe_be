@@ -11,7 +11,7 @@ public interface VehicleWarehouseExportService {
     byte[] generatePNK(List<VehicleDTO> vehicles,String importNumber) throws IOException;
 
     byte[] generateBaoCaoDinhGia(List<VehicleDTO> vehicles,String importNumber) throws IOException;
-
+    byte[] generateNhapKet(List<VehicleDTO> vehicles,String importNumber) throws IOException;
     byte[] generateBienBanDinhGia(List<VehicleDTO> vehicles,String importNumber) throws IOException;
 
     byte[] generatePhuLucHyundai(List<VehicleDTO> vehicles,String importNumber) throws IOException;
@@ -23,4 +23,7 @@ public interface VehicleWarehouseExportService {
     public byte[] generateDangKiGiaoDichDamBao(
             List<VehicleDTO> vehicles,String importNumber
     ) throws IOException;
+
+    void updateSafeStatus(List<Long> vehicleIds, boolean inSafe);
+
 }

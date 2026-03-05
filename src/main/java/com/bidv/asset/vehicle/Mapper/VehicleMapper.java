@@ -54,7 +54,7 @@ public class VehicleMapper {
         dto.setDescription(entity.getDescription());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setGuaranteeAmount(entity.getGuaranteeAmount());
-
+        dto.setInSafe(entity.getInSafe());
         /* ===== INVOICE ===== */
         if (entity.getInvoice() != null) {
             InvoiceEntity invoice = entity.getInvoice();
@@ -91,6 +91,7 @@ public class VehicleMapper {
                 // Map detailed loan info
                 LoanDTO loanDto = new LoanDTO();
                 loanDto.setId(firstLoan.getId());
+                loanDto.setDocId(firstLoan.getDocId());
                 loanDto.setLoanContractNumber(firstLoan.getLoanContractNumber());
                 loanDto.setAccountNumber(firstLoan.getAccountNumber());
                 loanDto.setLoanAmount(firstLoan.getLoanAmount());
@@ -186,7 +187,7 @@ public class VehicleMapper {
         entity.setRegistrationOrderNumber(dto.getRegistrationOrderNumber());
         entity.setDocsDeliveryDate(dto.getDocsDeliveryDate());
         entity.setGuaranteeAmount(dto.getGuaranteeAmount());
-
+        entity.setInSafe(dto.getInSafe());
         entity.setDescription(dto.getDescription());
         entity.setCreatedAt(dto.getCreatedAt());
 
