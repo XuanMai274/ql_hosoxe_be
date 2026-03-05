@@ -22,9 +22,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @RestController
-@RequestMapping("officer/disbursements")
+@RequestMapping("/officer/disbursements")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+
 public class DisbursementAPI {
 
     private final DisbursementService disbursementService;
@@ -58,8 +58,7 @@ public class DisbursementAPI {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate disbursementDateTo,
             @RequestParam(required = false) Long creditContractId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(disbursementService.searchDisbursements(
                 loanContractNumber, disbursementDateFrom, disbursementDateTo, creditContractId, page, size));
     }
@@ -68,16 +67,17 @@ public class DisbursementAPI {
     public ResponseEntity<DisbursementDTO> previewDisbursement() {
         return ResponseEntity.ok(disbursementService.previewDisbursement());
     }
+
     // kiểm tra tất toán
     @PostMapping("/check-paidOff")
     public ResponseEntity<List<DisbursementDTO>> checkDisbursementWillBeClosed(
             @RequestBody List<Long> loanIds) {
 
-        List<DisbursementDTO> result =
-                disbursementService.checkDisbursementWillBeClosed(loanIds);
+        List<DisbursementDTO> result = disbursementService.checkDisbursementWillBeClosed(loanIds);
 
         return ResponseEntity.ok(result);
     }
+
     // cập nhật lãi
     @PostMapping("/update-interest")
     public ResponseEntity<Void> updateInterest(

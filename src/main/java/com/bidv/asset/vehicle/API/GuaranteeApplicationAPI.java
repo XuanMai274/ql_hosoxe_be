@@ -42,6 +42,13 @@ public class GuaranteeApplicationAPI {
     // =====================================================
     // ===================== CUSTOMER =======================
     // =====================================================
+    // CREATE GUARANTEE APPLICATION
+    @PostMapping
+    public ResponseEntity<GuaranteeApplicationDTO> create(
+            @RequestBody GuaranteeApplicationDTO dto) {
+        GuaranteeApplicationDTO result = service.create(dto);
+        return ResponseEntity.ok(result);
+    }
 
     // UPDATE GUARANTEE APPLICATION
     @PutMapping("/{id}")

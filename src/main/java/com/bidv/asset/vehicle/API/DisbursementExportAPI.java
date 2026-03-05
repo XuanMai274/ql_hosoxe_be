@@ -24,14 +24,16 @@ import java.util.zip.ZipOutputStream;
 public class DisbursementExportAPI {
     @Autowired
     DisbursementService disbursementService;
-    @Autowired DisbursementExportService disbursementExportService;
+    @Autowired
+    DisbursementExportService disbursementExportService;
+
     @PostMapping("/officer/disbursements/export-all")
     public ResponseEntity<byte[]> exportAll(@RequestBody DisbursementExportRequest request) throws IOException {
         Map<String, byte[]> files = disbursementExportService.exportAll(
                 request.getDisbursementDTO(), request.getVehicleIds());
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ZipOutputStream zos = new ZipOutputStream(baos)) {
+                ZipOutputStream zos = new ZipOutputStream(baos)) {
 
             for (Map.Entry<String, byte[]> entry : files.entrySet()) {
                 ZipEntry ze = new ZipEntry(entry.getKey());
@@ -47,12 +49,15 @@ public class DisbursementExportAPI {
                     .body(baos.toByteArray());
         }
     }
-    @PostMapping("customer/disbursements/export-specific")
+
+    @PostMapping("/customer/disbursements/export-specific")
     public ResponseEntity<byte[]> exportSpecific(@RequestBody DisbursementExportRequest request) throws IOException {
-        Map<String, byte[]> files = disbursementExportService.exportSpecific(  request.getDisbursementDTO(), request.getVehicleIds());
-        String fileName=request.getDisbursementDTO().getLoanContractNumber();
+        Map<String, byte[]> files = disbursementExportService.exportSpecific(request.getDisbursementDTO(),
+                request.getVehicleIds());
+        String fileName = request.getDisbursementDTO().getLoanContractNumber();
         return createZipResponse(files, fileName);
     }
+
     private ResponseEntity<byte[]> createZipResponse(Map<String, byte[]> files, String fileName) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {

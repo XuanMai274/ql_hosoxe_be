@@ -21,22 +21,25 @@ public class WarehouseExportFileAPI {
 
     private final WarehouseExportFileService warehouseExportFileService;
 
-    @PostMapping("officer/warehouse-export-files/export-all")
+    @PostMapping("/officer/warehouse-export-files/export-all")
     public ResponseEntity<byte[]> exportAll(@RequestBody WarehouseExportDTO dto) throws IOException {
         Map<String, byte[]> files = warehouseExportFileService.exportAll(dto.getId(), dto.getVehicleIds());
         return createZipResponse(files, "XuatKho.zip");
     }
 
-    @PostMapping("customer/export-specific")
+    @PostMapping("/customer/export-specific")
     public ResponseEntity<byte[]> exportSpecific(@RequestBody WarehouseExportDTO dto) throws IOException {
         Map<String, byte[]> files = warehouseExportFileService.exportSpecific(dto.getId(), dto.getVehicleIds());
         return createZipResponse(files, "XuatKho.zip");
     }
-//    @PostMapping("officer/warehouse-export-files/vinfast")
-//    public ResponseEntity<byte[]> exportNKVINFAST(@RequestBody WarehouseExportDTO dto) throws IOException {
-//        Map<String, byte[]> files = warehouseExportFileService.exportNKVinfast(dto.getId(), dto.getVehicleIds());
-//        return createZipResponse(files, "XuatKho.zip");
-//    }
+
+    // @PostMapping("officer/warehouse-export-files/vinfast")
+    // public ResponseEntity<byte[]> exportNKVINFAST(@RequestBody WarehouseExportDTO
+    // dto) throws IOException {
+    // Map<String, byte[]> files =
+    // warehouseExportFileService.exportNKVinfast(dto.getId(), dto.getVehicleIds());
+    // return createZipResponse(files, "XuatKho.zip");
+    // }
     private ResponseEntity<byte[]> createZipResponse(Map<String, byte[]> files, String fileName) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {

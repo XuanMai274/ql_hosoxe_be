@@ -242,10 +242,13 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
         map.put("{{tong}}",formatMoney(totalVehicleAmountVay));
         if (!vehicles.isEmpty()) {
             VehicleDTO refVehicle = vehicles.get(0);
-            
             if (refVehicle.getLoan() != null) {
+                map.put("{{HDTD}}",safe(refVehicle.getGuaranteeLetterDTO().getCreditContractDTO().getContractNumber()));
+                map.put("{{HDTD_DATE}}",formatDate(refVehicle.getGuaranteeLetterDTO().getCreditContractDTO().getContractDate()));
                 map.put("{{loanContractNumber}}", safe(refVehicle.getLoan().getLoanContractNumber()));
                 map.put("{{loanDate}}", formatDate(refVehicle.getLoan().getLoanDate()));
+                map.put("{{HDTDCT}}", safe(refVehicle.getLoan().getLoanContractNumber()));
+                map.put("{{HDTDCT_DATE}}", formatDate(refVehicle.getLoan().getLoanDate()));
                 map.put("{{dueDate}}", formatDate(refVehicle.getLoan().getDueDate()));
             }
 
@@ -336,7 +339,6 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
             }
             map.put("{{TONG_CL}}", formatMoney(interestAmount));
             map.put("{{interestAmount}}", formatMoney(interestAmount));
-
             if (dto.getCreditContractDTO() != null) {
                 map.put("{{HDTD}}", safe(dto.getCreditContractDTO().getContractNumber()));
                 map.put("{{HDTD_DATE}}", formatDate(dto.getCreditContractDTO().getContractDate()));
@@ -850,7 +852,7 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
             // 2️ Tổng tiền
             XWPFRun r2 = paragraph.createRun();
             r2.setText("Tổng số tiền trả nợ:");
-            r2.addTab(); // 👈 chỉ 1 tab
+            r2.addTab(); //  chỉ 1 tab
             r2.setText(formatMoney(amount) + " đồng");
             r2.addBreak();
 

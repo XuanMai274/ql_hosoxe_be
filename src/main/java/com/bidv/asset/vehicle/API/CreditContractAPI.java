@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("officer/credit-contract")
+@RequestMapping("/officer/credit-contract")
 public class CreditContractAPI {
     @Autowired
     CreditContractService creditContractService;
@@ -30,10 +30,12 @@ public class CreditContractAPI {
         response.put("creditContract", null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+
     @GetMapping("/{id}")
     public CreditContractDTO getById(@PathVariable Long id) {
         return creditContractService.findById(id);
     }
+
     @PostMapping("/add")
     public ResponseEntity<Map<String, Object>> addCreditContract(@RequestBody CreditContractDTO creditContractDTO) {
         Map<String, Object> response = new HashMap<>();
