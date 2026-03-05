@@ -46,10 +46,10 @@ public class GuaranteeApplicationAPI {
     @PostMapping
     public ResponseEntity<GuaranteeApplicationDTO> create(
             @RequestBody GuaranteeApplicationDTO dto) {
-
         GuaranteeApplicationDTO result = service.create(dto);
         return ResponseEntity.ok(result);
     }
+
     // UPDATE GUARANTEE APPLICATION
     @PutMapping("/{id}")
     public ResponseEntity<GuaranteeApplicationDTO> update(

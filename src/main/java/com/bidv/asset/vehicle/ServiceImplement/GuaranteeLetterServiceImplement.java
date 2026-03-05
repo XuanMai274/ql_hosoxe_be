@@ -219,7 +219,8 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 BigDecimal guaranteeBalance = creditContract.getGuaranteeBalance() == null ? BigDecimal.ZERO
                                 : creditContract.getGuaranteeBalance();
                 creditContract.setOutstandingGuaranteeAmount(
-                                MoneyUtil.format(creditContract.getIssuedGuaranteeBalance().subtract(guaranteeBalance)));
+                                MoneyUtil.format(
+                                                creditContract.getIssuedGuaranteeBalance().subtract(guaranteeBalance)));
 
                 creditContractRepository.save(creditContract);
 
@@ -430,21 +431,21 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
         @Override
         @Transactional
         public void updateAfterVehicleImported(Long glId,
-                                               BigDecimal guaranteeAmountRaw) {
+                        BigDecimal guaranteeAmountRaw) {
 
                 // ====================================================
                 // ===== 1. LOCK GUARANTEE LETTER ====================
                 // ====================================================
 
                 GuaranteeLetterEntity gl = guaranteeLetterRepository
-                        .findByIdForUpdate(glId)
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy thư bảo lãnh"));
+                                .findByIdForUpdate(glId)
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy thư bảo lãnh"));
 
                 // Chuẩn hóa toàn bộ tiền
                 BigDecimal guaranteeAmount = money(guaranteeAmountRaw);
-                BigDecimal expected        = money(gl.getExpectedGuaranteeAmount());
-                BigDecimal used            = money(gl.getUsedAmount());
-                BigDecimal totalGuarantee  = money(gl.getTotalGuaranteeAmount());
+                BigDecimal expected = money(gl.getExpectedGuaranteeAmount());
+                BigDecimal used = money(gl.getUsedAmount());
+                BigDecimal totalGuarantee = money(gl.getTotalGuaranteeAmount());
 
                 // ====================================================
                 // ===== 2. TÍNH TOÁN MỚI (DOWN tuyệt đối) ==========
@@ -455,13 +456,12 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // Check vượt hạn mức bảo lãnh (Standardize so sánh chính xác)
                 if (newUsed.compareTo(expected) > 0) {
                         throw new RuntimeException(
-                                "Vượt hạn mức thư bảo lãnh | expected=" + expected
-                                        + " | used=" + used
-                                        + " | new=" + newUsed
-                        );
+                                        "Vượt hạn mức thư bảo lãnh | expected=" + expected
+                                                        + " | used=" + used
+                                                        + " | new=" + newUsed);
                 }
 
-                BigDecimal newRemaining      = money(expected.subtract(newUsed));
+                BigDecimal newRemaining = money(expected.subtract(newUsed));
                 BigDecimal newTotalGuarantee = money(totalGuarantee.add(guaranteeAmount));
 
                 // ====================================================
@@ -481,34 +481,31 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // ====================================================
 
                 CreditContractEntity contract = creditContractRepository
-                        .findByIdForUpdate(gl.getCreditContract().getId())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy HĐTD"));
+                                .findByIdForUpdate(gl.getCreditContract().getId())
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy HĐTD"));
 
-                BigDecimal contractUsed       = money(contract.getUsedLimit());
-                BigDecimal creditLimit        = money(contract.getCreditLimit());
-                BigDecimal guaranteeBalance   = money(contract.getGuaranteeBalance());
-                BigDecimal issuedGuarantee    = money(contract.getIssuedGuaranteeBalance());
+                BigDecimal contractUsed = money(contract.getUsedLimit());
+                BigDecimal creditLimit = money(contract.getCreditLimit());
+                BigDecimal guaranteeBalance = money(contract.getGuaranteeBalance());
+                BigDecimal issuedGuarantee = money(contract.getIssuedGuaranteeBalance());
 
                 // ====================================================
                 // ===== 5. TÍNH TOÁN CONTRACT =======================
                 // ====================================================
 
                 BigDecimal newGuaranteeBalance = money(guaranteeBalance.add(guaranteeAmount));
-                BigDecimal newUsedLimit        = money(contractUsed.add(guaranteeAmount));
+                BigDecimal newUsedLimit = money(contractUsed.add(guaranteeAmount));
 
                 // Check vượt hạn mức tín dụng
                 if (newUsedLimit.compareTo(creditLimit) > 0) {
                         throw new RuntimeException(
-                                "Vượt hạn mức tín dụng | creditLimit=" + creditLimit
-                                        + " | newUsed=" + newUsedLimit
-                        );
+                                        "Vượt hạn mức tín dụng | creditLimit=" + creditLimit
+                                                        + " | newUsed=" + newUsedLimit);
                 }
 
-                BigDecimal newOutstandingGuarantee =
-                        money(issuedGuarantee.subtract(newGuaranteeBalance));
+                BigDecimal newOutstandingGuarantee = money(issuedGuarantee.subtract(newGuaranteeBalance));
 
-                BigDecimal newRemainingLimit =
-                        money(creditLimit.subtract(newUsedLimit));
+                BigDecimal newRemainingLimit = money(creditLimit.subtract(newUsedLimit));
 
                 // ====================================================
                 // ===== 6. UPDATE CONTRACT ==========================
@@ -609,6 +606,7 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
 
                 return null;
         }
+
         private static final int MONEY_SCALE = 2;
         private static final RoundingMode MONEY_ROUND = RoundingMode.HALF_UP;
 

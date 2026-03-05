@@ -22,7 +22,7 @@ public interface GuaranteeApplicationRepository
                         "AND (:status IS NULL OR g.status = :status) " +
                         "AND (cast(:fromDate as timestamp) IS NULL OR g.createdAt >= :fromDate) " +
                         "AND (cast(:toDate as timestamp) IS NULL OR g.createdAt <= :toDate) " +
-                "ORDER BY CASE WHEN g.status LIKE 'PENDING%' OR g.status = 'SUBMITTED' THEN 0 ELSE 1 END ASC, g.createdAt DESC", countQuery = "SELECT count(g) FROM GuaranteeApplicationEntity g "
+                        "ORDER BY CASE WHEN g.status = 'PENDING_APPROVAL' OR g.status = 'PENDING' THEN 0 ELSE 1 END ASC, g.createdAt DESC", countQuery = "SELECT count(g) FROM GuaranteeApplicationEntity g "
                                         +
                                         "WHERE (cast(:customerId as long) IS NULL OR g.customer.id = :customerId) " +
                                         "AND (cast(:manufacturerId as long) IS NULL OR g.manufacturer.id = :manufacturerId) "
@@ -45,7 +45,7 @@ public interface GuaranteeApplicationRepository
                         "AND g.status <> 'REJECTED' " +
                         "AND (cast(:fromDate as timestamp) IS NULL OR g.createdAt >= :fromDate) " +
                         "AND (cast(:toDate as timestamp) IS NULL OR g.createdAt <= :toDate) " +
-                        "ORDER BY CASE WHEN g.status LIKE 'PENDING%' OR g.status = 'SUBMITTED' THEN 0 ELSE 1 END ASC, g.createdAt DESC", countQuery = "SELECT count(g) FROM GuaranteeApplicationEntity g "
+                        "ORDER BY CASE WHEN g.status = 'PENDING_APPROVAL' OR g.status = 'PENDING' THEN 0 ELSE 1 END ASC, g.createdAt DESC", countQuery = "SELECT count(g) FROM GuaranteeApplicationEntity g "
                                         +
                                         "WHERE (cast(:customerId as long) IS NULL OR g.customer.id = :customerId) " +
                                         "AND (cast(:manufacturerId as long) IS NULL OR g.manufacturer.id = :manufacturerId) "

@@ -160,27 +160,25 @@ public class VehicleAPI {
         return vehicleService.getCustomerAvailableVehicles(status, chassisNumber, manufacturer, loanContractNumber,
                 pageable);
     }
+
     // lấy lên danh sách xe vinfast chưa nhập kho
-    @GetMapping("officer/vehicles/vinfast/in-safe")
+    @GetMapping("/officer/vehicles/vinfast/in-safe")
     public ResponseEntity<List<VehicleDTO>> getVinfastInSafeVehicles() {
         return ResponseEntity.ok(
-                vehicleService.getVinfastInSafeVehicles()
-        );
+                vehicleService.getVinfastInSafeVehicles());
     }
+
     @PutMapping("/officer/vehicles/update-safe")
     public ResponseEntity<?> updateVehicleInSafe(
             @RequestBody List<Long> vehicleIds,
-            @RequestParam Boolean inSafe
-    ) {
+            @RequestParam Boolean inSafe) {
 
         int updatedCount = vehicleService.updateVehicleInSafe(vehicleIds, inSafe);
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "updatedCount", updatedCount,
-                "message", "Cập nhật thành công " + updatedCount + " xe"
-        ));
+                "message", "Cập nhật thành công " + updatedCount + " xe"));
     }
-
 
 }

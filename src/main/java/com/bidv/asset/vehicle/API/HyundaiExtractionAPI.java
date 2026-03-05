@@ -20,6 +20,19 @@ public class HyundaiExtractionAPI {
     @Autowired
     private com.bidv.asset.vehicle.Service.VehicleCatalogService vehicleCatalogService;
 
+    private String normalizeDate(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty())
+            return dateStr;
+        // Chuyển dd/MM/yyyy sang yyyy-MM-dd cho frontend type="date"
+        if (dateStr.matches("\\d{1,2}/\\d{1,2}/\\d{4}")) {
+            String[] parts = dateStr.split("/");
+            String d = parts[0].length() == 1 ? "0" + parts[0] : parts[0];
+            String m = parts[1].length() == 1 ? "0" + parts[1] : parts[1];
+            return parts[2] + "-" + m + "-" + d;
+        }
+        return dateStr;
+    }
+
     @PostMapping("/excel")
     public ResponseEntity<ExtractionResult> extractExcel(
             @RequestPart(value = "file", required = false) MultipartFile file,
@@ -50,42 +63,96 @@ public class HyundaiExtractionAPI {
             keyMapping.put("số máy", "engineNumber");
             keyMapping.put("số bảo lãnh", "guaranteeNumber");
             keyMapping.put("hợp đồng", "contractNumber");
+            keyMapping.put("hóa đơn htv", "invoiceNumber");
+            keyMapping.put("hóa đơn vat", "invoiceNumber");
             keyMapping.put("hóa đơn", "invoiceNumber");
+            keyMapping.put("số hóa đơn", "invoiceNumber");
             keyMapping.put("tên đại lý", "dealerName");
             keyMapping.put("đơn giá", "unitPrice");
             keyMapping.put("mã thư bảo lãnh", "guaranteeLetterCode");
+            keyMapping.put("ngày hđ", "invoiceDate");
 
-            // Nhóm dữ liệu theo cột "guaranteeNumber"
-            Map<String, List<Map<String, Object>>> groupedData = new java.util.LinkedHashMap<>();
+            // BƯỚC 1: PHÂN LOẠI VÀ CHUẨN BỊ DỮ LIỆU
+            List<Map<String, Object>> mainRows = new java.util.ArrayList<>();
+            Map<String, String> invoiceDateMap = new java.util.HashMap<>();
 
             for (Map<String, Object> row : rawData) {
+                boolean isVehicleRow = false;
+                boolean isInvoiceInfoRow = false;
+                String vehicleInvNum = null;
+                String extraInvNum = null;
+                String invDateVal = null;
+
+                for (Map.Entry<String, Object> entry : row.entrySet()) {
+                    String k = entry.getKey().toLowerCase();
+                    String v = entry.getValue() != null ? entry.getValue().toString().trim() : "";
+
+                    if ((k.contains("số khung") || k.contains("vin")) && !v.isEmpty()) {
+                        isVehicleRow = true;
+                    }
+                    if (k.contains("ngày hđ") && !v.isEmpty()) {
+                        isInvoiceInfoRow = true;
+                        invDateVal = normalizeDate(v);
+                    }
+
+                    // Ưu tiên Hóa đơn HTV cho dòng xe
+                    if (k.contains("hóa đơn htv")) {
+                        vehicleInvNum = v;
+                    }
+                    // Ưu tiên Hóa đơn VAT hoặc Số hóa đơn cho dòng thông tin hóa đơn
+                    if (k.contains("hóa đơn vat") || k.contains("số hóa đơn") || k.equals("hóa đơn")) {
+                        extraInvNum = v;
+                    }
+
+                    // Fallback chung nếu không tìm thấy cái đặc thù
+                    if (k.contains("hóa đơn") && !v.isEmpty()) {
+                        if (vehicleInvNum == null)
+                            vehicleInvNum = v;
+                        if (extraInvNum == null)
+                            extraInvNum = v;
+                    }
+                }
+
+                if (isVehicleRow) {
+                    // Để join được, ta cần đảm bảo identifier trong mainRows là cái ta sẽ dùng để
+                    // map
+                    // Ở đây ta dùng vehicleInvNum (Hóa đơn HTV)
+                    if (vehicleInvNum != null && !vehicleInvNum.isEmpty()) {
+                        row.put("_joinKey", vehicleInvNum);
+                        mainRows.add(row);
+                    }
+                } else if (isInvoiceInfoRow) {
+                    // Lưu ngày vào map với key là extraInvNum (Hóa đơn VAT)
+                    if (extraInvNum != null && !extraInvNum.isEmpty()) {
+                        invoiceDateMap.put(extraInvNum, invDateVal);
+                    }
+                }
+            }
+
+            // BƯỚC 2: CHUYỂN ĐỔI KEY VÀ JOIN DỮ LIỆU
+            Map<String, List<Map<String, Object>>> groupedData = new java.util.LinkedHashMap<>();
+
+            for (Map<String, Object> row : mainRows) {
                 String groupKey = "Other";
                 Map<String, Object> englishRow = new java.util.LinkedHashMap<>();
 
+                // Mapping keys
                 for (Map.Entry<String, Object> entry : row.entrySet()) {
                     String originalKey = entry.getKey();
-                    String lowerKey = originalKey.toLowerCase();
-                    // Chuẩn hóa khoảng trắng để so khớp chính xác: thay 2+ dấu cách bằng 1 dấu cách
-                    String normalizedKey = lowerKey.replaceAll("\\s+", " ").trim();
+                    String normalizedKey = originalKey.toLowerCase().replaceAll("\\s+", " ").trim();
 
-                    // Loại bỏ cột STT (index)
-                    if (normalizedKey.equals("stt") || normalizedKey.contains("stt")) {
+                    if (normalizedKey.equals("stt") || normalizedKey.contains("stt"))
                         continue;
-                    }
 
-                    String englishKey = originalKey; // Default to original if no mapping found
-
-                    // Find matching English key from mapping
+                    String englishKey = originalKey;
                     for (Map.Entry<String, String> mapEntry : keyMapping.entrySet()) {
                         if (normalizedKey.contains(mapEntry.getKey())) {
                             englishKey = mapEntry.getValue();
                             break;
                         }
                     }
-
                     englishRow.put(englishKey, entry.getValue());
 
-                    // Determine groupKey based on guarantee number
                     if (englishKey.equals("guaranteeNumber")) {
                         Object val = entry.getValue();
                         if (val != null && !val.toString().trim().isEmpty()) {
@@ -94,17 +161,29 @@ public class HyundaiExtractionAPI {
                     }
                 }
 
+                // JOIN: Lấy ngày hóa đơn từ Table 2 (nếu có)
+                Object joinKeyObj = row.get("_joinKey");
+                String invStr = (joinKeyObj != null) ? joinKeyObj.toString().trim() : "";
+
+                if (invStr.isEmpty()) {
+                    Object currentInv = englishRow.get("invoiceNumber");
+                    if (currentInv != null)
+                        invStr = currentInv.toString().trim();
+                }
+
+                if (!invStr.isEmpty() && invoiceDateMap.containsKey(invStr)) {
+                    englishRow.put("invoiceDate", invoiceDateMap.get(invStr));
+                }
+
                 // Tự động điền số chỗ ngồi
                 Object seats = englishRow.get("numberOfSeats");
                 String finalSeats = (seats != null) ? seats.toString().trim() : "";
-
                 if (finalSeats.isEmpty()) {
                     Object desc = englishRow.get("vehicleDescription");
                     if (desc != null) {
                         Integer autoSeats = vehicleCatalogService.getSeatsByModelName(desc.toString());
-                        if (autoSeats != null) {
+                        if (autoSeats != null)
                             finalSeats = autoSeats.toString();
-                        }
                     }
                 }
                 englishRow.put("numberOfSeats", finalSeats);
@@ -112,7 +191,8 @@ public class HyundaiExtractionAPI {
                 groupedData.computeIfAbsent(groupKey, k -> new java.util.ArrayList<>()).add(englishRow);
             }
 
-            return ResponseEntity.ok(new ExtractionResult(true, groupedData, "Extracted and grouped successfully"));
+            return ResponseEntity.ok(
+                    new ExtractionResult(true, groupedData, "Extraction successful with cross-table date matching."));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(new ExtractionResult(false, null, e.getMessage()));
         }
