@@ -20,75 +20,63 @@ public class ExcelServiceImplement implements ExcelService {
         List<Map<String, Object>> result = new ArrayList<>();
         DataFormatter formatter = new DataFormatter();
 
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-            int headerRowNum = -1;
-            List<String> headers = new ArrayList<>();
+            List<String> currentHeaders = null;
 
-            // Tìm dòng tiêu đề (quét 20 dòng đầu tiên)
-            for (int i = 0; i <= Math.min(sheet.getLastRowNum(), 20); i++) {
+            for (int i = 0; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null)
                     continue;
 
+                // Kiểm tra xem dòng này có phải là header mới không
+                boolean isHeaderCandidate = false;
+                List<String> rowValues = new ArrayList<>();
                 for (Cell cell : row) {
-                    String cellValue = formatter.formatCellValue(cell).toLowerCase().trim();
-                    if (cellValue.contains("vin") || cellValue.contains("số khung")) {
-                        headerRowNum = i;
-                        break;
+                    String val = formatter.formatCellValue(cell).trim();
+                    rowValues.add(val);
+                    String lowerVal = val.toLowerCase();
+                    // Các từ khóa nhận diện dòng tiêu đề
+                    if (lowerVal.equals("stt") || lowerVal.contains("số khung") ||
+                            lowerVal.contains("vin") || lowerVal.contains("ngày hđ") ||
+                            lowerVal.contains("hóa đơn htv") || lowerVal.contains("hóa đơn vat") ||
+                            lowerVal.contains("số hóa đơn") || lowerVal.equals("hóa đơn")) {
+                        isHeaderCandidate = true;
                     }
                 }
-                if (headerRowNum != -1) {
-                    for (Cell cell : row) {
-                        headers.add(formatter.formatCellValue(cell).trim());
+
+                // Nếu dòng này có nhiều cột và trông giống header -> Cập nhật header mới
+                long nonEmptyCols = rowValues.stream().filter(s -> !s.isEmpty()).count();
+                if (isHeaderCandidate && nonEmptyCols >= 3) {
+                    currentHeaders = rowValues;
+                    continue;
+                }
+
+                // Nếu đã thấy header và dòng này có dữ liệu -> Trích xuất
+                if (currentHeaders != null && nonEmptyCols > 0) {
+                    Map<String, Object> rowData = new LinkedHashMap<>();
+                    boolean meaningfulData = false;
+                    for (int j = 0; j < currentHeaders.size(); j++) {
+                        String h = currentHeaders.get(j);
+                        if (h == null || h.isEmpty())
+                            continue; // Bỏ qua cột không có tên header
+
+                        Cell cell = row.getCell(j);
+                        String val = formatter.formatCellValue(cell).trim();
+                        rowData.put(h, val);
+                        if (!val.isEmpty())
+                            meaningfulData = true;
                     }
-                    break;
+
+                    // Kiểm tra xem đây có phải dòng "Tổng cộng" không (thường STT trống hoặc chứa
+                    // chữ "Tổng")
+                    if (meaningfulData) {
+                        result.add(rowData);
+                    }
                 }
             }
-
-            if (headerRowNum == -1)
-                return result;
-
-            // Xác định vị trí cột định danh (VIN/Số khung) để biết ranh giới bảng
-            int identifierIdx = -1;
-            for (int j = 0; j < headers.size(); j++) {
-                String h = headers.get(j).toLowerCase();
-                if (h.contains("vin") || h.contains("số khung")) {
-                    identifierIdx = j;
-                    break;
-                }
-            }
-
-            // Đọc dữ liệu từ sau dòng tiêu đề
-            for (int i = headerRowNum + 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null)
-                    break; // Gặp dòng null thì dừng (hết bảng)
-
-                Map<String, Object> rowData = new LinkedHashMap<>();
-                boolean hasData = false;
-                for (int j = 0; j < headers.size(); j++) {
-                    Cell cell = row.getCell(j);
-                    String val = formatter.formatCellValue(cell);
-                    rowData.put(headers.get(j), val);
-                    if (val != null && !val.trim().isEmpty())
-                        hasData = true;
-                }
-
-                if (!hasData)
-                    break; // Dòng trống hoàn toàn -> hết bảng
-
-                // Nếu cột Số khung trống -> Có thể là dòng Tổng hoặc bắt đầu bảng khác -> Dừng
-                // lại
-                if (identifierIdx != -1) {
-                    Cell idCell = row.getCell(identifierIdx);
-                    String idVal = formatter.formatCellValue(idCell).trim();
-                    if (idVal.isEmpty())
-                        break;
-                }
-
-                result.add(rowData);
-            }
+        } catch (Exception e) {
+            throw new IOException("Lỗi khi xử lý file Excel: " + e.getMessage());
         }
         return result;
     }
