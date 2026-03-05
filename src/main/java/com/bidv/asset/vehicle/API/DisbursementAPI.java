@@ -24,7 +24,7 @@ import java.util.zip.ZipOutputStream;
 @RestController
 @RequestMapping("officer/disbursements")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+
 public class DisbursementAPI {
 
     private final DisbursementService disbursementService;
