@@ -8,11 +8,15 @@ import java.util.List;
 public interface VehicleDocumentService {
     public List<DocumentDTO> uploadVehicleDocuments(
             List<MultipartFile> files,
-            Long vehicleId
-    );
+            Long vehicleId);
 
     List<DocumentDTO> getDocumentsByVehicle(Long vehicleId);
+
     public void deleteDocumentManually(Long documentId);
+
     byte[] loadFile(Long documentId);
+
     DocumentDTO getMeta(Long id);
+
+    DocumentDTO findLatestDocumentByVehicle(Long vehicleId);
 }

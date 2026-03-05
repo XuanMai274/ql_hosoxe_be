@@ -140,6 +140,9 @@ public class GuaranteeLetterMapper {
             fileDTO.setFileType(entity.getFile().getFileType());
             fileDTO.setIsActive(entity.getFile().getIsActive());
             dto.setFileId(fileDTO);
+            dto.setHasFile(true);
+        } else {
+            dto.setHasFile(false);
         }
 
         return dto;

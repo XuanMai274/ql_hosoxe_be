@@ -26,12 +26,12 @@ public class VehicleDocumentServiceImplement implements VehicleDocumentService {
     @Autowired
     DocumentRepository documentRepository;
     private static final String ROOT_DIR = "/data/vehicle-docs";
+
     @Override
     @Transactional
     public List<DocumentDTO> uploadVehicleDocuments(
             List<MultipartFile> files,
-            Long vehicleId
-    ) {
+            Long vehicleId) {
         try {
             // 1. Tạo thư mục theo ngày (chuẩn audit)
             String folder = LocalDate.now().toString();
@@ -50,8 +50,7 @@ public class VehicleDocumentServiceImplement implements VehicleDocumentService {
                 Files.copy(
                         file.getInputStream(),
                         filePath,
-                        StandardCopyOption.REPLACE_EXISTING
-                );
+                        StandardCopyOption.REPLACE_EXISTING);
 
                 // 4. Lưu metadata DB
                 DocumentEntity doc = new DocumentEntity();
@@ -105,6 +104,7 @@ public class VehicleDocumentServiceImplement implements VehicleDocumentService {
             throw new RuntimeException("Không đọc được file", e);
         }
     }
+
     // xóa file
     @Override
     public void deleteDocumentManually(Long documentId) {
@@ -122,6 +122,7 @@ public class VehicleDocumentServiceImplement implements VehicleDocumentService {
         // 2. Xóa metadata trong DB
         documentRepository.delete(doc);
     }
+
     @Override
     public DocumentDTO getMeta(Long id) {
 
@@ -130,6 +131,24 @@ public class VehicleDocumentServiceImplement implements VehicleDocumentService {
 
         return mapToDto(entity);
     }
+
+    @Override
+    public DocumentDTO findLatestDocumentByVehicle(Long vehicleId) {
+        List<DocumentEntity> docs = documentRepository.findByVehicleId(vehicleId);
+        if (docs.isEmpty()) {
+            return null;
+        }
+        // Try to find COC or VAT in filename
+        return docs.stream()
+                .filter(d -> {
+                    String name = d.getFileName().toUpperCase();
+                    return name.contains("COC") || name.contains("VAT");
+                })
+                .findFirst()
+                .map(this::mapToDto)
+                .orElse(mapToDto(docs.get(0))); // Fallback to first one
+    }
+
     private DocumentDTO mapToDto(DocumentEntity doc) {
         DocumentDTO dto = new DocumentDTO();
         dto.setId(doc.getId());
