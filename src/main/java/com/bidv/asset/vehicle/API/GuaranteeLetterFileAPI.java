@@ -1,4 +1,5 @@
 package com.bidv.asset.vehicle.API;
+
 import com.bidv.asset.vehicle.DTO.GuaranteeLetterFileDTO;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterFileService;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterService;
@@ -13,17 +14,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/officer/guarantee-files")
+@RequestMapping({ "/officer/guarantee-files", "/customer/guarantee-files" })
 @RequiredArgsConstructor
 public class GuaranteeLetterFileAPI {
     @Autowired
     GuaranteeLetterFileService guaranteeLetterFileService;
+
     // ===== Upload / Replace =====
     @PostMapping("/upload")
     public GuaranteeLetterFileDTO upload(
             @RequestParam Long guaranteeLetterId,
-            @RequestParam MultipartFile file
-    ) {
+            @RequestParam MultipartFile file) {
         return guaranteeLetterFileService.uploadFile(guaranteeLetterId, file);
     }
 
@@ -54,8 +55,7 @@ public class GuaranteeLetterFileAPI {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + meta.getFileName() + "\""
-                )
+                        "attachment; filename=\"" + meta.getFileName() + "\"")
                 .body(new ByteArrayResource(data));
     }
 

@@ -83,8 +83,76 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
         // ==================================================
         // HANDLE VEHICLES
         // ==================================================
-        int maxTermDays = 0;
+        processVehicles(entity, manufacturer);
 
+        // ===== CALCULATE TOTAL =====
+        calculateTotals(entity);
+
+        GuaranteeApplicationEntity saved = repository.save(entity);
+
+        return mapper.toDTO(saved);
+    }
+
+    @Override
+    @Transactional
+    public GuaranteeApplicationDTO update(Long id, GuaranteeApplicationDTO dto) {
+        GuaranteeApplicationEntity entity = repository.findById(id.longValue());
+        if (entity == null) {
+            throw new RuntimeException("Guarantee Application not found");
+        }
+
+        if (!"PENDING_APPROVAL".equalsIgnoreCase(entity.getStatus())) {
+            throw new RuntimeException("Only applications with PENDING_APPROVAL status can be edited");
+        }
+
+        // ===== 1. RELOAD MANUFACTURER IF CHANGED =====
+        ManufacturerEntity manufacturer = manufacturerRepository.findById(
+                dto.getManufacturerDTO().getId())
+                .orElseThrow(() -> new RuntimeException("Manufacturer not found"));
+
+        entity.setManufacturer(manufacturer);
+
+        // If manufacturer changed, we might need to update mortgage contract and sub
+        // number too,
+        // but for simplicity let's assume manufacturer doesn't change or if it does,
+        // we just update basic info for now.
+        // Realistically, subNumber is derived from mortgage which is tied to
+        // manufacturer.
+
+        // ===== 2. UPDATE VEHICLES =====
+        // Clear old vehicles
+        if (entity.getVehicles() != null) {
+            entity.getVehicles().clear();
+        } else {
+            entity.setVehicles(new java.util.ArrayList<>());
+        }
+
+        // Map new vehicles from DTO
+        if (dto.getVehicles() != null) {
+            for (com.bidv.asset.vehicle.DTO.GuaranteeApplicationVehicleDTO vDto : dto.getVehicles()) {
+                GuaranteeApplicationVehicleEntity vEntity = new GuaranteeApplicationVehicleEntity();
+                vEntity.setVehicleName(vDto.getVehicleName());
+                vEntity.setVehicleType(vDto.getVehicleType());
+                vEntity.setColor(vDto.getColor());
+                vEntity.setChassisNumber(vDto.getChassisNumber());
+                vEntity.setInvoiceNumber(vDto.getInvoiceNumber());
+                vEntity.setVehiclePrice(vDto.getVehiclePrice());
+                vEntity.setGuaranteeApplication(entity);
+                entity.getVehicles().add(vEntity);
+            }
+        }
+
+        // ===== 3. PROCESS VEHICLES (Calc individual guarantee amount and term) =====
+        processVehicles(entity, manufacturer);
+
+        // ===== 4. RE-CALCULATE TOTALS =====
+        calculateTotals(entity);
+
+        return mapper.toDTO(repository.save(entity));
+    }
+
+    private void processVehicles(GuaranteeApplicationEntity entity, ManufacturerEntity manufacturer) {
+        int maxTermDays = 0;
         if (entity.getVehicles() != null && !entity.getVehicles().isEmpty()) {
 
             BigDecimal guaranteeRate = manufacturer.getGuaranteeRate() == null
@@ -114,16 +182,7 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
 
         // ===== SET TERM & EXPIRY DATE =====
         entity.setGuaranteeTermDays(maxTermDays);
-        entity.setExpiryDate(LocalDateTime.now()
-                .toLocalDate()
-                .plusDays(maxTermDays));
-
-        // ===== CALCULATE TOTAL =====
-        calculateTotals(entity);
-
-        GuaranteeApplicationEntity saved = repository.save(entity);
-
-        return mapper.toDTO(saved);
+        entity.setExpiryDate(entity.getCreatedAt().toLocalDate().plusDays(maxTermDays));
     }
 
     @Override
@@ -148,18 +207,48 @@ public class GuaranteeApplicationServiceImplement implements GuaranteeApplicatio
                 end = java.time.LocalDate.parse(toDate).atTime(23, 59, 59);
             }
         } catch (Exception e) {
-            // Log error or handle invalid date format
+            // Log error
         }
 
-        // Map simplified status to actual DB status
-        String dbStatus = status;
-        if ("PENDING".equalsIgnoreCase(status)) {
+        String dbStatus = (status == null || status.trim().isEmpty()) ? null : status.toUpperCase();
+        if ("PENDING".equals(dbStatus)) {
             dbStatus = "PENDING_APPROVAL";
-        } else if ("ACTIVE".equalsIgnoreCase(status)) {
+        } else if ("ACTIVE".equals(dbStatus)) {
             dbStatus = "APPROVED";
         }
 
         return repository.search(customerId, manufacturerId, dbStatus, start, end, pageable).map(mapper::toDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<GuaranteeApplicationDTO> searchExcludeRejected(Long customerId, Long manufacturerId, String status,
+            String fromDate,
+            String toDate,
+            Pageable pageable) {
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        try {
+            if (fromDate != null && !fromDate.isEmpty()) {
+                start = java.time.LocalDate.parse(fromDate).atStartOfDay();
+            }
+            if (toDate != null && !toDate.isEmpty()) {
+                end = java.time.LocalDate.parse(toDate).atTime(23, 59, 59);
+            }
+        } catch (Exception e) {
+            // Log error
+        }
+
+        String dbStatus = (status == null || status.trim().isEmpty()) ? null : status.toUpperCase();
+        if ("PENDING".equals(dbStatus)) {
+            dbStatus = "PENDING_APPROVAL";
+        } else if ("ACTIVE".equals(dbStatus)) {
+            dbStatus = "APPROVED";
+        }
+
+        return repository.searchExcludeRejected(customerId, manufacturerId, dbStatus, start, end, pageable)
+                .map(mapper::toDTO);
     }
 
     @Override

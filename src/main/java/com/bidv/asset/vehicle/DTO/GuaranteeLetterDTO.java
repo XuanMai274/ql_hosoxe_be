@@ -57,6 +57,7 @@ public class GuaranteeLetterDTO {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean hasFile;
     // ===== CHILD =====
     private List<Long> vehicleIds;
     private GuaranteeLetterFileDTO fileId;

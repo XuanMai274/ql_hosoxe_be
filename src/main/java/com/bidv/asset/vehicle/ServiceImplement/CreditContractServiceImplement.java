@@ -80,6 +80,31 @@ public class CreditContractServiceImplement implements CreditContractService {
             existingEntity.setGuaranteeBalance(MoneyUtil.format(creditContractDTO.getGuaranteeBalance()));
             existingEntity.setVehicleLoanBalance(MoneyUtil.format(creditContractDTO.getVehicleLoanBalance()));
             existingEntity.setRealEstateLoanBalance(MoneyUtil.format(creditContractDTO.getRealEstateLoanBalance()));
+            existingEntity.setCreditLimit(creditContractDTO.getCreditLimit());
+
+            // Cập nhật các giá trị số dư
+            BigDecimal issued = nvl(creditContractDTO.getIssuedGuaranteeBalance());
+            BigDecimal vehicleLoan = nvl(creditContractDTO.getVehicleLoanBalance());
+            BigDecimal realEstateLoan = nvl(creditContractDTO.getRealEstateLoanBalance());
+            BigDecimal creditLimit = nvl(creditContractDTO.getCreditLimit());
+            BigDecimal actualGuarantee = nvl(creditContractDTO.getGuaranteeBalance());
+
+            existingEntity.setIssuedGuaranteeBalance(issued);
+            existingEntity.setVehicleLoanBalance(vehicleLoan);
+            existingEntity.setRealEstateLoanBalance(realEstateLoan);
+
+            // Tự động tính Used Limit
+            BigDecimal usedLimit = issued.add(vehicleLoan).add(realEstateLoan);
+            existingEntity.setUsedLimit(usedLimit);
+
+            // Tự động tính Remaining Limit
+            existingEntity.setRemainingLimit(creditLimit.subtract(usedLimit));
+
+            // Cập nhật Dư bảo lãnh thực tế (lấy từ DTO)
+            existingEntity.setGuaranteeBalance(actualGuarantee);
+
+            // Cập nhật Dư bảo lãnh phát hành (Outstanding) = BL phát hành - BL thực tế
+            existingEntity.setOutstandingGuaranteeAmount(issued.subtract(actualGuarantee));
 
             if (creditContractDTO.getCustomerId() != null) {
                 CustomerEntity customer = customerRepository.findById(creditContractDTO.getCustomerId())
@@ -93,6 +118,10 @@ public class CreditContractServiceImplement implements CreditContractService {
             return creditContractMapper.toDto(updatedEntity);
         }
         return null;
+    }
+
+    private BigDecimal nvl(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 
     @Override

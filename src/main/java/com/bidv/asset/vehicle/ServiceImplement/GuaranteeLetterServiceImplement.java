@@ -82,6 +82,28 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                                         "Số tiền bảo lãnh dự kiến phải lớn hơn 0");
                 }
 
+                // =====================================================
+                // 1.5. CHECK DUPLICATE
+                // =====================================================
+                if (dto.getGuaranteeContractNumber() != null && !dto.getGuaranteeContractNumber().trim().isEmpty()) {
+                        GuaranteeLetterEntity existing = guaranteeLetterRepository
+                                        .findByGuaranteeContractNumber(dto.getGuaranteeContractNumber().trim());
+                        if (existing != null) {
+                                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                                "Số hợp đồng bảo lãnh " + dto.getGuaranteeContractNumber()
+                                                                + " đã tồn tại");
+                        }
+                }
+
+                if (dto.getReferenceCode() != null && !dto.getReferenceCode().trim().isEmpty()) {
+                        GuaranteeLetterEntity existingRef = guaranteeLetterRepository
+                                        .findByReferenceCode(dto.getReferenceCode().trim());
+                        if (existingRef != null) {
+                                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                                "Mã tham chiếu " + dto.getReferenceCode() + " đã tồn tại");
+                        }
+                }
+
                 Long customerId = dto.getCustomerDTO().getId();
                 Long manufacturerId = dto.getManufacturerDTO().getId();
                 Long repId = dto.getBranchAuthorizedRepresentativeDTO().getId();
@@ -150,9 +172,10 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 // =====================================================
                 // 7. CHECK CREDIT LIMIT
                 // =====================================================
-                BigDecimal creditLimit = MoneyUtil.format(creditContract.getCreditLimit());
-                BigDecimal currentUsedLimit = MoneyUtil.format(creditContract.getIssuedGuaranteeBalance().add(creditContract.getRealEstateLoanBalance().add(creditContract.getVehicleLoanBalance())));
-                BigDecimal newUsedLimit = MoneyUtil.format(currentUsedLimit.add(dto.getExpectedGuaranteeAmount()));
+                BigDecimal creditLimit = creditContract.getCreditLimit();
+                BigDecimal currentUsedLimit = creditContract.getIssuedGuaranteeBalance().add(
+                                creditContract.getRealEstateLoanBalance().add(creditContract.getVehicleLoanBalance()));
+                BigDecimal newUsedLimit = currentUsedLimit.add(dto.getExpectedGuaranteeAmount());
 
                 if (newUsedLimit.compareTo(creditLimit) > 0) {
                         throw new ResponseStatusException(
@@ -267,6 +290,19 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
                                         "Guarantee Letter chưa gắn HDTD");
+                }
+
+                // =====================================================
+                // 1.5. CHECK DUPLICATE REFERENCE CODE
+                // =====================================================
+                if (dto.getReferenceCode() != null && !dto.getReferenceCode().trim().isEmpty()) {
+                        GuaranteeLetterEntity existingRef = guaranteeLetterRepository
+                                        .findByReferenceCode(dto.getReferenceCode().trim());
+                        if (existingRef != null && !existingRef.getId().equals(id)) {
+                                throw new ResponseStatusException(
+                                                HttpStatus.BAD_REQUEST,
+                                                "Mã tham chiếu " + dto.getReferenceCode() + " đã tồn tại");
+                        }
                 }
 
                 // =====================================================
@@ -580,4 +616,9 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 return MoneyUtil.format(value);
         }
 
+        @Override
+        public Page<GuaranteeLetterDTO> getActiveGuaranteesForCustomer(Long customerId, Pageable pageable) {
+                return guaranteeLetterRepository.findByCustomerIdAndStatus(customerId, "ACTIVE", pageable)
+                                .map(guaranteeLetterMapper::toDto);
+        }
 }

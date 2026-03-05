@@ -34,6 +34,8 @@ public class MortgageContractServiceImplement implements MortgageContractService
     MortgageContractMapper mortgageContractMapper;
     @Autowired
     MortgageSequenceService mortgageSequenceService;
+    @Autowired
+    MortgageContractSequenceRepository sequenceRepo;
 
     // ===== CREATE =====
     @Override
@@ -111,7 +113,22 @@ public class MortgageContractServiceImplement implements MortgageContractService
 
         entity.setUpdatedAt(LocalDateTime.now());
 
-        return mortgageContractMapper.toDTO(mortgageRepo.save(entity));
+        MortgageContractEntity saved = mortgageRepo.save(entity);
+        mortgageSequenceService.createSequence(saved);
+
+        // ===== SYNC SEQUENCE COUNTERS =====
+        if (dto.getGuaranteeRunningNo() != null || dto.getWarehouseRunningNo() != null) {
+            MortgageContractSequenceEntity seq = sequenceRepo.findById(saved.getId()).orElse(null);
+            if (seq != null) {
+                if (dto.getGuaranteeRunningNo() != null)
+                    seq.setGuaranteeRunningNo(dto.getGuaranteeRunningNo());
+                if (dto.getWarehouseRunningNo() != null)
+                    seq.setWarehouseRunningNo(dto.getWarehouseRunningNo());
+                sequenceRepo.save(seq);
+            }
+        }
+
+        return mortgageContractMapper.toDTO(saved);
     }
 
     // ===== DELETE =====
