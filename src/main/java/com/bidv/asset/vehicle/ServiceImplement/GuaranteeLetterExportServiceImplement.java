@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.BranchAuthorizedRepresentativeDTO;
 import com.bidv.asset.vehicle.DTO.ExportDeXuatRequest;
 import com.bidv.asset.vehicle.DTO.GuaranteeLetterDTO;
@@ -13,13 +14,20 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExportService {
+    @Value("${app.template-root}")
+    private String templateRoot;
+
     BigDecimal gHTDConSD= BigDecimal.valueOf(0);
     BigDecimal gHTDaSuDung=BigDecimal.valueOf(0);
     private static final BigDecimal GUARANTEE_RATE = new BigDecimal("0.02");
@@ -77,14 +85,14 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     // =====================================================
 
     private byte[] generateThuBaoLanhVinfast(GuaranteeLetterDTO dto) throws IOException {
-        XWPFDocument doc = loadTemplate("/templates/Vinfast/thu-bao-lanh-vinfast.docx");
+        XWPFDocument doc = loadTemplate("Vinfast/thu-bao-lanh-vinfast.docx");
         Map<String, String> data = buildCommonData(dto);
         replaceAllPlaceholders(doc, data);
         return writeDoc(doc);
     }
 
     private byte[] generateThuBaoLanhHyundai(GuaranteeLetterDTO dto) throws IOException {
-        XWPFDocument doc = loadTemplate("/templates/Hyndai/thu-bao-lanh-hyndai.docx");
+        XWPFDocument doc = loadTemplate("Hyndai/thu-bao-lanh-hyndai.docx");
         Map<String, String> data = buildCommonData(dto);
         replaceAllPlaceholders(doc, data);
         return writeDoc(doc);
@@ -95,7 +103,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     // =====================================================
 
     private byte[] generateDeXuatVinfast(GuaranteeLetterDTO dto, XuatDeXuatBaoLanh xuatDeXuatBaoLanhBaoLanh) throws IOException {
-        XWPFDocument doc = loadTemplate("/templates/Vinfast/de-xuat-cap-bao-lanh-vinfast.docx");
+        XWPFDocument doc = loadTemplate("Vinfast/de-xuat-cap-bao-lanh-vinfast.docx");
         gHTDConSD=xuatDeXuatBaoLanhBaoLanh.getRemainingAmount();
         gHTDaSuDung=xuatDeXuatBaoLanhBaoLanh.getTotalGuaranteeAmount();
         Map<String, String> data = buildCommonData(dto);
@@ -152,7 +160,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     }
 
     private byte[] generateDeXuatHyundai(GuaranteeLetterDTO dto, XuatDeXuatBaoLanh xuatDeXuatBaoLanhBaoLanh) throws IOException {
-        XWPFDocument doc = loadTemplate("/templates/Hyndai/de-xuat-cap-bao-lanh-hyndai.docx");
+        XWPFDocument doc = loadTemplate("Hyndai/de-xuat-cap-bao-lanh-hyndai.docx");
 
         Map<String, String> data = buildCommonData(dto);
 
@@ -202,7 +210,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     // =====================================================
 
     private byte[] generateXetDuyetVinfast(GuaranteeLetterDTO dto,XuatDeXuatBaoLanh xuatDeXuatBaoLanhBaoLanh) throws IOException {
-        XWPFDocument doc = loadTemplate("/templates/Vinfast/phan-xet-duyet-vinfast.docx");
+        XWPFDocument doc = loadTemplate("Vinfast/phan-xet-duyet-vinfast.docx");
 
         Map<String, String> data = buildCommonData(dto);
 
@@ -245,7 +253,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     }
 
     private byte[] generateXetDuyetHyundai(GuaranteeLetterDTO dto,XuatDeXuatBaoLanh xuatDeXuatBaoLanhBaoLanh) throws IOException {
-        XWPFDocument doc = loadTemplate("/templates/Hyndai/phan-xet-duyet-hyndai.docx");
+        XWPFDocument doc = loadTemplate("Hyndai/phan-xet-duyet-hyndai.docx");
 
         Map<String, String> data = buildCommonData(dto);
 
@@ -291,7 +299,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     // =====================================================
     public byte[] generateYKienVinfast(GuaranteeLetterDTO dto)throws IOException{
         XWPFDocument doc =
-                loadTemplate("/templates/Vinfast/y-kien-phong-quan-tri-vinfast.docx");
+                loadTemplate("Vinfast/y-kien-phong-quan-tri-vinfast.docx");
 
         Map<String, String> data = buildCommonData(dto);
 
@@ -326,7 +334,7 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     }
     public byte[] generateYKienHyndai(GuaranteeLetterDTO dto)throws IOException{
         XWPFDocument doc =
-                loadTemplate("/templates/Hyndai/y-kien-cua-phong-quan-tri-hyndai.docx");
+                loadTemplate("Hyndai/y-kien-cua-phong-quan-tri-hyndai.docx");
 
         Map<String, String> data = buildCommonData(dto);
 
@@ -586,10 +594,12 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     // ================= TEMPLATE UTIL =====================
     // =====================================================
 
-    private XWPFDocument loadTemplate(String path) throws IOException {
-        InputStream is = getClass().getResourceAsStream(path);
-        if (is == null) throw new FileNotFoundException("Không tìm thấy template: " + path);
-        return new XWPFDocument(is);
+    private XWPFDocument loadTemplate(String relativePath) throws IOException {
+        Path path = Paths.get(templateRoot, relativePath);
+        if (!Files.exists(path)) {
+            throw new IOException("Không tìm thấy template: " + path.toAbsolutePath());
+        }
+        return new XWPFDocument(Files.newInputStream(path));
     }
 
     private void replaceAllPlaceholders(XWPFDocument doc, Map<String, String> data) {
@@ -624,19 +634,19 @@ public class GuaranteeLetterExportServiceImplement implements GuaranteeLetterExp
     // =====================================================
 
     private BigDecimal normalizeMoney(BigDecimal value) {
-        return value == null ? BigDecimal.ZERO : value.setScale(0, RoundingMode.HALF_UP);
+        return MoneyUtil.format(value);
     }
 
     private BigDecimal calculateGuaranteeFee(BigDecimal amount, Integer guaranteeTermDays) {
-
+ 
         if (amount == null || guaranteeTermDays == null || guaranteeTermDays <= 0) {
             return BigDecimal.ZERO;
         }
-
-        return amount
+ 
+        return MoneyUtil.format(amount
                 .multiply(GUARANTEE_RATE)
                 .multiply(BigDecimal.valueOf(guaranteeTermDays))
-                .divide(DAYS_IN_YEAR, 0, RoundingMode.HALF_UP);
+                .divide(DAYS_IN_YEAR, 2, RoundingMode.HALF_UP));
     }
 //    private BigDecimal calculateGuaranteeFee_hyndai(BigDecimal amount) {
 //        return amount.multiply(new BigDecimal("0.02"))

@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.DisbursementDTO;
 import com.bidv.asset.vehicle.DTO.LoanDTO;
 import com.bidv.asset.vehicle.DTO.UpdateInterestRequest;
@@ -137,10 +138,10 @@ public class DisbursementServiceImplement implements DisbursementService {
         
         // Logic tính toán lại hệ số (như đã định nghĩa trong Mapper hoặc có thể gọi Mapper để reuse)
         if (dto.getTotalCollateralValue() != null) {
-            existingEntity.setCollateralValueAfterFactor(dto.getTotalCollateralValue().multiply(new java.math.BigDecimal("0.85")));
+            existingEntity.setCollateralValueAfterFactor(MoneyUtil.format(dto.getTotalCollateralValue().multiply(new java.math.BigDecimal("0.85"))));
         }
         if (dto.getRealEstateValue() != null) {
-            existingEntity.setRealEstateValueAfterFactor(dto.getRealEstateValue().multiply(new java.math.BigDecimal("0.8")));
+            existingEntity.setRealEstateValueAfterFactor(MoneyUtil.format(dto.getRealEstateValue().multiply(new java.math.BigDecimal("0.8"))));
         }
 
         existingEntity.setUpdatedAt(LocalDateTime.now());
@@ -215,8 +216,8 @@ public class DisbursementServiceImplement implements DisbursementService {
         dto.setRealEstateValue(realEstate);
         
         // 4. Tính toán hệ số
-        dto.setCollateralValueAfterFactor(totalCollateral.multiply(new java.math.BigDecimal("0.85")));
-        dto.setRealEstateValueAfterFactor(realEstate.multiply(new java.math.BigDecimal("0.8")));
+        dto.setCollateralValueAfterFactor(MoneyUtil.format(totalCollateral.multiply(new java.math.BigDecimal("0.85"))));
+        dto.setRealEstateValueAfterFactor(MoneyUtil.format(realEstate.multiply(new java.math.BigDecimal("0.8"))));
 
         
 //        // Tính lãi suất dựa trên DisbursementAmount (nếu có, hoặc mặc định từ hạn mức)

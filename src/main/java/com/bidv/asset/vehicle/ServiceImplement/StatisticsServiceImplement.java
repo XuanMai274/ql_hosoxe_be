@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.GeneralStatisticsDTO;
 import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.StatisticsService;
@@ -48,26 +49,18 @@ public class StatisticsServiceImplement implements StatisticsService {
                 long returnedToCustomerCount = vehicleRepository.countByWarehouseExportIsNotNull();
 
                 // 2. Bảo lãnh (Guarantee)
-                BigDecimal totalIssuedGuaranteeBalance = creditContractRepository.sumIssuedGuaranteeBalance();
-                if (totalIssuedGuaranteeBalance == null)
-                        totalIssuedGuaranteeBalance = BigDecimal.ZERO;
+                BigDecimal totalIssuedGuaranteeBalance = MoneyUtil.format(creditContractRepository.sumIssuedGuaranteeBalance());
 
                 long activeGuaranteeLetterCount = guaranteeLetterRepository.countByStatus("ACTIVE");
 
-                BigDecimal actualGuaranteeBalance = creditContractRepository.sumActualGuaranteeBalance();
-                if (actualGuaranteeBalance == null)
-                        actualGuaranteeBalance = BigDecimal.ZERO;
+                BigDecimal actualGuaranteeBalance = MoneyUtil.format(creditContractRepository.sumActualGuaranteeBalance());
 
                 // 3. Khoản vay (Loan)
                 long activeDisbursementCount = disbursementRepository.countByStatus("ACTIVE");
 
-                BigDecimal totalVehicleLoanBalance = creditContractRepository.sumVehicleLoanBalance();
-                if (totalVehicleLoanBalance == null)
-                        totalVehicleLoanBalance = BigDecimal.ZERO;
+                BigDecimal totalVehicleLoanBalance = MoneyUtil.format(creditContractRepository.sumVehicleLoanBalance());
 
-                BigDecimal totalRealEstateLoanBalance = creditContractRepository.sumRealEstateLoanBalance();
-                if (totalRealEstateLoanBalance == null)
-                        totalRealEstateLoanBalance = BigDecimal.ZERO;
+                BigDecimal totalRealEstateLoanBalance = MoneyUtil.format(creditContractRepository.sumRealEstateLoanBalance());
 
                 // 4. Distribution & Trends (Enrichment)
                 List<GeneralStatisticsDTO.ManufacturerStats> manuStats = vehicleRepository.findAll().stream()

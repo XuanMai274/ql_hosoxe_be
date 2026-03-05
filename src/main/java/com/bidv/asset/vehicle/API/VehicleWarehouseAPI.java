@@ -203,7 +203,7 @@ public class VehicleWarehouseAPI {
         String fileName = request.getImportNumber();
 
         if (fileName == null || fileName.isBlank()) {
-            fileName = "HoSoKhachHang";
+            fileName = request.getImportNumber();
         }
 
         // loại ký tự không hợp lệ trong tên file
@@ -223,6 +223,61 @@ public class VehicleWarehouseAPI {
                             "attachment; filename=\"" + fileName + ".zip\"")
                     .header("Content-Type",
                             "application/octet-stream")
+                    .body(baos.toByteArray());
+        }
+    }
+    //api xuất file nhập kho riêng cho VINFAST
+    @PostMapping("/officer/vehicles/nhapkho/export-vinfast")
+    public ResponseEntity<byte[]> exportVinfastNhapKho(
+            @RequestBody ExportPNKRequest request
+    ) throws IOException {
+
+        List<VehicleDTO> vehicles =
+                vehicleService.findByIds(request.getVehicleIds());
+
+        if (vehicles == null || vehicles.isEmpty()) {
+            throw new RuntimeException("Danh sách xe trống");
+        }
+
+        // (Optional nhưng nên có) Validate đúng Vinfast
+        String manufacturerCode = vehicles.get(0)
+                .getManufacturerDTO()
+                .getCode();
+
+        if (!"VINFAST".equalsIgnoreCase(manufacturerCode)) {
+            throw new RuntimeException("Chỉ áp dụng cho xe VINFAST");
+        }
+
+        // ===== Generate 2 file =====
+        byte[] pnk =
+                vehicleWarehouseExportService
+                        .generatePNK(vehicles, request.getImportNumber());
+
+        byte[] dangKy =
+                vehicleWarehouseExportService
+                        .generateDangKiGiaoDichDamBao(vehicles, request.getImportNumber());
+
+        String fileName = request.getImportNumber();
+
+        if (fileName == null || fileName.isBlank()) {
+            fileName = request.getImportNumber()+"_";
+        }
+
+        fileName = fileName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             java.util.zip.ZipOutputStream zos =
+                     new java.util.zip.ZipOutputStream(baos)) {
+
+            addToZip(zos, "PHIEU_NHAP_KHO.docx", pnk);
+            addToZip(zos, "DON_DANG_KY_GIAO_DICH_DAM_BAO.docx", dangKy);
+
+            zos.finish();
+
+            return ResponseEntity.ok()
+                    .header("Content-Disposition",
+                            "attachment; filename=\"" + fileName + "_VINFAST.zip\"")
+                    .header("Content-Type", "application/zip")
                     .body(baos.toByteArray());
         }
     }

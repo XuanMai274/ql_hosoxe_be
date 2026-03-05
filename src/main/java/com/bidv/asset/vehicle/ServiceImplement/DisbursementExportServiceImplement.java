@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.DisbursementDTO;
 import com.bidv.asset.vehicle.DTO.ManufacturerDTO;
 import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
@@ -20,13 +21,16 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
@@ -36,21 +40,23 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
     private final VehicleMapper vehicleMapper;
     @Autowired
     MortgageContractRepository mortgageContractRepository;
-    private static final String TEMPLATE_PATH = "/templates/GiaiNgan/";
+
+    @Value("${app.template-root}")
+    private String templateRoot;
 
     @Override
     public byte[] exportDocx(String templateName, DisbursementDTO disbursementDTO, List<Long> vehicleIds) throws IOException {
-        XWPFDocument doc = loadTemplate(TEMPLATE_PATH + templateName);
+        XWPFDocument doc = loadTemplate("GiaiNgan/" + templateName);
 
         if (vehicleIds == null || vehicleIds.isEmpty()) {
             throw new RuntimeException("Danh sách xe không được để trống");
         }
         List<VehicleDTO> vehicles = vehicleRepository.findAllById(vehicleIds)
                 .stream().map(vehicleMapper::toDto).toList();
-        BigDecimal totalVehicleAmount = vehicles.stream()
+        BigDecimal totalVehicleAmount = MoneyUtil.format(vehicles.stream()
                 .map(VehicleDTO::getGuaranteeAmount)
                 .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
         ManufacturerDTO manufacturer = vehicles.stream()
                 .map(VehicleDTO::getManufacturerDTO)
                 .filter(Objects::nonNull)
@@ -88,7 +94,7 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
 
         Map<String, byte[]> results = new HashMap<>();
 
-        // 1️⃣ Export hợp đồng tín dụng cụ thể
+        // 1️ Export hợp đồng tín dụng cụ thể
         String contractTemplate = switch (manufacturer) {
             case "VINFAST" -> "hop-dong-tin-dung-cu-the-vinfast.docx";
             case "HYUNDAI" -> "hop-dong-tin-dung-cu-the-hyundai.docx";
@@ -100,7 +106,7 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
                     exportDocx(contractTemplate, disbursementDTO, vehicleIds));
         }
 
-        // 2️⃣ Export các template còn lại
+        // 2️ Export các template còn lại
         String[] templates = {
                 "de-xuat-giai-ngan.docx",
                 "duyet-ngan-hang.docx",
@@ -204,11 +210,11 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         map.put("{{loan_term}}",safe(String.valueOf(dto.getLoanTerm())));
         map.put("{{dueDate}}",formatDate(dto.getDueDate()));
         map.put("{{loanDate}}",formatDate(dto.getStartDate()));
-        BigDecimal tongTSBD=dto.getTotalCollateralValue().add(dto.getRealEstateValue());
+        BigDecimal tongTSBD = MoneyUtil.format(dto.getTotalCollateralValue().add(dto.getRealEstateValue()));
         map.put("{{TONG_TSBD}}",formatMoney(tongTSBD));
-        BigDecimal tongTSBDFactor=dto.getCollateralValueAfterFactor().add(dto.getRealEstateValueAfterFactor());
+        BigDecimal tongTSBDFactor = MoneyUtil.format(dto.getCollateralValueAfterFactor().add(dto.getRealEstateValueAfterFactor()));
         map.put("{{TONG_HE}}",formatMoney(tongTSBDFactor));
-        BigDecimal gttdAddVay=dto.getUsedLimit().add(dto.getDisbursementAmount());
+        BigDecimal gttdAddVay = MoneyUtil.format(dto.getUsedLimit().add(dto.getDisbursementAmount()));
         map.put("{{GHTDSD_VAY}}",formatMoney(gttdAddVay));
         map.put("{{total_vehicle}}", formatMoney(totalVehicleAmount));
         map.put("{{totalVehiclesCount}}", String.valueOf(dto.getTotalVehiclesCount() != null ? dto.getTotalVehiclesCount() : 0));
@@ -218,6 +224,7 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         map.put("{{status}}", safe(dto.getStatus()));
         map.put("{{manufacturer_name}}",safe(manufacturer.getName()));
         map.put("{{manufacturer_code}}",safe(manufacturer.getCode()));
+        map.put("{{HDTDCT}}",safe(dto.getLoanContractNumber()));
         BigDecimal rate = Optional.ofNullable(manufacturer.getGuaranteeRate())
                 .orElse(BigDecimal.ZERO);
 
@@ -234,10 +241,10 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         BigDecimal daysInYear = new BigDecimal("365");
         BigDecimal tongCL = dto.getInterestAmount();
         if (tongCL == null && disbursementAmount != null && loanTerm != null) {
-            tongCL = disbursementAmount
+            tongCL = MoneyUtil.format(disbursementAmount
                     .multiply(rateDiff)
                     .multiply(loanTerm)
-                    .divide(daysInYear, 0, RoundingMode.HALF_UP);
+                    .divide(daysInYear, 2, RoundingMode.HALF_UP));
         }
         map.put("{{TONG_CL}}", formatMoney(tongCL));
         map.put("{{interestAmount}}", formatMoney(tongCL));
@@ -384,8 +391,12 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         String replaced = fullText.toString();
         boolean modified = false;
         for (Map.Entry<String, String> e : data.entrySet()) {
-            if (replaced.contains(e.getKey())) {
-                replaced = replaced.replace(e.getKey(), e.getValue());
+
+            String key = e.getKey();
+            String value = e.getValue() == null ? "" : e.getValue();
+
+            if (replaced.contains(key)) {
+                replaced = replaced.replace(key, value);
                 modified = true;
             }
         }
@@ -455,10 +466,12 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
         }
     }
 
-    private XWPFDocument loadTemplate(String path) throws IOException {
-        InputStream is = getClass().getResourceAsStream(path);
-        if (is == null) throw new IOException("Không tìm thấy template: " + path);
-        return new XWPFDocument(is);
+    private XWPFDocument loadTemplate(String relativePath) throws IOException {
+        Path path = Paths.get(templateRoot, relativePath);
+        if (!Files.exists(path)) {
+            throw new IOException("Không tìm thấy template: " + path.toAbsolutePath());
+        }
+        return new XWPFDocument(Files.newInputStream(path));
     }
 
     private byte[] writeDoc(XWPFDocument doc) throws IOException {
@@ -501,8 +514,9 @@ public class DisbursementExportServiceImplement implements DisbursementExportSer
 
             // Chỉ replace 2 placeholder
             Map<String, String> smallMap = new HashMap<>();
-            smallMap.put("{{HDTDCT}}", data.get("{{HDTDCT}}"));
-            smallMap.put("{{CURRENT_DATE}}", data.get("{{CURRENT_DATE}}"));
+            smallMap.put("{{HDTDCT}}", safe(data.get("{{HDTDCT}}")));
+            smallMap.put("{{HDTDCT_DATE}}", safe(data.get("{{HDTDCT_DATE}}")));
+            smallMap.put("{{CURRENT_DATE}}", safe(data.get("{{CURRENT_DATE}}")));
 
             for (XWPFTableRow row : table.getRows()) {
                 replaceRowPlaceholders(row, smallMap);

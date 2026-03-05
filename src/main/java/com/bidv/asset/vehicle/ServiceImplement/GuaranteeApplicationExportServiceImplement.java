@@ -11,18 +11,22 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
 public class GuaranteeApplicationExportServiceImplement
         implements GuaranteeApplicationExportService {
 
-    private static final String TEMPLATE_PATH = "/templates/DeNghiCapBaoLanh/";
+    @Value("${app.template-root}")
+    private String templateRoot;
     // =====================================================
     // ================= MAIN EXPORT =======================
     // =====================================================
@@ -81,7 +85,7 @@ public class GuaranteeApplicationExportServiceImplement
             String templateName
     ) throws IOException {
 
-        XWPFDocument doc = loadTemplate(TEMPLATE_PATH + templateName);
+        XWPFDocument doc = loadTemplate("DeNghiCapBaoLanh/" + templateName);
 
         Map<String, String> data = buildCommonData(dto);
 
@@ -99,7 +103,7 @@ public class GuaranteeApplicationExportServiceImplement
             throws IOException {
 
         XWPFDocument doc = loadTemplate(
-                TEMPLATE_PATH + "danh-sach-xe-de-nghi-cap-bao-lanh.docx"
+                "DeNghiCapBaoLanh/danh-sach-xe-de-nghi-cap-bao-lanh.docx"
         );
 
         Map<String, String> common = buildCommonData(dto);
@@ -308,10 +312,12 @@ public class GuaranteeApplicationExportServiceImplement
     // =====================================================
     // ================= UTIL ==============================
     // =====================================================
-    private XWPFDocument loadTemplate(String path) throws IOException {
-        InputStream is = getClass().getResourceAsStream(path);
-        if (is == null) throw new IOException("Không tìm thấy template: " + path);
-        return new XWPFDocument(is);
+    private XWPFDocument loadTemplate(String relativePath) throws IOException {
+        Path path = Paths.get(templateRoot, relativePath);
+        if (!Files.exists(path)) {
+            throw new IOException("Không tìm thấy template: " + path.toAbsolutePath());
+        }
+        return new XWPFDocument(Files.newInputStream(path));
     }
 
     private byte[] writeDoc(XWPFDocument doc) throws IOException {

@@ -58,7 +58,8 @@ public class WarehouseImportAPI {
         try {
             return ResponseEntity.ok(warehouseImportService.getById(id));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
         }
     }
 

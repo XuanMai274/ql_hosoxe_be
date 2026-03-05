@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.MortgageContractDTO;
 import com.bidv.asset.vehicle.DTO.VehicleDTO;
 import com.bidv.asset.vehicle.DTO.WarehouseImportDTO;
@@ -13,6 +14,9 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -20,8 +24,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Value;
 @Service
 public class VehicleWarehouseExportImplement implements VehicleWarehouseExportService {
+    @Value("${app.template-root}")
+    private String templateRoot;
     @Autowired
     VehicleRepository vehicleRepository;
     @Autowired
@@ -47,7 +54,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
             throw new RuntimeException("Không có xe thuộc loại " + manufacturer);
         }
 
-        XWPFDocument doc = loadTemplate("/templates/NhapKho/PNK.docx");
+        XWPFDocument doc = loadTemplate("NhapKho/PNK.docx");
 
         BigDecimal total = calculateTotal(filtered);
 
@@ -80,7 +87,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
                 filterByManufacturer(vehicles, manufacturer);
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/bao-cao-dinh-gia-tai-san.docx");
+                loadTemplate("NhapKho/bao-cao-dinh-gia-tai-san.docx");
 
         BigDecimal total = calculateTotal(filtered);
 
@@ -113,7 +120,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
                 filterByManufacturer(vehicles, manufacturer);
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/nhap-ket.docx");
+                loadTemplate("NhapKho/nhap-ket.docx");
 
         BigDecimal total = calculateTotal(filtered);
 
@@ -158,7 +165,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
                 filterByManufacturer(vehicles, manufacturer);
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/bien-ban-dinh-gia-NK.docx");
+                loadTemplate("NhapKho/bien-ban-dinh-gia-NK.docx");
 
         BigDecimal total = calculateTotal(filtered);
 
@@ -201,7 +208,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         validateSingleManufacturer(vehicles, "HYUNDAI");
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/phu-luc-hop-dong-thue-chap-hyndai.docx");
+                loadTemplate("NhapKho/phu-luc-hop-dong-thue-chap-hyndai.docx");
 
         BigDecimal total = calculateTotal(vehicles);
 
@@ -226,7 +233,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         validateSingleManufacturer(vehicles, "VINFAST");
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/phu-luc-hop-dong-thue-chap-vinfast.docx");
+                loadTemplate("NhapKho/phu-luc-hop-dong-thue-chap-vinfast.docx");
 
         BigDecimal total = calculateTotal(vehicles);
 
@@ -271,7 +278,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         validateSingleManufacturer(vehicles, "VINFAST");
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/dang-ky-giao-dich-dam-bao-vinfast.docx");
+                loadTemplate("NhapKho/dang-ky-giao-dich-dam-bao-vinfast.docx");
 
         BigDecimal total = calculateTotal(vehicles);
 
@@ -291,7 +298,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         validateSingleManufacturer(vehicles, "HYUNDAI");
 
         XWPFDocument doc =
-                loadTemplate("/templates/NhapKho/dang-ky-giao-dich-bao-dam-hyundai.docx");
+                loadTemplate("NhapKho/dang-ky-giao-dich-bao-dam-hyundai.docx");
 
         BigDecimal total = calculateTotal(vehicles);
 
@@ -539,7 +546,7 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
                     VietnameseNumberUtil.toVietnamese(total));
 
             map.put("{{TONG_80%}}",
-                    formatMoney(total.multiply(BigDecimal.valueOf(0.8))));
+                    formatMoney(MoneyUtil.format(total.multiply(BigDecimal.valueOf(0.8)))));
         }
 
         /* ================= NGÀY ================= */
@@ -562,16 +569,16 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
                 + " năm " + date.getYear();
     }
     private BigDecimal calculateTotal(List<VehicleDTO> vehicles) {
-
+ 
         BigDecimal total = BigDecimal.ZERO;
-
+ 
         for (VehicleDTO v : vehicles) {
             if (v.getPrice() != null) {
                 total = total.add(v.getPrice());
             }
         }
-
-        return total;
+ 
+        return MoneyUtil.format(total);
     }
 
     private void replaceAll(XWPFDocument doc, Map<String,String> data) {
@@ -662,15 +669,12 @@ public class VehicleWarehouseExportImplement implements VehicleWarehouseExportSe
         newRun.setText(replaced);
     }
 
-    private XWPFDocument loadTemplate(String path) throws IOException {
-
-        var is = getClass().getResourceAsStream(path);
-
-        if (is == null) {
-            throw new IOException("Không tìm thấy template: " + path);
+    private XWPFDocument loadTemplate(String relativePath) throws IOException {
+        Path path = Paths.get(templateRoot, relativePath);
+        if (!Files.exists(path)) {
+            throw new IOException("Không tìm thấy template: " + path.toAbsolutePath());
         }
-
-        return new XWPFDocument(is);
+        return new XWPFDocument(Files.newInputStream(path));
     }
 
     private byte[] writeDoc(XWPFDocument doc) throws IOException {

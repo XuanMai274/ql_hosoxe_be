@@ -20,4 +20,18 @@ public class VehicleListDTO {
     private String engineNumber;
     private BigDecimal price;
     private String ref;
+    private boolean hasDocument;
+
+    public VehicleListDTO(Long id, Integer stt, String vehicleName, String status, String chassisNumber,
+            String engineNumber, BigDecimal price, String ref, Long docCount) {
+        this.id = id;
+        this.stt = stt;
+        this.vehicleName = vehicleName;
+        this.status = status;
+        this.chassisNumber = chassisNumber;
+        this.engineNumber = engineNumber;
+        this.price = price;
+        this.ref = ref;
+        this.hasDocument = docCount != null && docCount > 0;
+    }
 }

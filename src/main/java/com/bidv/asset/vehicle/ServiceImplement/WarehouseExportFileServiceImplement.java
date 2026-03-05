@@ -1,5 +1,6 @@
 package com.bidv.asset.vehicle.ServiceImplement;
 
+import com.bidv.asset.vehicle.Utill.MoneyUtil;
 import com.bidv.asset.vehicle.DTO.*;
 import com.bidv.asset.vehicle.Mapper.VehicleMapper;
 import com.bidv.asset.vehicle.Repository.MortgageContractRepository;
@@ -19,7 +20,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -28,6 +31,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +42,8 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
     private final MortgageContractRepository mortgageContractRepository;
     private final VehicleMapper vehicleMapper;
 
-    private static final String TEMPLATE_PATH = "/templates/XuatKho/";
+    @Value("${app.template-root}")
+    private String templateRoot;
 
     @Override
     public Map<String, byte[]> exportAll(Long exportId, List<Long> vehicleIds) throws IOException {
@@ -169,7 +174,7 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
     }
 
     private byte[] generateDoc(String templateName, WarehouseExportEntity export, List<VehicleDTO> vehicles, String manufacturerCode) throws IOException {
-        XWPFDocument doc = loadTemplate(TEMPLATE_PATH + templateName);
+        XWPFDocument doc = loadTemplate("XuatKho/" + templateName);
         if ("de-nghi-thu-no.docx".equals(templateName)) {
             replaceDebtRequestTable(doc, vehicles);
         }
@@ -192,14 +197,14 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
                     .filter(m -> m != null && manufacturerCode.equals(m.getCode()))
                     .findFirst().orElse(null);
         }
-        BigDecimal totalVehicleAmountHDMB = vehicles.stream()
+        BigDecimal totalVehicleAmountHDMB = MoneyUtil.format(vehicles.stream()
                 .map(VehicleDTO::getPrice)
                 .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalVehicleAmountVay = vehicles.stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        BigDecimal totalVehicleAmountVay = MoneyUtil.format(vehicles.stream()
                 .map(VehicleDTO::getGuaranteeAmount)
                 .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
 
         Map<String, String> data = buildData(export, vehicles, manufacturerDTO, disbursementDTO,totalVehicleAmountHDMB,totalVehicleAmountVay);
         
@@ -324,10 +329,10 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
             if (interestAmount == null && dto.getDisbursementAmount() != null && dto.getLoanTerm() != null) {
                 BigDecimal rateDiff = new BigDecimal("0.0114"); // 1.14%
                 BigDecimal daysInYear = new BigDecimal("365");
-                interestAmount = dto.getDisbursementAmount()
+                interestAmount = MoneyUtil.format(dto.getDisbursementAmount()
                         .multiply(rateDiff)
                         .multiply(BigDecimal.valueOf(dto.getLoanTerm()))
-                        .divide(daysInYear, 0, RoundingMode.HALF_UP);
+                        .divide(daysInYear, 2, RoundingMode.HALF_UP));
             }
             map.put("{{TONG_CL}}", formatMoney(interestAmount));
             map.put("{{interestAmount}}", formatMoney(interestAmount));
@@ -672,10 +677,12 @@ public class WarehouseExportFileServiceImplement implements WarehouseExportFileS
         }
     }
 
-    private XWPFDocument loadTemplate(String path) throws IOException {
-        InputStream is = getClass().getResourceAsStream(path);
-        if (is == null) throw new IOException("Không tìm thấy template: " + path);
-        return new XWPFDocument(is);
+    private XWPFDocument loadTemplate(String relativePath) throws IOException {
+        Path path = Paths.get(templateRoot, relativePath);
+        if (!Files.exists(path)) {
+            throw new IOException("Không tìm thấy template: " + path.toAbsolutePath());
+        }
+        return new XWPFDocument(Files.newInputStream(path));
     }
 
     private byte[] writeDoc(XWPFDocument doc) throws IOException {

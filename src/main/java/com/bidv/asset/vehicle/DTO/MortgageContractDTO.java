@@ -35,4 +35,8 @@ public class MortgageContractDTO {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Running numbers from MortgageContractSequenceEntity
+    private Integer guaranteeRunningNo;
+    private Integer warehouseRunningNo;
 }

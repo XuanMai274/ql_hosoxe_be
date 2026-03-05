@@ -11,32 +11,34 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface GuaranteeLetterService {
-    GuaranteeLetterDTO createGuaranteeLetter(GuaranteeLetterDTO dto);
+        GuaranteeLetterDTO createGuaranteeLetter(GuaranteeLetterDTO dto);
 
-    public Page<GuaranteeLetterDTO> getGuaranteeLetters(
-            String manufacturerCode,
-            LocalDate fromDate,
-            LocalDate toDate,
-            Pageable pageable);
+        public Page<GuaranteeLetterDTO> getGuaranteeLetters(
+                        String manufacturerCode,
+                        LocalDate fromDate,
+                        LocalDate toDate,
+                        Pageable pageable);
 
-    public Page<GuaranteeLetterDTO> search(
-            String keyword,
-            String manufacturerCode,
-            LocalDate fromDate,
-            LocalDate toDate,
-            Boolean hasLetterNumber,
-            Pageable pageable);
+        public Page<GuaranteeLetterDTO> search(
+                        String keyword,
+                        String manufacturerCode,
+                        LocalDate fromDate,
+                        LocalDate toDate,
+                        Boolean hasLetterNumber,
+                        Pageable pageable);
 
-    public GuaranteeLetterDTO findById(long id);
+        public GuaranteeLetterDTO findById(long id);
 
-    public GuaranteeLetterDTO updateGuaranteeLetter(Long id, GuaranteeLetterDTO dto);
+        public GuaranteeLetterDTO updateGuaranteeLetter(Long id, GuaranteeLetterDTO dto);
 
-    public List<GuaranteeLetterDTO> suggest(
-            String keyword,
-            String manufacturerCode);
+        public List<GuaranteeLetterDTO> suggest(
+                        String keyword,
+                        String manufacturerCode);
 
-    public void updateAfterVehicleImported(Long glId,
-            BigDecimal guaranteeAmount);
+        public void updateAfterVehicleImported(Long glId,
+                        BigDecimal guaranteeAmount);
 
-    List<GuaranteeLetterDTO> findAll();
+        Page<GuaranteeLetterDTO> getActiveGuaranteesForCustomer(Long customerId, Pageable pageable);
+
+        List<GuaranteeLetterDTO> findAll();
 }

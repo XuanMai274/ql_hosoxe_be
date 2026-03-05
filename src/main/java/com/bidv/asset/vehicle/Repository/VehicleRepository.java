@@ -56,7 +56,8 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
                     v.chassisNumber,
                     v.engineNumber,
                     v.price,
-                    gl.referenceCode
+                    gl.referenceCode,
+                    (select count(d) from DocumentEntity d where d.vehicle.id = v.id)
                 )
                 from VehicleEntity v
                 join v.guaranteeLetter gl
@@ -242,23 +243,24 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
 
     @Query("SELECT COUNT(v) FROM VehicleEntity v WHERE v.loans IS NOT EMPTY")
     long countByLoansIsNotEmpty();
+
     // tìm xe vinfast trong thời hạn cần nhập kho chính thức
     @Query("""
-    SELECT v FROM VehicleEntity v
-    WHERE v.manufacturerEntity.code = :manufacturerCode
-      AND v.status = :status
-      AND v.inSafe = true
-""")
+                SELECT v FROM VehicleEntity v
+                WHERE v.manufacturerEntity.code = :manufacturerCode
+                  AND v.status = :status
+                  AND v.inSafe = true
+            """)
     List<VehicleEntity> findVinfastInSafe(
             @Param("manufacturerCode") String manufacturerCode,
-            @Param("status") String status
-    );
+            @Param("status") String status);
+
     @Modifying
     @Query("""
-           UPDATE VehicleEntity v
-           SET v.inSafe = :inSafe
-           WHERE v.id IN :ids
-           """)
+            UPDATE VehicleEntity v
+            SET v.inSafe = :inSafe
+            WHERE v.id IN :ids
+            """)
     int updateInSafeByIds(@Param("ids") List<Long> ids,
-                          @Param("inSafe") Boolean inSafe);
+            @Param("inSafe") Boolean inSafe);
 }
