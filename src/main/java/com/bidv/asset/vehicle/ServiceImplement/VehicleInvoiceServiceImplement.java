@@ -103,7 +103,7 @@ public class VehicleInvoiceServiceImplement implements VehicleInvoiceService {
 
             vehicle.setGuaranteeLetter(gl);
             /* ===== TÍNH guaranteeAmount ===== */
-            BigDecimal rate = MoneyUtil.rate(gl.getManufacturer().getGuaranteeRate());
+            BigDecimal rate = MoneyUtil.rate(manufacturerEntity.getGuaranteeRate());
  
             BigDecimal guaranteeAmount = MoneyUtil.format(vehicle.getPrice().multiply(rate));
             vehicle.setGuaranteeAmount(guaranteeAmount);
