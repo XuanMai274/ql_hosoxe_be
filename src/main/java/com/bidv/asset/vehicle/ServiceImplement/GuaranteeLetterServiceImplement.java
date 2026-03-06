@@ -6,6 +6,7 @@ import com.bidv.asset.vehicle.Mapper.GuaranteeLetterMapper;
 import com.bidv.asset.vehicle.Repository.*;
 import com.bidv.asset.vehicle.Service.GuaranteeLetterService;
 import com.bidv.asset.vehicle.entity.*;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -42,6 +43,8 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
         CustomerRepository customerRepository;
         @Autowired
         GuaranteeApplicationRepository guaranteeApplicationRepository;
+        @Autowired
+        private EntityManager entityManager;
 
         @Transactional
         @Override
@@ -441,6 +444,9 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                                 .findByIdForUpdate(glId)
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thư bảo lãnh"));
 
+                // Refresh để lấy dữ liệu mới nhất từ DB sau khi đã có lock, tránh stale data từ session cache
+                entityManager.refresh(gl);
+
                 // Chuẩn hóa toàn bộ tiền
                 BigDecimal guaranteeAmount = money(guaranteeAmountRaw);
                 BigDecimal expected = money(gl.getExpectedGuaranteeAmount());
@@ -483,6 +489,8 @@ public class GuaranteeLetterServiceImplement implements GuaranteeLetterService {
                 CreditContractEntity contract = creditContractRepository
                                 .findByIdForUpdate(gl.getCreditContract().getId())
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy HĐTD"));
+
+                entityManager.refresh(contract);
 
                 BigDecimal contractUsed = money(contract.getUsedLimit());
                 BigDecimal creditLimit = money(contract.getCreditLimit());
